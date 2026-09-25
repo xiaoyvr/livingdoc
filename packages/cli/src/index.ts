@@ -11,54 +11,71 @@ import { parse as parseYaml } from 'yaml'
 
 const markdown = unified().use(remarkParse).use(remarkFrontmatter, ['yaml'])
 
-const TOKEN = /\{\{\s*([\s\S]*?)\s*\}\}/g
+const INLINE_TOKEN = /\{\{\s*([\s\S]*?)\s*\}\}/g
 
 export function check(file: string): void {
   const source = readFileSync(file, 'utf8')
   const tree = markdown.parse(source)
 
-  const yaml = tree.children.find((node) => node.type === 'yaml')
-  const data =
-    yaml && 'value' in yaml
-      ? (parseYaml(String(yaml.value)) as Record<string, unknown>)
-      : {}
-  if (!('livingdoc' in data)) return
+  if (!isOptedIn(frontmatter(tree))) return
 
+  const code = generateTest(headingTitle(tree), exampleBullets(tree))
+  writeFileSync(generatedPath(file), code)
+}
+
+function frontmatter(tree: Root): Record<string, unknown> {
+  const node = tree.children.find((child) => child.type === 'yaml')
+  return node && 'value' in node
+    ? (parseYaml(String(node.value)) as Record<string, unknown>)
+    : {}
+}
+
+function isOptedIn(data: Record<string, unknown>): boolean {
+  return 'livingdoc' in data
+}
+
+function headingTitle(tree: Root): string {
   const heading = tree.children.find((node) => node.type === 'heading')
-  const title = heading ? textOf(heading) : ''
+  return heading ? plainText(heading) : ''
+}
 
+function exampleBullets(tree: Root): string[] {
+  const index = tree.children.findIndex(
+    (node) => node.type === 'paragraph' && plainText(node).trim() === 'Example:',
+  )
+  if (index === -1) return []
+  const next = tree.children[index + 1]
+  if (!next || next.type !== 'list') return []
+  return next.children.map((item) => plainText(item).trim())
+}
+
+function generateTest(title: string, bullets: string[]): string {
   const output = [`describe(${JSON.stringify(title)}, () => {`]
-  for (const bullet of exampleBullets(tree)) {
-    output.push(`  it(${JSON.stringify(render(bullet))}, () => {`)
-    for (const input of inputs(bullet)) {
+  for (const bullet of bullets) {
+    output.push(`  it(${JSON.stringify(bulletTitle(bullet))}, () => {`)
+    for (const input of bulletInputs(bullet)) {
       output.push(`    const ${input.name} = ${input.value}`)
     }
     output.push('  })')
   }
   output.push('})')
-
-  const target = join(dirname(resolve(file)), 'livingdoc.test.ts')
-  writeFileSync(target, `${output.join('\n')}\n`)
+  return `${output.join('\n')}\n`
 }
 
-function exampleBullets(tree: Root): string[] {
-  const index = tree.children.findIndex(
-    (node) => node.type === 'paragraph' && textOf(node).trim() === 'Example:',
-  )
-  if (index === -1) return []
-  const next = tree.children[index + 1]
-  if (!next || next.type !== 'list') return []
-  return next.children.map((item) => textOf(item).trim())
+function generatedPath(file: string): string {
+  return join(dirname(resolve(file)), 'livingdoc.test.ts')
 }
 
-function textOf(node: Nodes): string {
+function plainText(node: Nodes): string {
   if ('value' in node && typeof node.value === 'string') return node.value
-  if ('children' in node) return node.children.map((child) => textOf(child)).join('')
+  if ('children' in node) {
+    return node.children.map((child) => plainText(child)).join('')
+  }
   return ''
 }
 
-function render(text: string): string {
-  return text.replace(TOKEN, (_match: string, body: string) => {
+function bulletTitle(text: string): string {
+  return text.replace(INLINE_TOKEN, (_match: string, body: string) => {
     const value = body.slice(body.indexOf(':') + 1).trim()
     const first = value[0]
     const last = value[value.length - 1]
@@ -68,9 +85,9 @@ function render(text: string): string {
   })
 }
 
-function inputs(text: string): { name: string; value: string }[] {
+function bulletInputs(text: string): { name: string; value: string }[] {
   const parsed: { name: string; value: string }[] = []
-  for (const match of text.matchAll(TOKEN)) {
+  for (const match of text.matchAll(INLINE_TOKEN)) {
     const body = match[1] ?? ''
     const colon = body.indexOf(':')
     if (colon === -1) continue
