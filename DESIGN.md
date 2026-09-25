@@ -1,0 +1,330 @@
+# livingdoc — design
+
+> Documentation that cannot be published while it is false.
+
+## 1. Vision
+
+livingdoc turns the important behaviors of a system into living documentation:
+you describe them in ordinary prose, mark the inputs and expectations, and
+livingdoc executes the behavior against your real code at build time. A claim
+whose expectation no longer holds turns red, and `livingdoc check` fails — so
+the document and the implementation cannot drift.
+
+It documents a *subset* — the behaviors that matter for a human to understand
+the system — and it is not a replacement for unit, integration, or e2e tests.
+
+## 2. What livingdoc is, and is not
+
+livingdoc is a **prose → code generator**. It parses the document's fluent text
+into inputs and assertions, and generates test code — in the consumer's
+language, wrapped in the consumer's test framework — that executes the
+document against their real code.
+
+- **is**: a parser, a text carrier, a code generator, a runner, a colorer, an
+  exit code.
+- **is not**: a test framework, a specification language, an assertion library,
+  a mocking tool, or a report generator.
+
+It has **no semantics of its own — not a type system, not an expression
+grammar, not an assertion vocabulary.** It carries text and names; the target
+language and framework give that text meaning.
+
+## 3. Core idea
+
+A document is a **parameterized test expressed as prose**:
+
+- the **operation body** (how to run the behavior) lives once in the consumer's
+  project;
+- the **document** supplies the parameters — inputs and expected results — as
+  free prose with marked values, using the language and test framework the
+  system is actually built with;
+- livingdoc generates test code that calls those operations and evaluates those
+  expectations, runs it through the consumer's own test framework, and colors
+  the result.
+
+The document is *authored*, never generated. Its markup is a *locator*: it finds
+the right operation and the right assertion to call.
+
+## 4. A document, end to end
+
+```markdown
+# Checkout
+
+## Applying a discount
+
+Example:
+
+- applying a {{ code: "SAVE10" }} code to a ${{ total: 100 }} cart, the total
+  {{ toBe total * 0.9 }},
+  {{ calls "pricing service" "Once" }},
+  and the order {{ "order saved" toBe true }}.
+```
+
+`toBe` is the framework's own assertion, written directly. Rendered (all markup
+stripped, values colored):
+
+> - applying a SAVE10 code to a $100 cart, the total **$90** ✓,
+>   **calls "pricing service" "Once"** ✓,
+>   and the order **"order saved" is true** ✓
+
+When the implementation changes so `SAVE10` gives 15%:
+
+> - applying a SAVE10 code to a $100 cart, the total ~~$90~~ **$85** ✗
+
+…and `livingdoc check` exits non-zero.
+
+## 5. The grammar
+
+livingdoc owns a tiny inline token language, processed *before* the markup
+renderer sees the document. The base format is Markdown; the token layer is
+format-independent.
+
+| construct | meaning |
+|---|---|
+| heading | the operation, by slug (see §6) |
+| `Example:` | starts a group of test cases |
+| `- …` (bullet under `Example:`) | one test case (one `it`) |
+| `{{ name: value }}` | an input; `name` locates the parameter; `value` is a native expression |
+| `{{ verb args… }}` | an assertion; `verb` is a framework assertion or consumer directive |
+| `\{{ … }}` | a literal `{{ … }}` |
+
+Assertion forms — the verb may appear first or in the middle:
+
+- `{{ toBe total * 0.9 }}` — verb first (the primary result)
+- `{{ "order saved" toBe true }}` — verb in the middle (subject + expected)
+- `{{ calls "pricing service" "Once" }}` — verb first, its own arguments
+
+Prose around the tokens is completely free — that is the key principle. A
+bullet without tokens is prose and is never executed.
+
+**Tokenizer:**
+
+- *inputs* — `{{ name: value }}`. Split on the first `:`; the value is the raw
+  text after it, verbatim, never lexed. `{{ code: "SAVE 10" }}` → name `code`,
+  value `"SAVE 10"`.
+- *assertions* — `{{ verb … }}`. Find the declared verb (a word); the text
+  before it is the subject, the text after it is the arguments — each raw,
+  verbatim, never lexed. `{{ toBe total * 0.9 }}` → verb `toBe`, args
+  `total * 0.9` (one expression). `{{ calls "pricing service" "Once" }}` →
+  verb `calls`, args `"pricing service" "Once"` (the verb splits its own
+  arguments).
+
+Disambiguation: if the second word is `:` the token is an input; otherwise it
+is an assertion. Because arguments are never lexed, expressions with spaces
+(`total * 0.9`) and directive argument lists both pass through untouched —
+interpretation is the generated code's job.
+
+## 6. Scoping: heading = describe, bullet = it
+
+The document's structure maps directly onto a test tree:
+
+| test | document |
+|---|---|
+| `describe("Applying a discount")` | the heading `## Applying a discount` |
+| `it(...)` — one case | one bullet under `Example:` |
+| parameter names in the signature | the `{{ name: value }}` / `{{ verb … }}` tokens |
+
+- The **heading** locates the `describe` (the action being tested): its slug is
+  the operation name — `## Applying a discount` → `applying-a-discount`
+  (lowercase, whitespace → hyphen, digits kept, other punctuation dropped).
+- The **parameter names** locate the `it` (the parameterized test): the names in
+  a bullet must match the operation's declared parameters.
+- A nested heading overrides the operation. A heading with no `Example:` bullets
+  is just structure. No explicit operation override exists — renaming a heading
+  changes the slug and breaks the lookup, which is drift caught red.
+
+## 7. The consumer's backend
+
+The consumer writes one backend file, in their language, importing their real
+code. It provides the two things a framework cannot:
+
+1. **`operations`** — parameterized test bodies, with declared parameter names:
+
+```js
+export const operations = {
+  "applying-a-discount": {
+    params: ["code", "total"],
+    run({ code, total }) { return { result: applyDiscount(code, total) } },
+  },
+}
+```
+
+2. **`directives`** — custom assertion verbs (e.g. mock verification). Like the
+   framework's own assertions, they fail by throwing on mismatch:
+
+```js
+export const directives = {
+  calls: (outputs, subject, n) => {
+    if (mock.calls(subject) !== n) throw new Error(`${subject} called ${mock.calls(subject)} times, expected ${n}`)
+  },
+}
+```
+
+The framework's own assertions (`toBe`, `toEqual`, `toContain`, …) are **not**
+consumer code — the document writes them directly and the adapter transcribes
+them (see §8).
+
+## 8. Code generation: language core + framework adapter
+
+livingdoc generates test code in two layers:
+
+1. **Language core** (framework-agnostic) — bind inputs as variables, call the
+   operation, emit the expectation expression as native code.
+2. **Framework adapter** — transcribe the document's verbs into the framework's
+   assertion form, directly, with no translation.
+
+```js
+// jest adapter (JavaScript) — the doc's {{ toBe total * 0.9 }}
+describe("Applying a discount", () => {
+  it("applying a SAVE10 code to a $100 cart", () => {
+    const code = "SAVE10";
+    const total = 100;
+    const outputs = operations["applying-a-discount"].run({ code, total });
+    expect(outputs.result).toBe(total * 0.9);
+    calls(outputs, "pricing service", "Once");
+    expect(outputs["order saved"]).toBe(true);
+  });
+});
+```
+
+The verb `toBe` is used **as-is** — the adapter only knows *where* a verb goes
+(`expect(SUBJECT).VERB(ARGS)`) and *which* verbs belong to its framework. It
+does not map a universal `is` to `toBe`; the document said `toBe`, and `toBe`
+is what runs.
+
+## 9. The framework adapter
+
+Each adapter knows two things: its framework's assertion *shape*, and its
+assertion *verbs*.
+
+| framework | shape | verbs (examples) |
+|---|---|---|
+| jest | `expect(SUBJECT).VERB(ARGS)` | `toBe`, `toEqual`, `toContain`, `toMatch` |
+| pytest | `assert SUBJECT VERB ARGS` | `==`, `!=`, `in`, `<` |
+| Catch2 | `REQUIRE(SUBJECT VERB ARGS)` | `==`, `!=`, `<=` |
+
+A document is bound to one framework, so it writes that framework's verbs
+directly. The adapter transcribes:
+
+```
+{{ toBe total * 0.9 }}        →  expect(result).toBe(total * 0.9)     (jest)
+{{ == total * 0.9 }}          →  assert result == (total * 0.9)       (pytest)
+```
+
+Consumer directives (`calls`) are transcribed as direct calls —
+`calls(outputs, "pricing service", "Once")` — no wrapping, and they throw on
+mismatch exactly like a framework assertion.
+
+The declared vocabulary is therefore: **the framework's verbs** (known to the
+adapter) plus **the consumer's directives** (from the backend). Any other verb
+is red: "no assertion `foo`".
+
+## 10. How one bullet is generated
+
+```
+- applying a {{ code: "SAVE10" }} code to a ${{ total: 100 }} cart, the total {{ toBe total * 0.9 }}.
+
+1. heading "Applying a discount"           → operation "applying-a-discount"
+2. {{ code: "SAVE10" }} {{ total: 100 }}   → inputs; names must match operation.params
+3. {{ toBe total * 0.9 }}                  → assertion: verb "toBe", args "total * 0.9"
+4. generate (jest):
+     const code = "SAVE10"; const total = 100;
+     const outputs = operations["applying-a-discount"].run({ code, total });
+     expect(outputs.result).toBe(total * 0.9);
+5. run `jest`; map each test's result back to its bullet; color green/red
+```
+
+## 11. Values are native expressions
+
+A token value is **native target-language code** — a literal is just the
+trivial expression. It is emitted verbatim into the generated test; livingdoc
+never parses, types, or validates it.
+
+| written | meaning |
+|---|---|
+| `100` | the target's number literal |
+| `"SAVE10"` | the target's string literal |
+| `true` | the target's boolean literal |
+| `total * 0.9` | a native expression |
+| `moment(total).add(1, 'day')` | a native expression using the target's libraries |
+
+The target's own compiler/interpreter evaluates it — so the result's type is
+the target's type, and the expression may use any of the target's libraries and
+idioms. That is the readability guarantee: the document reads in the language
+the team already speaks, with their own tools.
+
+Consequences:
+
+- **Currency and formatting are prose, not data** — `${{ total: 100 }}`,
+  `${{ toBe total * 0.9 }}`. `$100` is not an expression.
+- **Booleans, string quotes, and validity follow the target** — `true` (JS) vs
+  `True` (Python); `'bla bla'` is a JS string but a C++ error. The target's
+  compiler/interpreter is the judge, and its verdict surfaces as red.
+- **Input names are valid identifiers** — they become variables in the
+  generated code (`const total = 100`), so expressions can reference them
+  directly.
+
+## 12. Setup and side effects are the consumer's business
+
+livingdoc mandates no testing style:
+
+- **setup** — the operation body does its own setup, mock or real, in its own
+  framework. A named premise in the prose (`{{ given: standard-cart }}`) is just
+  another input the operation understands.
+- **side effects** — the operation observes them and returns them as named
+  outputs (`"pricing service": 1`, `"order saved": true`); the document asserts
+  on those names. Whether a count came from a spy, a live HTTP recorder, or a
+  database query is invisible to livingdoc.
+
+Swap a mock for a real database and the document does not change — only the
+operation body does.
+
+## 13. Config
+
+One file at the project root; the framework adapter and backend are the key
+settings.
+
+```toml
+# livingdoc.toml
+framework = "jest"     # or pytest, vitest, node-test, catch2, gtest, cargo-test, go-test
+backend   = "./livingdoc.backend.js"
+```
+
+## 14. The check gate
+
+```
+livingdoc check     # generate test code, run the consumer's framework, exit 1 on any red
+livingdoc render    # produce the static site with green/red baked in
+```
+
+A red assertion fails the build, exactly like a failing test run.
+
+## 15. Guarantees
+
+1. **A document cannot be false** — a red assertion makes `livingdoc check` fail.
+2. **A closed vocabulary** — parameter names and directive names are declared by
+   the backend, and assertion verbs come from the framework the adapter knows;
+   any undeclared name is red. Doc and code share one vocabulary, and drift is
+   caught both ways.
+3. **Framework-native** — the document writes the framework's own assertions;
+   the generated tests run under the consumer's real runner, in their CI.
+4. **Native expressions** — values are target-language code, evaluated by the
+   target's own runtime; livingdoc never types or parses.
+5. **Prose is free** — livingdoc only reads the `{{ … }}` marks; everything else
+   is the author's own words.
+
+## 16. Open questions
+
+1. **Result mapping** — the framework's pass/fail is the CI gate, but livingdoc
+   needs per-case results (including the actual on failure) to color each
+   bullet. Parse the framework's reporter (TAP/junit/spec), or have each
+   generated test also call a `record(id, ok, actual)` helper? Leaning: helper.
+2. **Which frameworks first** — jest + pytest + Catch2 as the seed? Then
+   node:test, vitest, cargo-test, go-test, gtest?
+3. **Generated-file lifecycle** — commit for review, or regenerate each `check`
+   and gitignore?
+4. **Compound values** — `[1, 2]`, `{ "a": 1 }` need bracket nesting in the
+   tokenizer (to find the closing `}}`). Deferred; native code makes them
+   possible but not yet specified.
+5. **Rendering** — deliberately deferred. How `Example:` markers and green/red
+   results are presented in HTML is not being designed yet.

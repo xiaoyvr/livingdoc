@@ -1,0 +1,29 @@
+{
+  "name": "livingdoc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Documentation that cannot be published while it is false",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*",
+    "packages/adapters/*"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf packages/core/dist packages/adapters/vitest/dist packages/cli/dist",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "livingdoc": "tsx packages/cli/src/bin.ts",
+    "checks": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  }
+}

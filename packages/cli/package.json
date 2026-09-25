@@ -1,0 +1,29 @@
+{
+  "name": "@livingdoc/cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The livingdoc command line interface",
+  "type": "module",
+  "bin": {
+    "livingdoc": "./dist/bin.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@livingdoc/adapter-vitest": "*",
+    "@livingdoc/core": "*",
+    "remark-frontmatter": "^5.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5",
+    "yaml": "^2.9.1"
+  }
+}
