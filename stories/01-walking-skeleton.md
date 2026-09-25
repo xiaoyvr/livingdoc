@@ -56,5 +56,6 @@ a loop that already works.
 
 ## Notes
 
-The self-check (`expect(code).toBe("SAVE10")`) proves the value round-trips
-through parse → generated code → executed code, without needing a backend yet.
+The document's inputs are bound as variables in the generated test — the
+parameters of the parameterized test. They are not self-checked; real
+assertions arrive in Story 2, against the consumer's backend.

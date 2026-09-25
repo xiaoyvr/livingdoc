@@ -24,6 +24,17 @@ const notOptedIn = `# Walking skeleton
 Example:
 `
 
+const withBullet = `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+Example:
+
+- a {{ code: "SAVE10" }} code is applied
+`
+
 describe('livingdoc check', () => {
   let dir: string
   let fixture: string
@@ -55,5 +66,15 @@ describe('livingdoc check', () => {
     check(fixture)
 
     expect(existsSync(join(dir, 'livingdoc.test.ts'))).toBe(false)
+  })
+
+  it('generates an it for the bullet, binding its input', () => {
+    writeFileSync(fixture, withBullet)
+
+    check(fixture)
+
+    const content = readFileSync(join(dir, 'livingdoc.test.ts'), 'utf8')
+    expect(content).toContain('it("a SAVE10 code is applied"')
+    expect(content).toContain('const code = "SAVE10"')
   })
 })
