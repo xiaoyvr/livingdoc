@@ -3,6 +3,7 @@
 // Programmatic entry point; `bin.ts` is the executable wrapper.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
+import type { Nodes, Root } from 'mdast'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkParse from 'remark-parse'
 import { unified } from 'unified'
@@ -11,35 +12,23 @@ import { parse as parseYaml } from 'yaml'
 const markdown = unified().use(remarkParse).use(remarkFrontmatter, ['yaml'])
 
 const TOKEN = /\{\{\s*([\s\S]*?)\s*\}\}/g
-const BULLET = /^\s*[-*+]\s+(.*)$/
-const EXAMPLE = /^\s*Example:\s*$/
 
 export function check(file: string): void {
   const source = readFileSync(file, 'utf8')
-
   const tree = markdown.parse(source)
-  const yamlNode = tree.children.find((node) => node.type === 'yaml')
+
+  const yaml = tree.children.find((node) => node.type === 'yaml')
   const data =
-    yamlNode && 'value' in yamlNode
-      ? (parseYaml(String(yamlNode.value)) as Record<string, unknown>)
+    yaml && 'value' in yaml
+      ? (parseYaml(String(yaml.value)) as Record<string, unknown>)
       : {}
   if (!('livingdoc' in data)) return
 
-  const heading = /^#{1,6}\s+(.*)$/m.exec(source)?.[1]?.trim() ?? ''
+  const heading = tree.children.find((node) => node.type === 'heading')
+  const title = heading ? textOf(heading) : ''
 
-  const cases: string[] = []
-  let inExample = false
-  for (const line of source.split(/\r?\n/)) {
-    if (EXAMPLE.test(line)) {
-      inExample = true
-      continue
-    }
-    const bullet = BULLET.exec(line)
-    if (bullet && inExample) cases.push((bullet[1] ?? '').trim())
-  }
-
-  const output = [`describe(${JSON.stringify(heading)}, () => {`]
-  for (const bullet of cases) {
+  const output = [`describe(${JSON.stringify(title)}, () => {`]
+  for (const bullet of exampleBullets(tree)) {
     output.push(`  it(${JSON.stringify(render(bullet))}, () => {`)
     for (const input of inputs(bullet)) {
       output.push(`    const ${input.name} = ${input.value}`)
@@ -50,6 +39,22 @@ export function check(file: string): void {
 
   const target = join(dirname(resolve(file)), 'livingdoc.test.ts')
   writeFileSync(target, `${output.join('\n')}\n`)
+}
+
+function exampleBullets(tree: Root): string[] {
+  const index = tree.children.findIndex(
+    (node) => node.type === 'paragraph' && textOf(node).trim() === 'Example:',
+  )
+  if (index === -1) return []
+  const next = tree.children[index + 1]
+  if (!next || next.type !== 'list') return []
+  return next.children.map((item) => textOf(item).trim())
+}
+
+function textOf(node: Nodes): string {
+  if ('value' in node && typeof node.value === 'string') return node.value
+  if ('children' in node) return node.children.map((child) => textOf(child)).join('')
+  return ''
 }
 
 function render(text: string): string {
