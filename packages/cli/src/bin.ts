@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 // livingdoc — CLI entry point.
-//
-// Story 1 wires `livingdoc check <file.md>` here. Stub until then.
-process.stderr.write('livingdoc: not implemented yet\n')
-process.exit(1)
+import { check } from './index.js'
+
+const [command, file] = process.argv.slice(2)
+
+if (command !== 'check' || !file) {
+  process.stderr.write('usage: livingdoc check <file.md>\n')
+  process.exit(1)
+}
+
+process.exit(check(file))

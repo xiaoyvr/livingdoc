@@ -1,6 +1,6 @@
 ---
 id: liv-frgb
-status: in_progress
+status: closed
 deps: []
 links: []
 created: 2026-09-26T03:21:48Z
@@ -35,12 +35,11 @@ execution instead of trusted as prose.
 - [x] 3. One `Example:` bullet: the `describe` gets an `it(<bullet text>)` that
       binds the input — `const code = "SAVE10"`.
 - [x] 4. `check` runs the generated check and returns its exit code.
-- [ ] 5. `bin.ts` wired to `check`: reports the outcome and mirrors the exit
-      code (thin entry; not the thing under test).
+- [x] 5. `bin.ts` wired to `check`: reports the outcome and mirrors the exit
+      code, covered end to end.
 
 ### Notes
 
 - Task 2 exists so the frontmatter opt-in introduced in task 1 is verified.
-- Task 5 is wiring and reporting only. Per the process, the entry point is not
-  the thing under test, so it has no test of its own.
+- Task 5 is covered by an end-to-end test that runs the built command.
 
