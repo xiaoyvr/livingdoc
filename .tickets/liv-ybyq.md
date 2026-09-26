@@ -1,6 +1,6 @@
 ---
 id: liv-ybyq
-status: open
+status: closed
 deps: [liv-frgb]
 links: []
 created: 2026-09-26T03:21:48Z
