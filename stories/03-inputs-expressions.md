@@ -1,46 +1,41 @@
-# Story 3 — Input binding + native expressions
+# Story 3 — Inputs and native expressions
 
 Inputs become variables; expectations become native code.
 
 ## Goal
 
-Bind the document's inputs as variables in the generated test, pass them to the
-operation, and emit the expectation expression as native TypeScript.
+Let a document supply several named inputs to an operation and express its
+expectation as a computation. The document reads the way the team already
+writes code.
 
 ## Why this slice
 
-It delivers the core readability property: the document writes
-`{{ toBe total * 0.9 }}` and the generated test literally contains
-`expect(outputs.result).toBe(total * 0.9)`, computed by TypeScript itself.
+It delivers the core readability property: what the document states is what the
+consumer's language evaluates, with no translation layer in between.
 
 ## In scope
 
-- Multiple input tokens on a bullet: `{{ code: "SAVE10" }} {{ total: 100 }}`.
-- Codegen that binds inputs: `const code = "SAVE10"; const total = 100;`.
-- Passing inputs to the operation: `run({ code, total })`.
-- Expressions in assertions, emitted verbatim: `{{ toBe total * 0.9 }}`.
+- Multiple marked inputs on a bullet, e.g.
+  `{{ code: "SAVE10" }} {{ total: 100 }}`.
+- The operation receives the declared inputs.
+- An expectation may be any computation in the consumer's language, e.g.
+  `{{ toBe total * 0.9 }}`.
+- An input name that is not a valid identifier is reported as an error.
 
 ## Out of scope
 
-- Multiple bullets/headings, named-output subjects (`"order saved" toBe …`),
-  directives, result mapping, config, rendering.
+- Multiple bullets/headings, named-output subjects, directives, per-case
+  reporting, configuration, rendering.
 
 ## Acceptance criteria
 
-- [ ] Inputs are passed to the operation as declared.
-- [ ] `{{ toBe total * 0.9 }}` evaluates to the computed value.
-- [ ] Wrong arithmetic in the expression makes the run fail.
-- [ ] An input name that isn't a valid identifier is reported as an error.
-
-## Tasks
-
-- [ ] Tokenizer: collect all input tokens on a bullet.
-- [ ] Codegen: emit `const <name> = <value>;` for each input (verbatim value).
-- [ ] Codegen: pass the inputs object to `run`.
-- [ ] Codegen: emit the assertion arg verbatim as native code.
-- [ ] Validate input names as TS identifiers; reject with a clear message.
+- [ ] The operation receives the declared inputs.
+- [ ] An expectation written as a computation evaluates in the consumer's
+      language.
+- [ ] Wrong arithmetic in an expectation makes the check fail.
+- [ ] An invalid input name is reported as an error.
 
 ## Notes
 
-Values are emitted verbatim (§11 of the design), so `total * 0.9` is plain
-TypeScript. Input names must be valid identifiers because they become variables.
+Marked values and expectations are the consumer's language, used as written;
+livingdoc neither parses nor translates them.

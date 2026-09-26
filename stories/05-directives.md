@@ -1,49 +1,38 @@
 # Story 5 — Directives
 
-Consumer-defined assertions, called directly.
+Consumer-defined assertions.
 
 ## Goal
 
-Support the consumer's custom assertion verbs (e.g. mock verification) as
-direct calls in the generated test, throwing on mismatch like a framework
-assertion.
+Let a document assert on what a return value cannot express — side effects,
+calls, state — using assertion phrases the consumer defines, which fail like any
+other assertion.
 
 ## Why this slice
 
-It closes the gap between "assert on the return value" and "assert on side
-effects" without livingdoc knowing anything about the consumer's mocks or
-libraries.
+It closes the gap between asserting on a result and asserting on side effects,
+without livingdoc knowing anything about the consumer's mocks or libraries.
 
 ## In scope
 
-- A `directives` export in the backend (`calls`).
-- Parsing `{{ calls "pricing service" "Once" }}` (verb + multiple raw args).
-- Codegen: a direct call — `calls(outputs, "pricing service", "Once")` — not
-  wrapped in a framework assertion.
-- Directives fail by throwing, so a mismatch fails the vitest test.
+- Consumer-defined assertion phrases, e.g.
+  `{{ calls "pricing service" "Once" }}`.
+- A directive reads the operation's outputs and its own arguments.
+- A directive that does not hold fails the check.
+- An unknown assertion phrase is reported as an error.
 
 ## Out of scope
 
-- Framework-verb whitelisting/validation beyond directives, result mapping,
-  config, rendering.
+- Per-case reporting, configuration, rendering.
 
 ## Acceptance criteria
 
-- [ ] `{{ calls "pricing service" "Once" }}` generates a direct `calls(...)` call.
-- [ ] A directive throwing on mismatch fails the run.
-- [ ] An undeclared directive name is reported as an error.
-
-## Tasks
-
-- [ ] Backend fixture: export `directives.calls(outputs, subject, n)` that
-      throws when the observed count differs.
-- [ ] Tokenizer: pass the verb's raw argument text to the directive.
-- [ ] Codegen: emit `directives["<verb>"](outputs, ...args)` for verbs not in the
-      framework's known set.
-- [ ] Declare the known framework verbs (vitest's `toBe`, `toEqual`, …) so a
-      verb is routed to `expect(SUBJECT).VERB(...)` vs a directive call.
+- [ ] A consumer-defined phrase receives the operation's outputs and its
+      arguments.
+- [ ] A directive that does not hold fails the run.
+- [ ] An unknown phrase is reported as an error.
 
 ## Notes
 
-Framework verbs vs consumer directives are distinguished by the adapter's known
-verb set plus the backend's `directives` export — an undeclared verb is red.
+The vocabulary is closed: the framework's assertions plus the consumer's
+directives. Anything else is a failure, so a typo cannot silently pass.

@@ -1,46 +1,35 @@
-# Story 6 — Result mapping
+# Story 6 — Per-case results
 
 Know which bullet failed, and why.
 
 ## Goal
 
-Map vitest's per-test results back to the document's bullets, with a stable
-identity and the actual value on failure, so livingdoc can report
-"bullet X failed: expected 90, got 85".
+Report each bullet's outcome individually, with enough detail to say "bullet X
+failed: expected 90, got 85", so a document's failures are useful today and can
+be shown in place later.
 
 ## Why this slice
 
-The framework's binary pass/fail is the CI gate; this slice gives livingdoc the
-per-case detail it needs to color the document later, and a useful red output
-now.
+The run's pass/fail is the gate; this slice gives livingdoc the per-case detail
+to explain a failure and to mark up the document afterwards.
 
 ## In scope
 
-- A stable id per bullet (e.g. heading slug + bullet index).
-- Reading vitest's per-test results (or a `record(id, ok, actual)` helper in the
-  generated test).
-- A structured report: `[{ id, ok, actual? }]`.
+- A stable identity per bullet.
+- The outcome of each bullet, including the actual value on failure.
+- A machine-readable report.
 
 ## Out of scope
 
-- HTML rendering/coloring, config, compound values.
+- Rendering/coloring, configuration, compound values.
 
 ## Acceptance criteria
 
-- [ ] Every bullet has a stable, discoverable id.
-- [ ] A failing bullet is reported with its id and actual value.
-- [ ] The report is machine-readable (JSON).
-
-## Tasks
-
-- [ ] Assign ids at parse time: `<slug>/<bullet-index>`.
-- [ ] Embed the id in the generated test (test name or a `record()` call).
-- [ ] Decide the result channel: parse vitest's reporter, or emit a
-      `record(id, ok, actual)` helper into each test. (Leaning: helper.)
-- [ ] Produce a JSON report consumed by `livingdoc check`.
+- [ ] Every bullet has a stable, discoverable identity.
+- [ ] A failing bullet is reported with its identity and actual value.
+- [ ] The report is machine-readable.
 
 ## Notes
 
-Design open question §16.1: this is the "result mapping" decision. If the
-`record()` helper is chosen, it must run even on failure (try/finally or a
-custom assertion wrapper).
+How per-case results are obtained is an open design question (DESIGN §16.1);
+the report is the contract this slice establishes.

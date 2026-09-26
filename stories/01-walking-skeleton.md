@@ -1,61 +1,41 @@
 # Story 1 — Walking skeleton
 
-A token becomes a passing test.
+A document becomes a passing check.
 
 ## Goal
 
-Prove the whole pipeline end-to-end with the smallest possible feature:
-`parse → generate → run → report`. After this slice, `livingdoc check` reads a
-markdown file, generates a `.test.ts`, runs it under vitest, and reports the
-result.
+Prove the whole promise end to end with the smallest possible feature: a
+document is read, a check is produced and executed, and its result is reported.
+After this slice, `livingdoc check` succeeds on a sound document.
 
 ## Why this slice
 
-It de-risks the riskiest unknown — driving vitest from a generated TypeScript
-file — before any real behavior exists. Every later slice only adds features to
-a loop that already works.
+It de-risks the idea itself — that a written document can drive a real, executed
+check — before any real behavior exists. Every later slice only adds capability
+to a pipeline that already works.
 
 ## In scope
 
-- A Node CLI entry point: `livingdoc check <file.md>`.
-- A minimal markdown parser that finds one input token:
-  `{{ code: "SAVE10" }}` inside one `Example:` bullet.
-- A code generator emitting a vitest `.test.ts` that binds the value and
-  self-checks it.
-- Running vitest on the generated file and reading pass/fail.
-- Exit code 0 on pass, non-zero on fail.
+- The `livingdoc check <file.md>` command.
+- A document that opts in with `livingdoc` frontmatter and contains one
+  `Example:` bullet with one marked input, `{{ code: "SAVE10" }}`.
+- The marked input is made available to the check, and the check is named after
+  the bullet.
+- The command reports the outcome and exits 0 on success, non-zero otherwise.
 
 ## Out of scope
 
-- Backend/operations, real assertions (`toBe` on a result), expressions,
-  multiple bullets/headings, directives, result mapping, config, rendering.
+- The consumer's operation and real assertions, expressions, multiple
+  bullets/headings, directives, per-case reporting, configuration, rendering.
 
 ## Acceptance criteria
 
-- [ ] `livingdoc check fixture.md` generates `livingdoc.test.ts` next to the
-      fixture.
-- [ ] The generated test runs under `vitest run` and passes.
+- [ ] `livingdoc check <file.md>` produces a check beside the document.
+- [ ] The check executes and passes.
 - [ ] The command exits 0.
-- [ ] The generated test name is the bullet's text.
-
-## Tasks
-
-- [ ] Scaffold the livingdoc project: TypeScript, vitest as a dev dependency,
-      a `bin` entry.
-- [ ] Add a fixture: `stories/fixtures/walking-skeleton.md` with one heading,
-      one `Example:`, one bullet containing `{{ code: "SAVE10" }}`.
-- [ ] Minimal tokenizer: scan for `{{ name: value }}` and extract `name` +
-      raw `value` (split on the first `:`).
-- [ ] Codegen: emit a `.test.ts` that declares the value and asserts it —
-      `const code = "SAVE10"; expect(code).toBe("SAVE10")` — named after the
-      bullet.
-- [ ] Runner: invoke `vitest run` on the generated file and capture the exit
-      code.
-- [ ] Report: print a one-line summary (e.g. `1 passed`) and mirror the exit
-      code.
+- [ ] The check is named after the bullet.
 
 ## Notes
 
-The document's inputs are bound as variables in the generated test — the
-parameters of the parameterized test. They are not self-checked; real
-assertions arrive in Story 2, against the consumer's backend.
+The marked input is a parameter of the case, not something to assert. Real
+assertions arrive in Story 2, against the consumer's operation.

@@ -1,49 +1,38 @@
-# Story 4 — Headings, multiple cases, describe/it
+# Story 4 — Headings and multiple cases
 
-The document structure becomes the test structure.
+The document structure becomes the run.
 
 ## Goal
 
-Map headings to `describe` blocks and operation slugs, and each bullet to an
-`it` test, so a full document generates a real vitest suite.
+Let a document describe several behaviors and several examples, each becoming
+its own case, so livingdoc is usable for real documents.
 
 ## Why this slice
 
-It makes livingdoc usable for real documents — multiple behaviors, multiple
-examples — and establishes the heading→operation resolution that binds prose to
-code.
+It maps a document's structure onto the run: each heading is a behavior, each
+bullet under `Example:` is a case, and a heading selects the operation it
+exercises.
 
 ## In scope
 
-- Heading slug → operation name (`## Applying a discount` →
-  `applying-a-discount`).
-- Multiple bullets under one `Example:` → multiple `it()`.
-- Multiple headings → multiple `describe()`.
-- Named-output subjects: `{{ "order saved" toBe true }}` → assert
-  `outputs["order saved"]`.
-- All cases run even when one fails (vitest's default).
+- A heading selects the operation by name.
+- Several bullets under one `Example:` each become a case.
+- Several headings each become their own group of cases.
+- An assertion may target a named output, e.g. `{{ "order saved" toBe true }}`.
+- One failing case does not prevent the other cases from running.
 
 ## Out of scope
 
-- Directives, result mapping, config, rendering.
+- Directives, per-case reporting, configuration, rendering.
 
 ## Acceptance criteria
 
-- [ ] Two headings produce two `describe` blocks with the right operation lookups.
-- [ ] Bullets under a heading produce one `it` each, named by the bullet text.
-- [ ] `{{ "order saved" toBe true }}` asserts the named output.
+- [ ] Two headings exercise their respective operations.
+- [ ] Each bullet becomes one case, named after the bullet.
+- [ ] An assertion can target a named output.
 - [ ] A failing case fails the run while the other cases still execute.
-
-## Tasks
-
-- [ ] Slugify headings (lowercase, whitespace → hyphen, strip punctuation).
-- [ ] Group bullets under their owning heading; derive the operation slug.
-- [ ] Codegen: `describe(<heading>, () => { it(<bullet>, ...) })`.
-- [ ] Resolve the subject: primary result when the verb is first, named output
-      when the verb is in the middle.
-- [ ] Emit `outputs["<subject>"]` for named-output subjects.
 
 ## Notes
 
-Slug convention (kebab-case) and "no explicit operation override" are design
-decisions from §6 — a heading rename breaks the lookup, which is caught red.
+An operation is selected by the heading, so renaming a heading breaks the
+selection — drift that is caught as a failure.

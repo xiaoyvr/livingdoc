@@ -1,44 +1,38 @@
-# Story 7 — Config + CLI
+# Story 7 — Configuration and commands
 
 Make it a real tool.
 
 ## Goal
 
-Move the framework and backend out of hardcoded defaults into a config file,
-and provide the two commands: `livingdoc check` and `livingdoc generate`.
+Let a project choose its framework and its backend through configuration, and
+give livingdoc two commands: one that writes the check, and one that writes and
+runs it. Honest exit codes and actionable errors.
 
 ## Why this slice
 
-It turns the working pipeline into a distributable tool a project can adopt:
-config-driven, with a clean CLI and honest exit codes.
+It turns the working pipeline into something a project can adopt: configurable,
+with a clear interface and errors a human can act on.
 
 ## In scope
 
-- `livingdoc.toml`: `framework = "vitest"`, `backend = "./livingdoc.backend.ts"`.
-- `livingdoc generate` — write the generated test file without running.
-- `livingdoc check` — generate + run + report, exit 0/1.
-- Clear errors: missing config, missing backend, undeclared verb/param.
+- Configuration selecting the framework and the consumer's backend.
+- `livingdoc generate` — produce the check without running it.
+- `livingdoc check` — produce and run the check, exiting 0 or non-zero.
+- Clear errors for missing configuration, a missing backend, and undeclared
+  names.
 
 ## Out of scope
 
-- Frameworks beyond vitest, HTML rendering, compound values.
+- Frameworks beyond the current adapter, rendering, compound values.
 
 ## Acceptance criteria
 
-- [ ] `livingdoc generate` writes the `.test.ts` and nothing else.
-- [ ] `livingdoc check` uses the configured backend and framework.
-- [ ] A red assertion makes `check` exit non-zero.
+- [ ] `livingdoc generate` produces the check and nothing else.
+- [ ] `livingdoc check` uses the configured framework and backend.
+- [ ] A failing assertion makes `check` exit non-zero.
 - [ ] Misconfiguration fails with an actionable message, not a stack trace.
-
-## Tasks
-
-- [ ] Parse `livingdoc.toml` (framework, backend).
-- [ ] Route codegen through the vitest adapter (the only adapter so far).
-- [ ] Split `generate` and `check` commands behind a small arg parser.
-- [ ] Wire exit codes and error messages end-to-end.
 
 ## Notes
 
-This is the thin-slice boundary: the tool is now genuinely usable for a
-TypeScript + Vitest project. Rendering/coloring is a later slice, after the
-result-mapping report from Story 6 exists.
+This is the thin-slice boundary: livingdoc is now usable for a project. Showing
+results in the document comes later, after per-case results exist.
