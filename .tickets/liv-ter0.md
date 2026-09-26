@@ -38,21 +38,28 @@ documents and my backend no matter where the markdown and the tests live.
 
 - `livingdoc.toml` at the project root; `livingdocs` and `backend` are
   directories, resolved relative to the config.
+- Config discovery: walk up from the document's directory when a path is
+  given, from cwd otherwise.
 - The backend filename defaults to `livingdoc.backend.<ext>`, resolved by
-  scanning `backend`; `<ext>` is `ts` for now.
-- Generated checks always land in `backend`, named after the document.
-- `framework` is intentionally absent until the adapter story; a TOML parser
-  dependency is added.
+  scanning `backend`; `<ext>` is `ts` for now. Exactly one match is required;
+  none or several is an error.
+- Generated checks always land in `backend` as `<doc-basename>.test.ts`.
+- `framework` is intentionally absent until the adapter story; `smol-toml` is
+  added as the TOML parser.
 - Carved from liv-53z4, whose `generate` command and error matrix stay there.
 
 ## Implementation tasks
 
-- [ ] 1. Load `livingdoc.toml` from the project root (paths relative to it).
-- [ ] 2. Resolve the backend file by scanning `backend` for
-      `livingdoc.backend.<ext>`.
-- [ ] 3. Write the generated check into `backend`, named after the document,
-      importing the backend by relative name.
-- [ ] 4. `livingdoc check` with no path checks every opted-in document under
-      `livingdocs`.
-- [ ] 5. Fail with an actionable message for a missing config or backend.
+- [ ] 1. Config-driven generation (AC1, AC2): find `livingdoc.toml`, read
+      `livingdocs` and `backend`, resolve the backend file, and write the check
+      to `backend/<doc-basename>.test.ts` importing the backend by relative
+      name. Migrate the existing unit and e2e fixtures to the configured
+      layout.
+- [ ] 2. Check the whole folder (AC3): `check()` with no path checks every
+      opted-in `*.md` under `livingdocs`; `bin.ts` accepts no argument.
+- [ ] 3. Actionable errors (AC4): a missing config or a backend folder with no
+      (or several) `livingdoc.backend.*` gives a clear message and non-zero,
+      not a stack trace.
+- [ ] 4. Docs: update DESIGN §13 and README to the `livingdocs`/`backend`
+      config.
 
