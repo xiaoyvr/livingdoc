@@ -19,7 +19,7 @@ not only return values.
 - **Given** a document using a consumer-defined assertion phrase, e.g.
   `{{ calls "pricing service" "Once" }}`
   **When** I run `livingdoc check`
-  **Then** the phrase receives the operation's outputs and its arguments
+  **Then** the phrase receives the binding's outputs and its arguments
 
 - **Given** a directive that does not hold
   **When** I run `livingdoc check`

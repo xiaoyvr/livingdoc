@@ -10,7 +10,7 @@ assignee: xiaoyvr
 ---
 # Inputs and native expressions
 
-**As a** documentation author, **I want** to give an operation several named
+**As a** documentation author, **I want** to give a binding several named
 inputs and write expectations as computations, **so that** the document reads
 in the language my team already writes.
 
@@ -19,7 +19,7 @@ in the language my team already writes.
 - **Given** a document with several marked inputs and an expectation written as
   a computation
   **When** I run `livingdoc check`
-  **Then** the operation receives the declared inputs
+  **Then** the binding receives the declared inputs
   **And** the computation is evaluated in the consumer's language
 
 - **Given** an expectation whose computation is wrong

@@ -33,17 +33,17 @@ language and framework give that text meaning.
 
 A document is a **parameterized test expressed as prose**:
 
-- the **operation body** (how to run the behavior) lives once in the consumer's
+- the **binding body** (how to run the behavior) lives once in the consumer's
   project;
 - the **document** supplies the parameters — inputs and expected results — as
   free prose with marked values, using the language and test framework the
   system is actually built with;
-- livingdoc generates test code that calls those operations and evaluates those
+- livingdoc generates test code that calls those bindings and evaluates those
   expectations, runs it through the consumer's own test framework, and colors
   the result.
 
 The document is *authored*, never generated. Its markup is a *locator*: it finds
-the right operation and the right assertion to call.
+the right binding and the right assertion to call.
 
 ## 4. A document, end to end
 
@@ -81,7 +81,7 @@ format-independent.
 
 | construct | meaning |
 |---|---|
-| heading | the operation, by slug (see §6) |
+| heading | the binding, by slug (see §6) |
 | `Example:` | starts a group of test cases |
 | `- …` (bullet under `Example:`) | one test case (one `it`) |
 | `{{ name: value }}` | an input; `name` locates the parameter; `value` is a native expression |
@@ -125,12 +125,12 @@ The document's structure maps directly onto a test tree:
 | parameter names in the signature | the `{{ name: value }}` / `{{ verb … }}` tokens |
 
 - The **heading** locates the `describe` (the action being tested): its slug is
-  the operation name — `## Applying a discount` → `applying-a-discount`
+  the binding name — `## Applying a discount` → `applying-a-discount`
   (lowercase, whitespace → hyphen, digits kept, other punctuation dropped).
 - The **parameter names** locate the `it` (the parameterized test): the names in
-  a bullet must match the operation's declared parameters.
-- A nested heading overrides the operation. A heading with no `Example:` bullets
-  is just structure. No explicit operation override exists — renaming a heading
+  a bullet must match the binding's declared parameters.
+- A nested heading overrides the binding. A heading with no `Example:` bullets
+  is just structure. No explicit binding override exists — renaming a heading
   changes the slug and breaks the lookup, which is drift caught red.
 
 ## 7. The consumer's backend
@@ -138,10 +138,10 @@ The document's structure maps directly onto a test tree:
 The consumer writes one backend file, in their language, importing their real
 code. It provides the two things a framework cannot:
 
-1. **`operations`** — parameterized test bodies, with declared parameter names:
+1. **`bindings`** — parameterized test bodies, with declared parameter names:
 
 ```js
-export const operations = {
+export const bindings = {
   "applying-a-discount": {
     params: ["code", "total"],
     run({ code, total }) { return { result: applyDiscount(code, total) } },
@@ -169,7 +169,7 @@ them (see §8).
 livingdoc generates test code in two layers:
 
 1. **Language core** (framework-agnostic) — bind inputs as variables, call the
-   operation, emit the expectation expression as native code.
+   binding, emit the expectation expression as native code.
 2. **Framework adapter** — transcribe the document's verbs into the framework's
    assertion form, directly, with no translation.
 
@@ -179,7 +179,7 @@ describe("Applying a discount", () => {
   it("applying a SAVE10 code to a $100 cart", () => {
     const code = "SAVE10";
     const total = 100;
-    const outputs = operations["applying-a-discount"].run({ code, total });
+    const outputs = bindings["applying-a-discount"].run({ code, total });
     expect(outputs.result).toBe(total * 0.9);
     calls(outputs, "pricing service", "Once");
     expect(outputs["order saved"]).toBe(true);
@@ -224,12 +224,12 @@ is red: "no assertion `foo`".
 ```
 - applying a {{ code: "SAVE10" }} code to a ${{ total: 100 }} cart, the total {{ toBe total * 0.9 }}.
 
-1. heading "Applying a discount"           → operation "applying-a-discount"
-2. {{ code: "SAVE10" }} {{ total: 100 }}   → inputs; names must match operation.params
+1. heading "Applying a discount"           → binding "applying-a-discount"
+2. {{ code: "SAVE10" }} {{ total: 100 }}   → inputs; names must match binding.params
 3. {{ toBe total * 0.9 }}                  → assertion: verb "toBe", args "total * 0.9"
 4. generate (jest):
      const code = "SAVE10"; const total = 100;
-     const outputs = operations["applying-a-discount"].run({ code, total });
+     const outputs = bindings["applying-a-discount"].run({ code, total });
      expect(outputs.result).toBe(total * 0.9);
 5. run `jest`; map each test's result back to its bullet; color green/red
 ```
@@ -268,16 +268,16 @@ Consequences:
 
 livingdoc mandates no testing style:
 
-- **setup** — the operation body does its own setup, mock or real, in its own
+- **setup** — the binding body does its own setup, mock or real, in its own
   framework. A named premise in the prose (`{{ given: standard-cart }}`) is just
-  another input the operation understands.
-- **side effects** — the operation observes them and returns them as named
+  another input the binding understands.
+- **side effects** — the binding observes them and returns them as named
   outputs (`"pricing service": 1`, `"order saved": true`); the document asserts
   on those names. Whether a count came from a spy, a live HTTP recorder, or a
   database query is invisible to livingdoc.
 
 Swap a mock for a real database and the document does not change — only the
-operation body does.
+binding body does.
 
 ## 13. Config
 

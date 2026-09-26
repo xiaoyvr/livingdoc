@@ -18,7 +18,7 @@ behaviors of a real system.
 
 - **Given** a document with two headings, each with an `Example:` bullet
   **When** I run `livingdoc check`
-  **Then** each heading exercises its own operation
+  **Then** each heading exercises its own binding
   **And** each bullet becomes its own case, named after the bullet
 
 - **Given** a bullet asserting a named output

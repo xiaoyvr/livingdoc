@@ -27,7 +27,7 @@ Basic, mirroring Story 1, for a Python system under test:
 
 Out of scope:
 
-- The consumer's operation and real assertions, expressions, multiple
+- The consumer's binding and real assertions, expressions, multiple
   bullets/headings, directives, per-case reporting, configuration, rendering.
 
 ## Acceptance criteria
