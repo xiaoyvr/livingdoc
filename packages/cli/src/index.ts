@@ -50,7 +50,8 @@ interface Config {
 }
 
 function loadConfig(start: string): Config {
-  let dir = resolve(start)
+  const from = resolve(start)
+  let dir = from
   while (true) {
     const candidate = join(dir, 'livingdoc.toml')
     if (existsSync(candidate)) {
@@ -65,7 +66,7 @@ function loadConfig(start: string): Config {
       return { root: dir, livingdocs: join(dir, livingdocs), backend: join(dir, backend) }
     }
     const parent = dirname(dir)
-    if (parent === dir) throw new Error('livingdoc.toml not found')
+    if (parent === dir) throw new Error(`no livingdoc.toml found from ${from}`)
     dir = parent
   }
 }

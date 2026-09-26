@@ -9,4 +9,10 @@ if (command !== 'check') {
   process.exit(1)
 }
 
-process.exit(check(file))
+try {
+  process.exit(check(file))
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error)
+  process.stderr.write(`livingdoc: ${message}\n`)
+  process.exit(1)
+}

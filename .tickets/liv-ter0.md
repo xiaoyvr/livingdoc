@@ -57,9 +57,12 @@ documents and my backend no matter where the markdown and the tests live.
       layout.
 - [x] 2. Check the whole folder (AC3): `check()` with no path checks every
       opted-in `*.md` under `livingdocs`; `bin.ts` accepts no argument.
-- [ ] 3. Actionable errors (AC4): a missing config or a backend folder with no
+- [x] 3. Actionable errors (AC4): a missing config or a backend folder with no
       (or several) `livingdoc.backend.*` gives a clear message and non-zero,
       not a stack trace.
 - [ ] 4. Docs: update DESIGN §13 and README to the `livingdocs`/`backend`
       config.
+- [x] 5. Rebalance the e2e suite: delete the explicit-file tests already covered
+      in process, keeping the folder scan and the error output at the command
+      boundary.
 

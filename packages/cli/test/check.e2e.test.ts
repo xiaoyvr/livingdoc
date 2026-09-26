@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -81,23 +81,6 @@ describe('livingdoc CLI', () => {
     rmSync(staleDir, { recursive: true, force: true })
   })
 
-  it('checks a document and exits 0', () => {
-    const result = spawnSync('node', [bin, 'check', fixture], {
-      encoding: 'utf8',
-    })
-
-    expect(result.status).toBe(0)
-    expect(existsSync(join(dir, 'tests', 'fixture.test.ts'))).toBe(true)
-  })
-
-  it('exits non-zero when the expectation does not hold', () => {
-    const result = spawnSync('node', [bin, 'check', staleFixture], {
-      encoding: 'utf8',
-    })
-
-    expect(result.status).not.toBe(0)
-  })
-
   it('checks the livingdocs folder when given no path', () => {
     const result = spawnSync('node', [bin, 'check'], {
       cwd: dir,
@@ -114,5 +97,24 @@ describe('livingdoc CLI', () => {
     })
 
     expect(result.status).not.toBe(0)
+  })
+
+  it('reports an actionable message without a stack trace', () => {
+    const fresh = mkdtempSync(join(tmpdir(), 'livingdoc-cli-noconfig-'))
+    mkdirSync(join(fresh, 'docs'))
+    writeFileSync(join(fresh, 'docs', 'fixture.md'), markdown)
+    try {
+      const result = spawnSync(
+        'node',
+        [bin, 'check', join(fresh, 'docs', 'fixture.md')],
+        { encoding: 'utf8' },
+      )
+
+      expect(result.status).not.toBe(0)
+      expect(result.stderr).toContain('livingdoc.toml')
+      expect(result.stderr).not.toContain('\n    at ')
+    } finally {
+      rmSync(fresh, { recursive: true, force: true })
+    }
   })
 })
