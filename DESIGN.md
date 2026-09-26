@@ -284,14 +284,24 @@ binding body does.
 
 ## 13. Config
 
-One file at the project root; the framework adapter and backend are the key
-settings.
+One file at the project root, `livingdoc.toml`; the livingdocs folder and the
+backend folder are the key settings.
 
 ```toml
 # livingdoc.toml
-framework = "jest"     # or pytest, vitest, node-test, catch2, gtest, cargo-test, go-test
-backend   = "./livingdoc.backend.js"
+livingdocs = "docs"
+backend    = "tests"
 ```
+
+- **`livingdocs`** — the folder whose `*.md` files are livingdoc documents.
+  `livingdoc check` with no path checks every opted-in document under it.
+- **`backend`** — the folder holding the backend. livingdoc finds the backend
+  by its default name, `livingdoc.backend.<ext>`.
+- Paths are resolved relative to `livingdoc.toml`; generated checks are written
+  into `backend` as `<document>.test.ts`.
+
+The framework adapter is not yet a setting; TypeScript + Vitest is the only
+target.
 
 ## 14. The check gate
 

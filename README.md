@@ -38,3 +38,9 @@ Work is tracked with `tk` in `.tickets/`; `tk ready` lists unblocked work.
 The CLI runs from source with `npm run livingdoc -- check <file.md>`
 (or `tsx packages/cli/src/bin.ts`). `npm run build` emits `dist/` per package,
 after which `packages/cli/dist/bin.js` is the `livingdoc` executable.
+
+The CLI reads `livingdoc.toml` at the project root. It names the `livingdocs`
+folder to check and the `backend` folder, which holds the
+`livingdoc.backend.<ext>` file and where the generated checks are written. Run
+`livingdoc check <file.md>` for one document, or `livingdoc check` for every
+opted-in document under `livingdocs`.

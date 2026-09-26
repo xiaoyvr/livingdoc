@@ -60,7 +60,7 @@ documents and my backend no matter where the markdown and the tests live.
 - [x] 3. Actionable errors (AC4): a missing config or a backend folder with no
       (or several) `livingdoc.backend.*` gives a clear message and non-zero,
       not a stack trace.
-- [ ] 4. Docs: update DESIGN §13 and README to the `livingdocs`/`backend`
+- [x] 4. Docs: update DESIGN §13 and README to the `livingdocs`/`backend`
       config.
 - [x] 5. Rebalance the e2e suite: delete the explicit-file tests already covered
       in process, keeping the folder scan and the error output at the command
