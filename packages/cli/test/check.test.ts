@@ -77,4 +77,12 @@ describe('livingdoc check', () => {
     expect(content).toContain('it("a SAVE10 code is applied"')
     expect(content).toContain('const code = "SAVE10"')
   })
+
+  it('runs the generated check and passes', () => {
+    writeFileSync(fixture, withBullet)
+
+    const code = check(fixture)
+
+    expect(code).toBe(0)
+  })
 })

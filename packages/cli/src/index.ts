@@ -1,8 +1,9 @@
 // @livingdoc/cli
 //
 // Programmatic entry point; `bin.ts` is the executable wrapper.
+import { spawnSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import type { Nodes, Root } from 'mdast'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkParse from 'remark-parse'
@@ -13,14 +14,17 @@ const markdown = unified().use(remarkParse).use(remarkFrontmatter, ['yaml'])
 
 const INLINE_TOKEN = /\{\{\s*([\s\S]*?)\s*\}\}/g
 
-export function check(file: string): void {
+export function check(file: string): number {
   const source = readFileSync(file, 'utf8')
   const tree = markdown.parse(source)
 
-  if (!isOptedIn(frontmatter(tree))) return
+  if (!isOptedIn(frontmatter(tree))) return 0
 
   const code = generateTest(headingTitle(tree), exampleBullets(tree))
-  writeFileSync(generatedPath(file), code)
+  const target = generatedPath(file)
+  writeFileSync(target, code)
+
+  return runCheck(target)
 }
 
 function frontmatter(tree: Root): Record<string, unknown> {
@@ -50,7 +54,11 @@ function exampleBullets(tree: Root): string[] {
 }
 
 function generateTest(title: string, bullets: string[]): string {
-  const output = [`describe(${JSON.stringify(title)}, () => {`]
+  const output = [
+    "import { describe, it } from 'vitest'",
+    '',
+    `describe(${JSON.stringify(title)}, () => {`,
+  ]
   for (const bullet of bullets) {
     output.push(`  it(${JSON.stringify(bulletTitle(bullet))}, () => {`)
     for (const input of bulletInputs(bullet)) {
@@ -64,6 +72,15 @@ function generateTest(title: string, bullets: string[]): string {
 
 function generatedPath(file: string): string {
   return join(dirname(resolve(file)), 'livingdoc.test.ts')
+}
+
+function runCheck(testFile: string): number {
+  const result = spawnSync(
+    'npx',
+    ['vitest', 'run', '--root', dirname(testFile), basename(testFile)],
+    { encoding: 'utf8' },
+  )
+  return result.status ?? 1
 }
 
 function plainText(node: Nodes): string {
