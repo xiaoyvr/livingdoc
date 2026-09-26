@@ -29,9 +29,22 @@ const backend = `export const bindings = {
 }
 `
 
+const staleMarkdown = `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+Example:
+
+- a {{ code: "SAVE10" }} code is applied, returning {{ toBe "OTHER" }}
+`
+
 describe('livingdoc CLI', () => {
   let dir: string
   let fixture: string
+  let staleDir: string
+  let staleFixture: string
 
   beforeAll(() => {
     const build = spawnSync('npm', ['run', 'build'], {
@@ -46,10 +59,16 @@ describe('livingdoc CLI', () => {
     fixture = join(dir, 'fixture.md')
     writeFileSync(fixture, markdown)
     writeFileSync(join(dir, 'livingdoc.backend.ts'), backend)
+
+    staleDir = mkdtempSync(join(tmpdir(), 'livingdoc-cli-stale-'))
+    staleFixture = join(staleDir, 'stale.md')
+    writeFileSync(staleFixture, staleMarkdown)
+    writeFileSync(join(staleDir, 'livingdoc.backend.ts'), backend)
   })
 
   afterAll(() => {
     rmSync(dir, { recursive: true, force: true })
+    rmSync(staleDir, { recursive: true, force: true })
   })
 
   it('checks a document and exits 0', () => {
@@ -59,5 +78,13 @@ describe('livingdoc CLI', () => {
 
     expect(result.status).toBe(0)
     expect(existsSync(join(dir, 'livingdoc.test.ts'))).toBe(true)
+  })
+
+  it('exits non-zero when the expectation does not hold', () => {
+    const result = spawnSync('node', [bin, 'check', staleFixture], {
+      encoding: 'utf8',
+    })
+
+    expect(result.status).not.toBe(0)
   })
 })

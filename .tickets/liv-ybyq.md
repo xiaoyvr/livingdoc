@@ -34,7 +34,7 @@ behavior changes.
       with the bound inputs.
 - [x] 2. The document asserts the binding's result: `{{ toBe <expr> }}`
       generates `expect(outputs.result).toBe(<expr>)`.
-- [ ] 3. A stale expectation fails the check and the command exits non-zero.
+- [x] 3. A stale expectation fails the check and the command exits non-zero.
 
 ### Notes
 
