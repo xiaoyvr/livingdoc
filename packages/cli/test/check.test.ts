@@ -1,5 +1,6 @@
 import {
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -9,6 +10,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { check } from '@livingdoc/cli'
+
+const config = `livingdocs = "docs"
+backend = "tests"
+`
 
 const optedIn = `---
 livingdoc: true
@@ -82,11 +87,16 @@ const consumerBackend = `export const bindings = {
 describe('livingdoc check', () => {
   let dir: string
   let fixture: string
+  let generated: string
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), 'livingdoc-check-'))
-    fixture = join(dir, 'fixture.md')
-    writeFileSync(join(dir, 'livingdoc.backend.ts'), consumerBackend)
+    mkdirSync(join(dir, 'docs'))
+    mkdirSync(join(dir, 'tests'))
+    writeFileSync(join(dir, 'livingdoc.toml'), config)
+    fixture = join(dir, 'docs', 'fixture.md')
+    generated = join(dir, 'tests', 'fixture.test.ts')
+    writeFileSync(join(dir, 'tests', 'livingdoc.backend.ts'), consumerBackend)
   })
 
   afterEach(() => {
@@ -98,7 +108,6 @@ describe('livingdoc check', () => {
 
     check(fixture)
 
-    const generated = join(dir, 'livingdoc.test.ts')
     expect(existsSync(generated)).toBe(true)
 
     const content = readFileSync(generated, 'utf8')
@@ -110,7 +119,7 @@ describe('livingdoc check', () => {
 
     check(fixture)
 
-    expect(existsSync(join(dir, 'livingdoc.test.ts'))).toBe(false)
+    expect(existsSync(generated)).toBe(false)
   })
 
   it('generates an it for the bullet, binding its input', () => {
@@ -118,7 +127,7 @@ describe('livingdoc check', () => {
 
     check(fixture)
 
-    const content = readFileSync(join(dir, 'livingdoc.test.ts'), 'utf8')
+    const content = readFileSync(generated, 'utf8')
     expect(content).toContain('it("a code SAVE10 is applied"')
     expect(content).toContain('const code = "SAVE10"')
   })
@@ -162,7 +171,6 @@ describe('livingdoc check', () => {
   })
 
   it('fails a structural document with no cases, as vitest does', () => {
-    rmSync(join(dir, 'livingdoc.backend.ts'))
     writeFileSync(fixture, optedIn)
 
     expect(check(fixture)).not.toBe(0)

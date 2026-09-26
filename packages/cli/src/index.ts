@@ -2,11 +2,12 @@
 //
 // Programmatic entry point; `bin.ts` is the executable wrapper.
 import { spawnSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
-import { basename, dirname, join, resolve } from 'node:path'
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { basename, dirname, join, parse as parsePath, resolve } from 'node:path'
 import type { Nodes, Root } from 'mdast'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkParse from 'remark-parse'
+import { parse as parseToml } from 'smol-toml'
 import { unified } from 'unified'
 import { parse as parseYaml } from 'yaml'
 
@@ -21,11 +22,53 @@ export function check(file: string): number {
 
   if (!isOptedIn(frontmatter(tree))) return 0
 
-  const code = generateTest(headingTitle(tree), exampleBullets(tree))
-  const target = generatedPath(file)
+  const config = loadConfig(file)
+  const backend = resolveBackend(config)
+  const code = generateTest(headingTitle(tree), exampleBullets(tree), backend)
+  const target = generatedPath(file, config)
   writeFileSync(target, code)
 
   return runCheck(target)
+}
+
+interface Config {
+  root: string
+  livingdocs: string
+  backend: string
+}
+
+function loadConfig(file: string): Config {
+  let dir = dirname(resolve(file))
+  while (true) {
+    const candidate = join(dir, 'livingdoc.toml')
+    if (existsSync(candidate)) {
+      const data = parseToml(readFileSync(candidate, 'utf8')) as Record<
+        string,
+        unknown
+      >
+      const { livingdocs, backend } = data
+      if (typeof livingdocs !== 'string' || typeof backend !== 'string') {
+        throw new Error(`${candidate}: livingdocs and backend must be strings`)
+      }
+      return { root: dir, livingdocs: join(dir, livingdocs), backend: join(dir, backend) }
+    }
+    const parent = dirname(dir)
+    if (parent === dir) throw new Error('livingdoc.toml not found')
+    dir = parent
+  }
+}
+
+function resolveBackend(config: Config): string {
+  const matches = readdirSync(config.backend).filter((name) =>
+    name.startsWith('livingdoc.backend.'),
+  )
+  const file = matches[0]
+  if (matches.length !== 1 || !file) {
+    throw new Error(
+      `${config.backend}: expected exactly one livingdoc.backend.* file`,
+    )
+  }
+  return join(config.backend, file)
 }
 
 function frontmatter(tree: Root): Record<string, unknown> {
@@ -62,12 +105,12 @@ function exampleBullets(tree: Root): string[] {
   return next.children.map((item) => plainText(item).trim())
 }
 
-function generateTest(title: string, bullets: string[]): string {
+function generateTest(title: string, bullets: string[], backend: string): string {
   const assertions = bullets.flatMap((bullet) => bulletAssertions(bullet))
   const vitest = ['describe', ...(assertions.length ? ['expect'] : []), 'it']
   const output = [`import { ${vitest.join(', ')} } from 'vitest'`]
   if (bullets.length > 0) {
-    output.push("import { bindings } from './livingdoc.backend'")
+    output.push(`import { bindings } from './${parsePath(backend).name}'`)
   }
   output.push('', `describe(${JSON.stringify(title)}, () => {`)
   for (const bullet of bullets) {
@@ -89,8 +132,8 @@ function generateTest(title: string, bullets: string[]): string {
   return `${output.join('\n')}\n`
 }
 
-function generatedPath(file: string): string {
-  return join(dirname(resolve(file)), 'livingdoc.test.ts')
+function generatedPath(file: string, config: Config): string {
+  return join(config.backend, `${parsePath(resolve(file)).name}.test.ts`)
 }
 
 function runCheck(testFile: string): number {

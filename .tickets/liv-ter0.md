@@ -50,7 +50,7 @@ documents and my backend no matter where the markdown and the tests live.
 
 ## Implementation tasks
 
-- [ ] 1. Config-driven generation (AC1, AC2): find `livingdoc.toml`, read
+- [x] 1. Config-driven generation (AC1, AC2): find `livingdoc.toml`, read
       `livingdocs` and `backend`, resolve the backend file, and write the check
       to `backend/<doc-basename>.test.ts` importing the backend by relative
       name. Migrate the existing unit and e2e fixtures to the configured

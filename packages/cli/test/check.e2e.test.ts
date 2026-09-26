@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -7,6 +7,10 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 const repoRoot = fileURLToPath(new URL('../../..', import.meta.url))
 const bin = fileURLToPath(new URL('../dist/bin.js', import.meta.url))
+
+const config = `livingdocs = "docs"
+backend = "tests"
+`
 
 const markdown = `---
 livingdoc: true
@@ -56,14 +60,20 @@ describe('livingdoc CLI', () => {
     }
 
     dir = mkdtempSync(join(tmpdir(), 'livingdoc-cli-'))
-    fixture = join(dir, 'fixture.md')
+    mkdirSync(join(dir, 'docs'))
+    mkdirSync(join(dir, 'tests'))
+    writeFileSync(join(dir, 'livingdoc.toml'), config)
+    fixture = join(dir, 'docs', 'fixture.md')
     writeFileSync(fixture, markdown)
-    writeFileSync(join(dir, 'livingdoc.backend.ts'), backend)
+    writeFileSync(join(dir, 'tests', 'livingdoc.backend.ts'), backend)
 
     staleDir = mkdtempSync(join(tmpdir(), 'livingdoc-cli-stale-'))
-    staleFixture = join(staleDir, 'stale.md')
+    mkdirSync(join(staleDir, 'docs'))
+    mkdirSync(join(staleDir, 'tests'))
+    writeFileSync(join(staleDir, 'livingdoc.toml'), config)
+    staleFixture = join(staleDir, 'docs', 'stale.md')
     writeFileSync(staleFixture, staleMarkdown)
-    writeFileSync(join(staleDir, 'livingdoc.backend.ts'), backend)
+    writeFileSync(join(staleDir, 'tests', 'livingdoc.backend.ts'), backend)
   })
 
   afterAll(() => {
@@ -77,7 +87,7 @@ describe('livingdoc CLI', () => {
     })
 
     expect(result.status).toBe(0)
-    expect(existsSync(join(dir, 'livingdoc.test.ts'))).toBe(true)
+    expect(existsSync(join(dir, 'tests', 'fixture.test.ts'))).toBe(true)
   })
 
   it('exits non-zero when the expectation does not hold', () => {
