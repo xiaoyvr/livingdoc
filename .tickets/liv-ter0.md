@@ -65,4 +65,10 @@ documents and my backend no matter where the markdown and the tests live.
 - [x] 5. Rebalance the e2e suite: delete the explicit-file tests already covered
       in process, keeping the folder scan and the error output at the command
       boundary.
+- [x] 6. Fix: a missing `livingdocs` or `backend` folder gives an actionable
+      message, not a raw ENOENT.
+- [x] 7. Fix: `check` loads the config before the opt-in decision, so a missing
+      config always fails.
+- [x] 8. Fix: `livingdocs` and `backend` are relative to the config file;
+      reject an absolute path with an actionable message.
 

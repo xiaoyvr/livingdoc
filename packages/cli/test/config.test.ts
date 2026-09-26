@@ -52,4 +52,43 @@ describe('livingdoc configuration', () => {
     expect(check(fixture)).toBe(0)
     expect(existsSync(join(root, 'tests', 'fixture.test.ts'))).toBe(true)
   })
+
+  it('reports a missing backend folder', () => {
+    writeFileSync(fixture, document)
+    rmSync(join(root, 'tests'), { recursive: true, force: true })
+
+    expect(() => check(fixture)).toThrow(/backend folder not found/)
+  })
+
+  it('reports a missing livingdocs folder', () => {
+    writeFileSync(fixture, document)
+    writeFileSync(
+      join(root, 'livingdoc.toml'),
+      `livingdocs = "missing"\nbackend = "tests"\n`,
+    )
+
+    expect(() => check(fixture)).toThrow(/livingdocs folder not found/)
+  })
+
+  it('rejects an absolute folder in the config', () => {
+    writeFileSync(fixture, document)
+    writeFileSync(
+      join(root, 'livingdoc.toml'),
+      `livingdocs = "docs"\nbackend = "${join(root, 'tests')}"\n`,
+    )
+
+    expect(() => check(fixture)).toThrow(/relative/)
+  })
+
+  it('requires a config even without the opt-in', () => {
+    const plain = mkdtempSync(join(tmpdir(), 'livingdoc-plain-'))
+    try {
+      const doc = join(plain, 'plain.md')
+      writeFileSync(doc, '# Plain\n')
+
+      expect(() => check(doc)).toThrow(/livingdoc\.toml/)
+    } finally {
+      rmSync(plain, { recursive: true, force: true })
+    }
+  })
 })

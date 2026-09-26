@@ -3,7 +3,7 @@
 // Programmatic entry point; `bin.ts` is the executable wrapper.
 import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { basename, dirname, join, parse as parsePath, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, join, parse as parsePath, resolve } from 'node:path'
 import type { Nodes, Root } from 'mdast'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkParse from 'remark-parse'
@@ -19,12 +19,12 @@ const ASSERTION_TOKEN = /\{\{!\s*([\s\S]*?)\s*\}\}/g
 export function check(file?: string): number {
   if (!file) return checkProject(process.cwd())
 
+  const config = loadConfig(dirname(resolve(file)))
   const source = readFileSync(file, 'utf8')
   const tree = markdown.parse(source)
 
   if (!isOptedIn(frontmatter(tree))) return 0
 
-  const config = loadConfig(dirname(resolve(file)))
   const backend = resolveBackend(config)
   const code = generateTest(headingTitle(tree), exampleBullets(tree), backend)
   const target = generatedPath(file, config)
@@ -63,7 +63,16 @@ function loadConfig(start: string): Config {
       if (typeof livingdocs !== 'string' || typeof backend !== 'string') {
         throw new Error(`${candidate}: livingdocs and backend must be strings`)
       }
-      return { root: dir, livingdocs: join(dir, livingdocs), backend: join(dir, backend) }
+      if (isAbsolute(livingdocs) || isAbsolute(backend)) {
+        throw new Error(
+          `${candidate}: livingdocs and backend must be relative to the config file`,
+        )
+      }
+      const livingdocsDir = join(dir, livingdocs)
+      if (!existsSync(livingdocsDir)) {
+        throw new Error(`livingdocs folder not found: ${livingdocsDir}`)
+      }
+      return { root: dir, livingdocs: livingdocsDir, backend: join(dir, backend) }
     }
     const parent = dirname(dir)
     if (parent === dir) throw new Error(`no livingdoc.toml found from ${from}`)
@@ -72,6 +81,9 @@ function loadConfig(start: string): Config {
 }
 
 function resolveBackend(config: Config): string {
+  if (!existsSync(config.backend)) {
+    throw new Error(`backend folder not found: ${config.backend}`)
+  }
   const matches = readdirSync(config.backend).filter((name) =>
     name.startsWith('livingdoc.backend.'),
   )
