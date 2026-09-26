@@ -15,7 +15,7 @@ packages/
   adapters/
     vitest/              @livingdoc/adapter-vitest — TS + Vitest adapter
   cli/                   @livingdoc/cli — the `livingdoc` command
-stories/                 vertical slices, one per feature
+.tickets/                work items, tracked with `tk` (run `tk help`)
 ```
 
 `@livingdoc/core` is framework-agnostic. Each language/framework adapter lives
@@ -33,6 +33,8 @@ npm run typecheck  # tsc -b across all packages
 npm run checks     # typecheck + test
 ```
 
-The CLI stub runs from source with `npm run livingdoc -- check <file.md>`
+Work is tracked with `tk` in `.tickets/`; `tk ready` lists unblocked work.
+
+The CLI runs from source with `npm run livingdoc -- check <file.md>`
 (or `tsx packages/cli/src/bin.ts`). `npm run build` emits `dist/` per package,
 after which `packages/cli/dist/bin.js` is the `livingdoc` executable.
