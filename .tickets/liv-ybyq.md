@@ -29,7 +29,7 @@ behavior changes.
 
 - [x] 0. Rename `operation` to `binding` across the design and tickets (docs
       only; no code references it yet).
-- [ ] 1. The heading selects and runs the binding: the check imports `bindings`
+- [x] 1. The heading selects and runs the binding: the check imports `bindings`
       from `./livingdoc.backend` and calls `bindings[<heading-slug>].run(...)`
       with the bound inputs.
 - [ ] 2. The document asserts the binding's result: `{{ toBe <expr> }}`

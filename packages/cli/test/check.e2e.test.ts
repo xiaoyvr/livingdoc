@@ -19,6 +19,16 @@ Example:
 - a {{ code: "SAVE10" }} code is applied
 `
 
+const backend = `export const bindings = {
+  "walking-skeleton": {
+    params: ["code"],
+    run({ code }) {
+      return { result: code }
+    },
+  },
+}
+`
+
 describe('livingdoc CLI', () => {
   let dir: string
   let fixture: string
@@ -35,6 +45,7 @@ describe('livingdoc CLI', () => {
     dir = mkdtempSync(join(tmpdir(), 'livingdoc-cli-'))
     fixture = join(dir, 'fixture.md')
     writeFileSync(fixture, markdown)
+    writeFileSync(join(dir, 'livingdoc.backend.ts'), backend)
   })
 
   afterAll(() => {

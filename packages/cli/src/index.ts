@@ -43,6 +43,14 @@ function headingTitle(tree: Root): string {
   return heading ? plainText(heading) : ''
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+}
+
 function exampleBullets(tree: Root): string[] {
   const index = tree.children.findIndex(
     (node) => node.type === 'paragraph' && plainText(node).trim() === 'Example:',
@@ -56,14 +64,20 @@ function exampleBullets(tree: Root): string[] {
 function generateTest(title: string, bullets: string[]): string {
   const output = [
     "import { describe, it } from 'vitest'",
+    "import { bindings } from './livingdoc.backend'",
     '',
     `describe(${JSON.stringify(title)}, () => {`,
   ]
   for (const bullet of bullets) {
     output.push(`  it(${JSON.stringify(bulletTitle(bullet))}, () => {`)
-    for (const input of bulletInputs(bullet)) {
+    const inputs = bulletInputs(bullet)
+    for (const input of inputs) {
       output.push(`    const ${input.name} = ${input.value}`)
     }
+    const args = inputs.map((input) => input.name).join(', ')
+    output.push(
+      `    const outputs = bindings[${JSON.stringify(slugify(title))}].run({ ${args} })`,
+    )
     output.push('  })')
   }
   output.push('})')
