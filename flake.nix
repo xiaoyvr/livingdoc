@@ -2,9 +2,17 @@
   description = "livingdoc — documentation that cannot be published while it is false";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.ticket = {
+    url = "github:wedow/ticket/v0.3.2";
+    flake = false;
+  };
 
   outputs =
-    { nixpkgs, ... }:
+    {
+      nixpkgs,
+      ticket,
+      ...
+    }:
     let
       systems = [
         "x86_64-linux"
@@ -19,12 +27,38 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          ticket-text = ''
+            export PATH="${
+              pkgs.lib.makeBinPath (
+                with pkgs;
+                [
+                  coreutils
+                  findutils
+                  gawk
+                  git
+                  gnugrep
+                  gnused
+                  jq
+                  ripgrep
+                ]
+              )
+            }:$PATH"
+            ${builtins.readFile (ticket + "/ticket")}
+          '';
+          ticket-cli = pkgs.symlinkJoin {
+            name = "ticket-cli";
+            paths = [
+              (pkgs.writeShellScriptBin "tk" ticket-text)
+              (pkgs.writeShellScriptBin "ticket" ticket-text)
+            ];
+          };
         in
         {
           default = pkgs.mkShell {
             packages = [
               pkgs.nodejs_24
               pkgs.nixfmt
+              ticket-cli
             ];
 
             shellHook = ''

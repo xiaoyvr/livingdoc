@@ -18,7 +18,25 @@
     },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "ticket": "ticket"
+      }
+    },
+    "ticket": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1770135786,
+        "narHash": "sha256-orxqAwJBL+LHe+I9M+djYGa/yfvH67HdR/VVy8fdg90=",
+        "owner": "wedow",
+        "repo": "ticket",
+        "rev": "266b9d38d5090f1af4e5184afd21b183b3bbe878",
+        "type": "github"
+      },
+      "original": {
+        "owner": "wedow",
+        "ref": "v0.3.2",
+        "repo": "ticket",
+        "type": "github"
       }
     }
   },

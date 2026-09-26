@@ -34,5 +34,11 @@ current default. Other mode is not encouraged yet.
 - Make each task end to end — a vertical slice, not a layer. Split a step that
   is too big.
 
+## Tickets
+
+Work is tracked with `tk` (tickets live in `.tickets/`). Run `tk help` when you
+need to use it. `tk ready` lists unblocked work, `tk show <id>` reads a ticket,
+and `tk dep tree <id>` shows what it depends on.
+
 ## Layout
 
