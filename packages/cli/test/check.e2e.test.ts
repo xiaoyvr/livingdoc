@@ -97,4 +97,22 @@ describe('livingdoc CLI', () => {
 
     expect(result.status).not.toBe(0)
   })
+
+  it('checks the livingdocs folder when given no path', () => {
+    const result = spawnSync('node', [bin, 'check'], {
+      cwd: dir,
+      encoding: 'utf8',
+    })
+
+    expect(result.status).toBe(0)
+  })
+
+  it('fails when a document in the folder is stale', () => {
+    const result = spawnSync('node', [bin, 'check'], {
+      cwd: staleDir,
+      encoding: 'utf8',
+    })
+
+    expect(result.status).not.toBe(0)
+  })
 })

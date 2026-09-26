@@ -55,7 +55,7 @@ documents and my backend no matter where the markdown and the tests live.
       to `backend/<doc-basename>.test.ts` importing the backend by relative
       name. Migrate the existing unit and e2e fixtures to the configured
       layout.
-- [ ] 2. Check the whole folder (AC3): `check()` with no path checks every
+- [x] 2. Check the whole folder (AC3): `check()` with no path checks every
       opted-in `*.md` under `livingdocs`; `bin.ts` accepts no argument.
 - [ ] 3. Actionable errors (AC4): a missing config or a backend folder with no
       (or several) `livingdoc.backend.*` gives a clear message and non-zero,

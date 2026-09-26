@@ -16,13 +16,15 @@ const markdown = unified().use(remarkParse).use(remarkFrontmatter, ['yaml'])
 const INPUT_TOKEN = /\{\{(?!\s*!)([\s\S]*?)\}\}/g
 const ASSERTION_TOKEN = /\{\{!\s*([\s\S]*?)\s*\}\}/g
 
-export function check(file: string): number {
+export function check(file?: string): number {
+  if (!file) return checkProject(process.cwd())
+
   const source = readFileSync(file, 'utf8')
   const tree = markdown.parse(source)
 
   if (!isOptedIn(frontmatter(tree))) return 0
 
-  const config = loadConfig(file)
+  const config = loadConfig(dirname(resolve(file)))
   const backend = resolveBackend(config)
   const code = generateTest(headingTitle(tree), exampleBullets(tree), backend)
   const target = generatedPath(file, config)
@@ -31,14 +33,24 @@ export function check(file: string): number {
   return runCheck(target)
 }
 
+function checkProject(dir: string): number {
+  const config = loadConfig(dir)
+  let code = 0
+  for (const name of readdirSync(config.livingdocs)) {
+    if (!name.endsWith('.md')) continue
+    code = check(join(config.livingdocs, name)) || code
+  }
+  return code
+}
+
 interface Config {
   root: string
   livingdocs: string
   backend: string
 }
 
-function loadConfig(file: string): Config {
-  let dir = dirname(resolve(file))
+function loadConfig(start: string): Config {
+  let dir = resolve(start)
   while (true) {
     const candidate = join(dir, 'livingdoc.toml')
     if (existsSync(candidate)) {

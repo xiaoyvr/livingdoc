@@ -4,8 +4,8 @@ import { check } from './index.js'
 
 const [command, file] = process.argv.slice(2)
 
-if (command !== 'check' || !file) {
-  process.stderr.write('usage: livingdoc check <file.md>\n')
+if (command !== 'check') {
+  process.stderr.write('usage: livingdoc check [file.md]\n')
   process.exit(1)
 }
 
