@@ -1,38 +1,20 @@
 # Story 7 — Configuration and commands
 
-Make it a real tool.
-
-## Goal
-
-Let a project choose its framework and its backend through configuration, and
-give livingdoc two commands: one that writes the check, and one that writes and
-runs it. Honest exit codes and actionable errors.
-
-## Why this slice
-
-It turns the working pipeline into something a project can adopt: configurable,
-with a clear interface and errors a human can act on.
-
-## In scope
-
-- Configuration selecting the framework and the consumer's backend.
-- `livingdoc generate` — produce the check without running it.
-- `livingdoc check` — produce and run the check, exiting 0 or non-zero.
-- Clear errors for missing configuration, a missing backend, and undeclared
-  names.
-
-## Out of scope
-
-- Frameworks beyond the current adapter, rendering, compound values.
+**As a** developer adopting livingdoc, **I want** to configure my framework and
+backend and choose whether to generate or check, **so that** livingdoc fits my
+project and my CI.
 
 ## Acceptance criteria
 
-- [ ] `livingdoc generate` produces the check and nothing else.
-- [ ] `livingdoc check` uses the configured framework and backend.
-- [ ] A failing assertion makes `check` exit non-zero.
-- [ ] Misconfiguration fails with an actionable message, not a stack trace.
+- **Given** a project with a configured framework and backend
+  **When** I run `livingdoc generate`
+  **Then** the check is produced and nothing else happens
 
-## Notes
+- **Given** a project with a configured framework and backend
+  **When** I run `livingdoc check`
+  **Then** it uses the configured framework and backend
+  **And** it exits 0 on success and non-zero on failure
 
-This is the thin-slice boundary: livingdoc is now usable for a project. Showing
-results in the document comes later, after per-case results exist.
+- **Given** a misconfigured project
+  **When** I run `livingdoc check`
+  **Then** it fails with an actionable message, not a stack trace

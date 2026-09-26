@@ -1,38 +1,20 @@
 # Story 4 — Headings and multiple cases
 
-The document structure becomes the run.
-
-## Goal
-
-Let a document describe several behaviors and several examples, each becoming
-its own case, so livingdoc is usable for real documents.
-
-## Why this slice
-
-It maps a document's structure onto the run: each heading is a behavior, each
-bullet under `Example:` is a case, and a heading selects the operation it
-exercises.
-
-## In scope
-
-- A heading selects the operation by name.
-- Several bullets under one `Example:` each become a case.
-- Several headings each become their own group of cases.
-- An assertion may target a named output, e.g. `{{ "order saved" toBe true }}`.
-- One failing case does not prevent the other cases from running.
-
-## Out of scope
-
-- Directives, per-case reporting, configuration, rendering.
+**As a** documentation author, **I want** to describe several behaviors and
+several examples in one document, **so that** a document can cover the
+behaviors of a real system.
 
 ## Acceptance criteria
 
-- [ ] Two headings exercise their respective operations.
-- [ ] Each bullet becomes one case, named after the bullet.
-- [ ] An assertion can target a named output.
-- [ ] A failing case fails the run while the other cases still execute.
+- **Given** a document with two headings, each with an `Example:` bullet
+  **When** I run `livingdoc check`
+  **Then** each heading exercises its own operation
+  **And** each bullet becomes its own case, named after the bullet
 
-## Notes
+- **Given** a bullet asserting a named output
+  **When** I run `livingdoc check`
+  **Then** the assertion targets that output
 
-An operation is selected by the heading, so renaming a heading breaks the
-selection — drift that is caught as a failure.
+- **Given** a document in which one case fails
+  **When** I run `livingdoc check`
+  **Then** that case fails while the other cases still execute
