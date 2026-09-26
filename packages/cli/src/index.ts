@@ -12,7 +12,8 @@ import { parse as parseYaml } from 'yaml'
 
 const markdown = unified().use(remarkParse).use(remarkFrontmatter, ['yaml'])
 
-const INLINE_TOKEN = /\{\{\s*([\s\S]*?)\s*\}\}/g
+const INPUT_TOKEN = /\{\{(?!\s*!)([\s\S]*?)\}\}/g
+const ASSERTION_TOKEN = /\{\{!\s*([\s\S]*?)\s*\}\}/g
 
 export function check(file: string): number {
   const source = readFileSync(file, 'utf8')
@@ -62,12 +63,13 @@ function exampleBullets(tree: Root): string[] {
 }
 
 function generateTest(title: string, bullets: string[]): string {
-  const output = [
-    "import { describe, expect, it } from 'vitest'",
-    "import { bindings } from './livingdoc.backend'",
-    '',
-    `describe(${JSON.stringify(title)}, () => {`,
-  ]
+  const assertions = bullets.flatMap((bullet) => bulletAssertions(bullet))
+  const vitest = ['describe', ...(assertions.length ? ['expect'] : []), 'it']
+  const output = [`import { ${vitest.join(', ')} } from 'vitest'`]
+  if (bullets.length > 0) {
+    output.push("import { bindings } from './livingdoc.backend'")
+  }
+  output.push('', `describe(${JSON.stringify(title)}, () => {`)
   for (const bullet of bullets) {
     output.push(`  it(${JSON.stringify(bulletTitle(bullet))}, () => {`)
     const inputs = bulletInputs(bullet)
@@ -78,8 +80,7 @@ function generateTest(title: string, bullets: string[]): string {
     output.push(
       `    const outputs = bindings[${JSON.stringify(slugify(title))}].run({ ${args} })`,
     )
-    const assertion = bulletAssertion(bullet)
-    if (assertion) {
+    for (const assertion of bulletAssertions(bullet)) {
       output.push(`    expect(outputs.result).${assertion.verb}(${assertion.args})`)
     }
     output.push('  })')
@@ -110,39 +111,42 @@ function plainText(node: Nodes): string {
 }
 
 function bulletTitle(text: string): string {
-  return text.replace(INLINE_TOKEN, (_match: string, body: string) => {
-    const value = body.slice(body.indexOf(':') + 1).trim()
-    const first = value[0]
-    const last = value[value.length - 1]
-    return (first === '"' || first === "'") && first === last
-      ? value.slice(1, -1)
-      : value
-  })
+  return text
+    .replace(ASSERTION_TOKEN, (_match: string, body: string) => body.trim())
+    .replace(INPUT_TOKEN, (_match: string, body: string) => unquote(body.trim()))
+}
+
+function unquote(value: string): string {
+  const first = value[0]
+  const last = value[value.length - 1]
+  return (first === '"' || first === "'") && first === last
+    ? value.slice(1, -1)
+    : value
 }
 
 function bulletInputs(text: string): { name: string; value: string }[] {
   const parsed: { name: string; value: string }[] = []
-  for (const match of text.matchAll(INLINE_TOKEN)) {
-    const body = match[1] ?? ''
-    const colon = body.indexOf(':')
-    if (colon === -1) continue
-    parsed.push({
-      name: body.slice(0, colon).trim(),
-      value: body.slice(colon + 1).trim(),
-    })
+  for (const match of text.matchAll(INPUT_TOKEN)) {
+    const name = previousWord(text, match.index ?? 0)
+    if (!name) continue
+    parsed.push({ name, value: (match[1] ?? '').trim() })
   }
   return parsed
 }
 
-function bulletAssertion(
+function previousWord(text: string, index: number): string | undefined {
+  return text.slice(0, index).match(/([A-Za-z_]\w*)\s*$/)?.[1]
+}
+
+function bulletAssertions(
   text: string,
-): { verb: string; args: string } | undefined {
-  for (const match of text.matchAll(INLINE_TOKEN)) {
+): { verb: string; args: string }[] {
+  const parsed: { verb: string; args: string }[] = []
+  for (const match of text.matchAll(ASSERTION_TOKEN)) {
     const body = (match[1] ?? '').trim()
-    if (body.includes(':')) continue
     const [verb, ...rest] = body.split(/\s+/)
     if (!verb) continue
-    return { verb, args: rest.join(' ') }
+    parsed.push({ verb, args: rest.join(' ') })
   }
-  return undefined
+  return parsed
 }

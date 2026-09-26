@@ -32,7 +32,7 @@ livingdoc: true
 
 Example:
 
-- a {{ code: "SAVE10" }} code is applied
+- a code {{ "SAVE10" }} is applied
 `
 
 const withAssertion = `---
@@ -43,14 +43,36 @@ livingdoc: true
 
 Example:
 
-- a {{ code: "SAVE10" }} code is applied, returning {{ toBe "OTHER" }}
+- a code {{ "SAVE10" }} is applied, returning {{! toBe "OTHER" }}
+`
+
+const withColonValue = `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+Example:
+
+- a code {{ "http://x" }} is applied
+`
+
+const withTwoAssertions = `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+Example:
+
+- a code {{ "SAVE10" }} is applied, first {{! toBe "SAVE10" }} second {{! toBe "NOPE" }}
 `
 
 const consumerBackend = `export const bindings = {
   "walking-skeleton": {
     params: ["code"],
     run({ code }) {
-      if (code !== "SAVE10") throw new Error(\`unexpected code: \${code}\`)
+      if (code === "WRONG") throw new Error(\`unexpected code: \${code}\`)
       return { result: code }
     },
   },
@@ -97,7 +119,7 @@ describe('livingdoc check', () => {
     check(fixture)
 
     const content = readFileSync(join(dir, 'livingdoc.test.ts'), 'utf8')
-    expect(content).toContain('it("a SAVE10 code is applied"')
+    expect(content).toContain('it("a code SAVE10 is applied"')
     expect(content).toContain('const code = "SAVE10"')
   })
 
@@ -125,5 +147,24 @@ describe('livingdoc check', () => {
     writeFileSync(fixture, withAssertion.replace('OTHER', 'SAVE10'))
 
     expect(check(fixture)).toBe(0)
+  })
+
+  it('binds a value containing a colon, verbatim', () => {
+    writeFileSync(fixture, withColonValue)
+
+    expect(check(fixture)).toBe(0)
+  })
+
+  it('evaluates every assertion in a bullet', () => {
+    writeFileSync(fixture, withTwoAssertions)
+
+    expect(check(fixture)).not.toBe(0)
+  })
+
+  it('fails a structural document with no cases, as vitest does', () => {
+    rmSync(join(dir, 'livingdoc.backend.ts'))
+    writeFileSync(fixture, optedIn)
+
+    expect(check(fixture)).not.toBe(0)
   })
 })

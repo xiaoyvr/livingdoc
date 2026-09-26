@@ -35,14 +35,15 @@ behavior changes.
 - [x] 2. The document asserts the binding's result: `{{ toBe <expr> }}`
       generates `expect(outputs.result).toBe(<expr>)`.
 - [x] 3. A stale expectation fails the check and the command exits non-zero.
-- [ ] 4. New token grammar from review: an input is `<name> {{ <expr> }}` where
+- [x] 4. New token grammar from review: an input is `<name> {{ <expr> }}` where
       the name is the word before the token; an assertion is `{{! <verb> <args> }}`.
       Everything inside the braces is verbatim, and `!` alone distinguishes an
       assertion, so no colon is lexed.
-- [ ] 5. Emit every assertion in a bullet; none are silently dropped.
-- [ ] 6. Import the backend only when the document has `Example:` bullets, so a
-      structural document still produces a passing empty check.
-- [ ] 7. Update DESIGN.md for the new grammar and for the `it` title keeping raw
+- [x] 5. Emit every assertion in a bullet; none are silently dropped.
+- [x] 6. Import the backend only when the document has `Example:` bullets, so a
+      document with no cases fails from vitest's no-test rule, not a missing
+      backend. No synthetic empty case is generated.
+- [x] 7. Update DESIGN.md for the new grammar and for the `it` title keeping raw
       assertion text until rendering lands.
 
 ### Notes
