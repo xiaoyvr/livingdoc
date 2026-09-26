@@ -35,6 +35,17 @@ Example:
 - a {{ code: "SAVE10" }} code is applied
 `
 
+const withAssertion = `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+Example:
+
+- a {{ code: "SAVE10" }} code is applied, returning {{ toBe "OTHER" }}
+`
+
 const consumerBackend = `export const bindings = {
   "walking-skeleton": {
     params: ["code"],
@@ -102,5 +113,17 @@ describe('livingdoc check', () => {
     writeFileSync(fixture, withBullet.replace('SAVE10', 'WRONG'))
 
     expect(check(fixture)).not.toBe(0)
+  })
+
+  it('fails the check when the expectation does not hold', () => {
+    writeFileSync(fixture, withAssertion)
+
+    expect(check(fixture)).not.toBe(0)
+  })
+
+  it('passes the check when the expectation holds', () => {
+    writeFileSync(fixture, withAssertion.replace('OTHER', 'SAVE10'))
+
+    expect(check(fixture)).toBe(0)
   })
 })

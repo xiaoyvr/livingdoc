@@ -32,7 +32,7 @@ behavior changes.
 - [x] 1. The heading selects and runs the binding: the check imports `bindings`
       from `./livingdoc.backend` and calls `bindings[<heading-slug>].run(...)`
       with the bound inputs.
-- [ ] 2. The document asserts the binding's result: `{{ toBe <expr> }}`
+- [x] 2. The document asserts the binding's result: `{{ toBe <expr> }}`
       generates `expect(outputs.result).toBe(<expr>)`.
 - [ ] 3. A stale expectation fails the check and the command exits non-zero.
 

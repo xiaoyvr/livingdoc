@@ -63,7 +63,7 @@ function exampleBullets(tree: Root): string[] {
 
 function generateTest(title: string, bullets: string[]): string {
   const output = [
-    "import { describe, it } from 'vitest'",
+    "import { describe, expect, it } from 'vitest'",
     "import { bindings } from './livingdoc.backend'",
     '',
     `describe(${JSON.stringify(title)}, () => {`,
@@ -78,6 +78,10 @@ function generateTest(title: string, bullets: string[]): string {
     output.push(
       `    const outputs = bindings[${JSON.stringify(slugify(title))}].run({ ${args} })`,
     )
+    const assertion = bulletAssertion(bullet)
+    if (assertion) {
+      output.push(`    expect(outputs.result).${assertion.verb}(${assertion.args})`)
+    }
     output.push('  })')
   }
   output.push('})')
@@ -128,4 +132,17 @@ function bulletInputs(text: string): { name: string; value: string }[] {
     })
   }
   return parsed
+}
+
+function bulletAssertion(
+  text: string,
+): { verb: string; args: string } | undefined {
+  for (const match of text.matchAll(INLINE_TOKEN)) {
+    const body = (match[1] ?? '').trim()
+    if (body.includes(':')) continue
+    const [verb, ...rest] = body.split(/\s+/)
+    if (!verb) continue
+    return { verb, args: rest.join(' ') }
+  }
+  return undefined
 }
