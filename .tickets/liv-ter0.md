@@ -1,6 +1,6 @@
 ---
 id: liv-ter0
-status: open
+status: closed
 deps: []
 links: [liv-53z4]
 created: 2026-09-26T23:00:28Z
