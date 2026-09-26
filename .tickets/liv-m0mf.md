@@ -1,4 +1,14 @@
-# Story 5 — Directives
+---
+id: liv-m0mf
+status: open
+deps: [liv-ybyq]
+links: []
+created: 2026-09-26T03:21:48Z
+type: feature
+priority: 2
+assignee: xiaoyvr
+---
+# Directives
 
 **As a** documentation author, **I want** to assert on side effects with
 assertion phrases my project defines, **so that** I can verify calls and state,
@@ -18,3 +28,4 @@ not only return values.
 - **Given** a document using an unknown assertion phrase
   **When** I run `livingdoc check`
   **Then** the unknown phrase is reported as an error
+

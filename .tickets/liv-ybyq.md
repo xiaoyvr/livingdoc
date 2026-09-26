@@ -1,4 +1,14 @@
-# Story 2 — One real assertion against an operation
+---
+id: liv-ybyq
+status: open
+deps: [liv-frgb]
+links: []
+created: 2026-09-26T03:21:48Z
+type: feature
+priority: 1
+assignee: xiaoyvr
+---
+# One real assertion against an operation
 
 **As a** documentation author, **I want** to state an expected result in the
 document, **so that** the document verifies real behavior and goes red when the
@@ -14,3 +24,4 @@ behavior changes.
 - **Given** the operation's result no longer matches the document's expectation
   **When** I run `livingdoc check`
   **Then** the check fails and the command exits non-zero
+

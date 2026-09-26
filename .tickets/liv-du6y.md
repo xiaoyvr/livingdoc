@@ -1,4 +1,14 @@
-# Story 4 — Headings and multiple cases
+---
+id: liv-du6y
+status: open
+deps: [liv-ybyq]
+links: []
+created: 2026-09-26T03:21:48Z
+type: feature
+priority: 2
+assignee: xiaoyvr
+---
+# Headings and multiple cases
 
 **As a** documentation author, **I want** to describe several behaviors and
 several examples in one document, **so that** a document can cover the
@@ -18,3 +28,4 @@ behaviors of a real system.
 - **Given** a document in which one case fails
   **When** I run `livingdoc check`
   **Then** that case fails while the other cases still execute
+
