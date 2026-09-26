@@ -1,6 +1,6 @@
 ---
 id: liv-ybyq
-status: closed
+status: open
 deps: [liv-frgb]
 links: []
 created: 2026-09-26T03:21:48Z
@@ -35,6 +35,15 @@ behavior changes.
 - [x] 2. The document asserts the binding's result: `{{ toBe <expr> }}`
       generates `expect(outputs.result).toBe(<expr>)`.
 - [x] 3. A stale expectation fails the check and the command exits non-zero.
+- [ ] 4. New token grammar from review: an input is `<name> {{ <expr> }}` where
+      the name is the word before the token; an assertion is `{{! <verb> <args> }}`.
+      Everything inside the braces is verbatim, and `!` alone distinguishes an
+      assertion, so no colon is lexed.
+- [ ] 5. Emit every assertion in a bullet; none are silently dropped.
+- [ ] 6. Import the backend only when the document has `Example:` bullets, so a
+      structural document still produces a passing empty check.
+- [ ] 7. Update DESIGN.md for the new grammar and for the `it` title keeping raw
+      assertion text until rendering lands.
 
 ### Notes
 
@@ -43,4 +52,6 @@ behavior changes.
   `params` are not validated yet.
 - Only the primary-result, verb-first assertion is in scope; middle-form
   assertions, directives, and multiple validated inputs are liv-m0mf / liv-d7uk.
+- Reopened after review: tasks 4-6 fix defects found in the delivered
+  implementation; task 7 records the deferred title behavior.
 
