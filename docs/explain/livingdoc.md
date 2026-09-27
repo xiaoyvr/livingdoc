@@ -9,4 +9,4 @@ livingdoc: true
 
 Example:
 
-- a document with heading :=`"Applying a discount"`, the generated describe !!`toBe "Applying a discount"`
+- a document with heading :=`"Applying a discount"`, the generated file !!`toContain 'describe("Applying a discount"'`

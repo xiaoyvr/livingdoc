@@ -1,6 +1,6 @@
 // The backend for livingdoc's own explain documents. Each binding builds a
-// tiny livingdoc project, generates its check with the built CLI, and reads
-// back what was produced.
+// tiny livingdoc project, generates its test file with the built CLI, and
+// returns that file so the document can assert on its content.
 import { spawnSync } from 'node:child_process'
 import {
   mkdirSync,
@@ -29,11 +29,6 @@ function project(heading: string): string {
   return dir
 }
 
-function describeOf(source: string): string {
-  const match = source.match(/^describe\((.*?), \(\) => \{/m)
-  return match ? (JSON.parse(match[1] ?? '') as string) : ''
-}
-
 export const bindings = {
   'generating-a-test-file': {
     params: ['heading'],
@@ -41,8 +36,7 @@ export const bindings = {
       const dir = project(heading)
       try {
         spawnSync('node', [bin, 'generate'], { cwd: dir, encoding: 'utf8' })
-        const generated = readFileSync(join(dir, 'tests', 'fixture.test.ts'), 'utf8')
-        return { result: describeOf(generated) }
+        return { result: readFileSync(join(dir, 'tests', 'fixture.test.ts'), 'utf8') }
       } finally {
         rmSync(dir, { recursive: true, force: true })
       }
