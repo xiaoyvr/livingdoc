@@ -1,6 +1,6 @@
 ---
 id: liv-mpoe
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-09-27T05:05:04Z
