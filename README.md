@@ -31,6 +31,7 @@ npm install        # install dependencies and link workspaces
 npm test           # run the test suite (vitest)
 npm run typecheck  # tsc -b across all packages
 npm run generate   # write the checks for docs/explain with the built CLI
+npm run dogfood    # clean the checks, rebuild, generate, then run them
 npm run checks     # typecheck + generate + test
 ```
 

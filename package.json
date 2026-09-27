@@ -14,11 +14,13 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "rm -rf packages/core/dist packages/adapters/vitest/dist packages/cli/dist",
+    "clean:checks": "rm -f tests/explain/*.test.ts",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
     "livingdoc": "tsx packages/cli/src/bin.ts",
     "generate": "node packages/cli/dist/bin.js generate",
+    "dogfood": "npm run clean:checks && npm run typecheck && npm run generate && vitest run tests/",
     "checks": "npm run typecheck && npm run generate && npm test"
   },
   "devDependencies": {
