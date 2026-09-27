@@ -105,8 +105,23 @@ Example:
 
 - a code :=\`"SAVE10"\` and the file !!\`toBe expected\`
 
-  expected :=
+  ~~~expected :=
+  hello
+  world
   ~~~
+`
+
+const withFencedInputLang = `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+Example:
+
+- a code :=\`"SAVE10"\` and the file !!\`toBe expected\`
+
+  ~~~ts expected :=
   hello
   world
   ~~~
@@ -234,8 +249,11 @@ describe('livingdoc generate', () => {
     expect(content).not.toContain('expect(')
   })
 
-  it('binds a fenced block as a string', () => {
-    writeFileSync(fixture, withFencedInput)
+  it.each([
+    ['a bare name', withFencedInput],
+    ['a language and a name', withFencedInputLang],
+  ])('binds a fenced block as a string: %s', (_form, document) => {
+    writeFileSync(fixture, document)
 
     generate(fixture)
 

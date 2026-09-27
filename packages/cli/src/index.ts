@@ -131,7 +131,7 @@ type Token =
 type Part =
   | { type: 'text'; value: string }
   | { type: 'inlineCode'; value: string }
-  | { type: 'fencedCode'; value: string }
+  | { type: 'fencedCode'; value: string; info: string }
 
 function generateTest(title: string, bullets: Nodes[], backend: string): string {
   const tokens = bullets.flatMap((bullet) => bulletTokens(bullet))
@@ -230,10 +230,11 @@ function bulletTokens(item: Nodes): Token[] {
       }
       pending = undefined
     } else if (part.type === 'fencedCode') {
-      if (pending?.kind === 'input') {
+      const input = part.info.match(/([A-Za-z_]\w*)\s*:=$/)
+      if (input?.[1]) {
         parsed.push({
           kind: 'input',
-          name: pending.name,
+          name: input[1],
           value: part.value,
           literal: true,
         })
@@ -245,7 +246,10 @@ function bulletTokens(item: Nodes): Token[] {
 }
 
 function parts(node: Nodes): Part[] {
-  if (node.type === 'code') return [{ type: 'fencedCode', value: node.value }]
+  if (node.type === 'code') {
+    const info = [node.lang, node.meta].filter(Boolean).join(' ')
+    return [{ type: 'fencedCode', value: node.value, info }]
+  }
   if (node.type === 'inlineCode') return [{ type: 'inlineCode', value: node.value }]
   if (node.type === 'text') return [{ type: 'text', value: node.value }]
   if ('children' in node) return node.children.flatMap(parts)

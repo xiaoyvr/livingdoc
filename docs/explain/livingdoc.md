@@ -12,8 +12,7 @@ Example:
 - a document with heading :=`"Applying a discount"`, the generated file !!`toContain 'describe("Applying a discount"'`
 - a document with heading :=`"Applying a discount"`, the generated file !!`toBe expected`
 
-  expected :=
-  ```
+  ```js expected :=
   import { describe, it } from 'vitest'
 
   describe("Applying a discount", () => {
