@@ -176,7 +176,7 @@ export const directives = {
 ```
 
 The framework's own assertions (`toBe`, `toEqual`, `toContain`, …) are **not**
-consumer code — the document writes them directly and the adapter transcribes
+consumer code — the document writes them directly and the generator transcribes
 them (see §8).
 
 ## 8. Code generation: language core + framework generator
@@ -341,7 +341,7 @@ failing test; livingdoc never spawns the runner.
 1. **A document cannot be false** — a red assertion fails the generated test,
    and therefore the consumer's test run.
 2. **A closed vocabulary** — parameter names and directive names are declared by
-   the backend, and assertion verbs come from the framework the adapter knows;
+   the backend, and assertion verbs come from the framework the generator knows;
    any undeclared name is red. Doc and code share one vocabulary, and drift is
    caught both ways.
 3. **Framework-native** — the document writes the framework's own assertions;
