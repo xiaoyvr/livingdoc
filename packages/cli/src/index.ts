@@ -125,8 +125,13 @@ function exampleBullets(tree: Root): Nodes[] {
 }
 
 type Token =
-  | { kind: 'input'; name: string; value: string }
+  | { kind: 'input'; name: string; value: string; literal?: boolean }
   | { kind: 'assertion'; verb: string; args: string }
+
+type Part =
+  | { type: 'text'; value: string }
+  | { type: 'inlineCode'; value: string }
+  | { type: 'fencedCode'; value: string }
 
 function generateTest(title: string, bullets: Nodes[], backend: string): string {
   const tokens = bullets.flatMap((bullet) => bulletTokens(bullet))
@@ -144,7 +149,8 @@ function generateTest(title: string, bullets: Nodes[], backend: string): string 
       (token): token is Extract<Token, { kind: 'input' }> => token.kind === 'input',
     )
     for (const input of inputs) {
-      output.push(`    const ${input.name} = ${input.value}`)
+      const value = input.literal ? JSON.stringify(input.value) : input.value
+      output.push(`    const ${input.name} = ${value}`)
     }
     const args = inputs.map((input) => input.name).join(', ')
     output.push(
@@ -176,25 +182,24 @@ function plainText(node: Nodes): string {
 function bulletTitle(item: Nodes): string {
   let out = ''
   let pending: 'input' | 'assertion' | undefined
-  for (const node of flattenInline(item)) {
-    if (node.type === 'text') {
-      const input = node.value.match(/([A-Za-z_]\w*)\s*:=$/)
-      if (/!!$/.test(node.value)) {
+  for (const part of parts(item)) {
+    if (part.type === 'text') {
+      const input = part.value.match(/([A-Za-z_]\w*)\s*:=$/)
+      if (/!!$/.test(part.value)) {
         pending = 'assertion'
-        out += node.value.slice(0, -2)
+        out += part.value.slice(0, -2)
       } else if (input) {
         pending = 'input'
-        out += `${node.value.slice(0, input.index ?? 0)}${input[1] ?? ''} `
+        out += `${part.value.slice(0, input.index ?? 0)}${input[1] ?? ''} `
       } else {
         pending = undefined
-        out += node.value
+        out += part.value
       }
-    } else if (node.type === 'inlineCode') {
-      out += pending === 'input' ? unquote(node.value.trim()) : node.value.trim()
+    } else if (part.type === 'inlineCode') {
+      out += pending === 'input' ? unquote(part.value.trim()) : part.value.trim()
       pending = undefined
     } else {
       pending = undefined
-      out += plainText(node)
     }
   }
   return out.trim()
@@ -206,34 +211,45 @@ function bulletTokens(item: Nodes): Token[] {
     | { kind: 'input'; name: string }
     | { kind: 'assertion' }
     | undefined
-  for (const node of flattenInline(item)) {
-    if (node.type === 'text') {
-      const input = node.value.match(/([A-Za-z_]\w*)\s*:=$/)
-      if (/!!$/.test(node.value)) {
+  for (const part of parts(item)) {
+    if (part.type === 'text') {
+      const input = part.value.match(/([A-Za-z_]\w*)\s*:=$/)
+      if (/!!$/.test(part.value)) {
         pending = { kind: 'assertion' }
       } else if (input?.[1]) {
         pending = { kind: 'input', name: input[1] }
       } else {
         pending = undefined
       }
-    } else if (node.type === 'inlineCode') {
+    } else if (part.type === 'inlineCode') {
       if (pending?.kind === 'assertion') {
-        const [verb, ...rest] = node.value.trim().split(/\s+/)
+        const [verb, ...rest] = part.value.trim().split(/\s+/)
         if (verb) parsed.push({ kind: 'assertion', verb, args: rest.join(' ') })
       } else if (pending?.kind === 'input') {
-        parsed.push({ kind: 'input', name: pending.name, value: node.value })
+        parsed.push({ kind: 'input', name: pending.name, value: part.value })
       }
       pending = undefined
-    } else {
+    } else if (part.type === 'fencedCode') {
+      if (pending?.kind === 'input') {
+        parsed.push({
+          kind: 'input',
+          name: pending.name,
+          value: part.value,
+          literal: true,
+        })
+      }
       pending = undefined
     }
   }
   return parsed
 }
 
-function flattenInline(node: Nodes): Nodes[] {
-  if ('children' in node) return node.children.flatMap(flattenInline)
-  return [node]
+function parts(node: Nodes): Part[] {
+  if (node.type === 'code') return [{ type: 'fencedCode', value: node.value }]
+  if (node.type === 'inlineCode') return [{ type: 'inlineCode', value: node.value }]
+  if (node.type === 'text') return [{ type: 'text', value: node.value }]
+  if ('children' in node) return node.children.flatMap(parts)
+  return []
 }
 
 function unquote(value: string): string {

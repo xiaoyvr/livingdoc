@@ -95,6 +95,23 @@ Example:
 - run \`toBe SAVE10\` now
 `
 
+const withFencedInput = `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+Example:
+
+- a code :=\`"SAVE10"\` and the file !!\`toBe expected\`
+
+  expected :=
+  ~~~
+  hello
+  world
+  ~~~
+`
+
 const consumerBackend = `export const bindings = {
   "walking-skeleton": {
     params: ["code"],
@@ -215,5 +232,15 @@ describe('livingdoc generate', () => {
 
     const content = readFileSync(generated, 'utf8')
     expect(content).not.toContain('expect(')
+  })
+
+  it('binds a fenced block as a string', () => {
+    writeFileSync(fixture, withFencedInput)
+
+    generate(fixture)
+
+    const content = readFileSync(generated, 'utf8')
+    expect(content).toContain('const expected = "hello\\nworld"')
+    expect(content).toContain('expect(outputs.result).toBe(expected)')
   })
 })

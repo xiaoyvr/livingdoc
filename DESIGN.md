@@ -85,6 +85,7 @@ format-independent.
 | `Example:` | starts a group of test cases |
 | `- …` (bullet under `Example:`) | one test case (one `it`) |
 | ``name :=`expr` `` | an input; `name` is the word before `:=`; `expr` is a native expression, verbatim |
+| `name :=` + fenced block | a multi-line input; the block's content is the value, as a string |
 | ``!!`expr` `` | an assertion; `expr` is a framework assertion or consumer directive |
 | any other code span | prose, never executed |
 
@@ -109,6 +110,10 @@ bullet without tokens is prose and is never executed.
   `total * 0.9` (one expression). ``!!`calls "pricing service" "Once"` `` →
   verb `calls`, args `"pricing service" "Once"` (the verb splits its own
   arguments).
+- *fenced inputs* — `name :=` before a fenced code block binds the block's
+  content as a string, so a whole multi-line value (a file, a payload) can be
+  written in the document. The trailing newline follows CommonMark: a blank
+  line before the closing fence keeps one.
 
 Disambiguation: the sigil is glued to the opening backtick — `:=` for an
 input, `!!` for an assertion. A space breaks the glue and leaves the code span
