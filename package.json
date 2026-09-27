@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "rm -rf packages/core/dist packages/adapters/vitest/dist packages/cli/dist",
-    "clean:checks": "rm -f tests/explain/*.test.ts",
+    "clean:checks": "rm -f tests/explain/vitest/*.test.ts",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",

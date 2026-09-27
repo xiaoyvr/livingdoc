@@ -5,7 +5,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { generate } from '@livingdoc/cli'
 
 const config = `livingdocs = "docs"
-backend = "tests"
+code_path = "tests"
+
+[[backend.vitest]]
+name = "vitest"
 `
 
 const document = `---
@@ -36,7 +39,7 @@ describe('livingdoc configuration', () => {
   beforeEach(() => {
     root = mkdtempSync(join(tmpdir(), 'livingdoc-config-'))
     mkdirSync(join(root, 'docs'))
-    mkdirSync(join(root, 'tests'))
+    mkdirSync(join(root, 'tests', 'vitest'), { recursive: true })
     writeFileSync(join(root, 'livingdoc.toml'), config)
     fixture = join(root, 'docs', 'fixture.md')
   })
@@ -45,26 +48,35 @@ describe('livingdoc configuration', () => {
     rmSync(root, { recursive: true, force: true })
   })
 
-  it('generates the check into the backend folder from the config', () => {
+  it('generates a named backend from the config', () => {
+    writeFileSync(join(root, 'tests', 'vitest', 'backend.ts'), backend)
     writeFileSync(fixture, document)
-    writeFileSync(join(root, 'tests', 'livingdoc.backend.ts'), backend)
 
     expect(generate(fixture)).toBe(0)
-    expect(existsSync(join(root, 'tests', 'fixture.test.ts'))).toBe(true)
+    expect(existsSync(join(root, 'tests', 'vitest', 'fixture.test.ts'))).toBe(true)
   })
 
-  it('reports a missing backend folder', () => {
+  it('reports a missing backend file', () => {
     writeFileSync(fixture, document)
-    rmSync(join(root, 'tests'), { recursive: true, force: true })
 
-    expect(() => generate(fixture)).toThrow(/backend folder not found/)
+    expect(() => generate(fixture)).toThrow(/backend file not found/)
+  })
+
+  it('reports an unknown framework', () => {
+    writeFileSync(
+      join(root, 'livingdoc.toml'),
+      `livingdocs = "docs"\ncode_path = "tests"\n\n[[backend.jest]]\nname = "web"\n`,
+    )
+    writeFileSync(fixture, document)
+
+    expect(() => generate(fixture)).toThrow(/unknown framework/)
   })
 
   it('reports a missing livingdocs folder', () => {
     writeFileSync(fixture, document)
     writeFileSync(
       join(root, 'livingdoc.toml'),
-      `livingdocs = "missing"\nbackend = "tests"\n`,
+      `livingdocs = "missing"\ncode_path = "tests"\n\n[[backend.vitest]]\nname = "vitest"\n`,
     )
 
     expect(() => generate(fixture)).toThrow(/livingdocs folder not found/)
@@ -74,7 +86,7 @@ describe('livingdoc configuration', () => {
     writeFileSync(fixture, document)
     writeFileSync(
       join(root, 'livingdoc.toml'),
-      `livingdocs = "docs"\nbackend = "${join(root, 'tests')}"\n`,
+      `livingdocs = "docs"\ncode_path = "${join(root, 'tests')}"\n\n[[backend.vitest]]\nname = "vitest"\n`,
     )
 
     expect(() => generate(fixture)).toThrow(/relative/)

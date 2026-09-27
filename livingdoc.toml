@@ -1,3 +1,6 @@
 # livingdoc checking livingdoc.
 livingdocs = "docs/explain"
-backend    = "tests/explain"
+code_path  = "tests/explain"
+
+[[backend.vitest]]
+name = "vitest"

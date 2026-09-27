@@ -87,7 +87,7 @@ name = "pricing"
 
 ## Implementation tasks
 
-- [ ] 1. One named backend generates its test file, end to end. A
+- [x] 1. One named backend generates its test file, end to end. A
       `livingdoc.toml` with `code_path` and one `[[backend.vitest]] name = "…"`:
       `generate` resolves `<code_path>/<name>`, the framework's `backend.ts`, and
       writes `<code_path>/<name>/<doc>.test.ts` importing `./backend`. The vitest

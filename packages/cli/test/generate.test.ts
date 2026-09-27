@@ -12,7 +12,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { generate } from '@livingdoc/cli'
 
 const config = `livingdocs = "docs"
-backend = "tests"
+code_path = "tests"
+
+[[backend.vitest]]
+name = "vitest"
 `
 
 const optedIn = `---
@@ -146,11 +149,11 @@ describe('livingdoc generate', () => {
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), 'livingdoc-check-'))
     mkdirSync(join(dir, 'docs'))
-    mkdirSync(join(dir, 'tests'))
+    mkdirSync(join(dir, 'tests', 'vitest'), { recursive: true })
     writeFileSync(join(dir, 'livingdoc.toml'), config)
     fixture = join(dir, 'docs', 'fixture.md')
-    generated = join(dir, 'tests', 'fixture.test.ts')
-    writeFileSync(join(dir, 'tests', 'livingdoc.backend.ts'), consumerBackend)
+    generated = join(dir, 'tests', 'vitest', 'fixture.test.ts')
+    writeFileSync(join(dir, 'tests', 'vitest', 'backend.ts'), consumerBackend)
   })
 
   afterEach(() => {
