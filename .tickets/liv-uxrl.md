@@ -16,10 +16,11 @@ and exercise several systems.
 
 ## Acceptance criteria
 
-- **Given** a `livingdoc.toml` whose `livingdocs` folder holds a document and
-  whose `[[backend]]` entries each name a `path` and an `adapter`
+- **Given** a `livingdoc.toml` with a `livingdocs` folder, a top-level
+  `backend_path`, and `[[backend]]` entries that each name an `adapter`
   **When** I run `livingdoc generate`
-  **Then** each backend's bindings are resolved through that adapter
+  **Then** each backend's folder is `<backend_path>/<name>` and its bindings are
+  resolved through that adapter
 
 - **Given** a document with an `Example (web):` group and an
   `Example (pricing):` group
@@ -35,23 +36,40 @@ and exercise several systems.
   **When** I run `livingdoc generate`
   **Then** the alias is reported as an error
 
+## Config
+
+```toml
+livingdocs   = "docs/explain"
+backend_path = "tests"
+
+[[backend]]
+name    = "web"
+adapter = "vitest"     # folder: tests/web
+
+[[backend]]
+name    = "pricing"
+adapter = "pytest"     # folder: tests/pricing
+```
+
+- `backend_path` is the single root; a backend's folder defaults to
+  `<backend_path>/<name>`, so `path` is not repeated per backend.
+- The adapter is named explicitly, not inferred from the backend file's
+  extension — vitest and jest are both `.ts`.
+- The flat single-backend form keeps working: `livingdocs`, `backend_path`,
+  and `adapter`, with the sole backend's folder being `backend_path` itself.
+
 ## Scope
 
-- `livingdoc.toml` gains `[[backend]]` entries: `name`, `path`, `adapter`.
-  The adapter is named explicitly, not inferred from the backend file's
-  extension — vitest and jest are both `.ts`.
 - `Example (name):` marks the backend for a group. `Example:` alone uses the
   default backend: the only backend, or the one named `default`.
 - Generation is per (document, backend): a document that touches two backends
   produces two files, each in that backend's folder, named by that adapter.
 - The adapter owns its backend filename, generated filename, import, binding
   call, assertion shape, and verb set.
-- Realize the boundary this needs and DESIGN §8 has promised: move the token
-  model and parser into `@livingdoc/core`, move the vitest codegen into
-  `@livingdoc/adapter-vitest`, and register adapters by name. Only `vitest` is
-  registered here; this story must not add a second language.
-- The flat `livingdocs`/`backend` config stays valid as a single default
-  backend whose adapter is `vitest`.
+- Realize the boundary DESIGN §8 promised: move the token model and parser into
+  `@livingdoc/core`, move the vitest codegen into `@livingdoc/adapter-vitest`,
+  and register adapters by name. Only `vitest` is registered here; this story
+  must not add a second language.
 
 ## Out of scope
 
@@ -60,13 +78,13 @@ and exercise several systems.
 
 ## Implementation tasks
 
-- [ ] 1. Config: parse `[[backend]]` (`name`, `path`, `adapter`) alongside the
-      flat single-backend form.
+- [ ] 1. Config: parse the top-level `backend_path` plus `[[backend]]`
+      (`name`, `adapter`), and the flat single-backend form.
 - [ ] 2. Adapter boundary: `@livingdoc/core` owns the token model and parser;
-      `@livingdoc/adapter-vitest` owns the vitest codegen and its verbs;
-      an adapter registry selects by name.
+      `@livingdoc/adapter-vitest` owns the vitest codegen and its verbs; an
+      adapter registry selects by name.
 - [ ] 3. The `Example (name):` marker selects the backend for a group.
 - [ ] 4. Generation per (document, backend): group cases per backend, one file
-      per backend in its folder.
+      per backend in `<backend_path>/<name>`.
 - [ ] 5. An unknown alias is a generate-time error.
 - [ ] 6. Docs: DESIGN §6/§13/§14.
