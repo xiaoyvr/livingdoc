@@ -56,6 +56,8 @@ name = "pricing"
   backend under it uses that framework, so two backends can share `vitest`.
 - A backend's folder is `<code_path>/<name>` and its backend file is
   `backend.<ext>`. The framework is not part of the path.
+- A backend may be named after its framework; this repository's backend is
+  `[[backend.vitest]]` named `vitest`.
 - `Example:` with no marker uses the first configured backend.
 
 ## Vocabulary
@@ -91,4 +93,8 @@ name = "pricing"
 - [ ] 4. Generation per (document, backend): `<code_path>/<name>/backend.<ext>`
       and one generated file per backend in `<code_path>/<name>`.
 - [ ] 5. Unknown framework and unknown alias are generate-time errors.
-- [ ] 6. Migrate the repository's `livingdoc.toml`, then DESIGN §6/§13/§14.
+- [ ] 6. Migrate the repository: `livingdoc.toml` becomes
+      `code_path = "tests/explain"` with `[[backend.vitest]] name = "vitest"`,
+      and remove the empty `@livingdoc/core` / `@livingdoc/adapter-vitest`
+      packages (the generators live in the CLI).
+- [ ] 7. Docs: DESIGN §6/§8/§9/§13/§14 and the README layout.

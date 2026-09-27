@@ -31,8 +31,8 @@ Deferred findings from the liv-ybyq and liv-ter0 implementation reviews.
 - `Config.root` is written and never read; `loadConfig` threads `from` only to
   build the error string.
 - A malformed `livingdoc.toml` surfaces the raw `smol-toml` message.
-- `resolveBackend` matches on `startsWith('livingdoc.backend.')` without a file
-  check, and its message does not distinguish none from several.
+- `resolveBackend` resolves the backend file by backend name and framework;
+  revisit its missing/duplicate handling once liv-uxrl lands.
 
 ## Layout and lifecycle
 
@@ -45,9 +45,9 @@ Deferred findings from the liv-ybyq and liv-ter0 implementation reviews.
 
 ## Architecture
 
-- The generator lives in `@livingdoc/cli`; `@livingdoc/core` and
-  `@livingdoc/adapter-vitest` are empty stubs. DESIGN 8's language-core/adapter
-  split is not realized in code. liv-f6ao is expected to pay this down.
+- The generators live in `@livingdoc/cli` as the `frameworks/` modules; liv-uxrl
+  removes the empty `@livingdoc/core` and `@livingdoc/adapter-vitest` stubs.
+  "Adapter" is reserved for a future runtime SDK.
 
 ## Coverage
 

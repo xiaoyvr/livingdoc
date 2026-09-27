@@ -179,17 +179,17 @@ The framework's own assertions (`toBe`, `toEqual`, `toContain`, …) are **not**
 consumer code — the document writes them directly and the adapter transcribes
 them (see §8).
 
-## 8. Code generation: language core + framework adapter
+## 8. Code generation: language core + framework generator
 
 livingdoc generates test code in two layers:
 
 1. **Language core** (framework-agnostic) — bind inputs as variables, call the
    binding, emit the expectation expression as native code.
-2. **Framework adapter** — transcribe the document's verbs into the framework's
-   assertion form, directly, with no translation.
+2. **Framework generator** — transcribe the document's verbs into the
+   framework's assertion form, directly, with no translation.
 
 ```js
-// jest adapter (JavaScript) — the doc's !!`toBe total * 0.9`
+// jest generator (JavaScript) — the doc's !!`toBe total * 0.9`
 describe("Applying a discount", () => {
   it("applying a SAVE10 code to a $100 cart", () => {
     const code = "SAVE10";
@@ -202,14 +202,14 @@ describe("Applying a discount", () => {
 });
 ```
 
-The verb `toBe` is used **as-is** — the adapter only knows *where* a verb goes
+The verb `toBe` is used **as-is** — the generator only knows *where* a verb goes
 (`expect(SUBJECT).VERB(ARGS)`) and *which* verbs belong to its framework. It
 does not map a universal `is` to `toBe`; the document said `toBe`, and `toBe`
 is what runs.
 
-## 9. The framework adapter
+## 9. The framework generator
 
-Each adapter knows two things: its framework's assertion *shape*, and its
+Each generator knows two things: its framework's assertion *shape*, and its
 assertion *verbs*.
 
 | framework | shape | verbs (examples) |
@@ -219,7 +219,7 @@ assertion *verbs*.
 | Catch2 | `REQUIRE(SUBJECT VERB ARGS)` | `==`, `!=`, `<=` |
 
 A document is bound to one framework, so it writes that framework's verbs
-directly. The adapter transcribes:
+directly. The generator transcribes:
 
 ```
 !!`toBe total * 0.9`          →  expect(result).toBe(total * 0.9)     (jest)
@@ -231,8 +231,8 @@ Consumer directives (`calls`) are transcribed as direct calls —
 mismatch exactly like a framework assertion.
 
 The declared vocabulary is therefore: **the framework's verbs** (known to the
-adapter) plus **the consumer's directives** (from the backend). Any other verb
-is red: "no assertion `foo`".
+generator) plus **the consumer's directives** (from the backend). Any other
+verb is red: "no assertion `foo`".
 
 ## 10. How one bullet is generated
 
@@ -317,7 +317,9 @@ name = "pricing"
   is `<code_path>/<name>`, holding `backend.<ext>` and the generated tests.
 - **`[[backend.<framework>]]`** — one entry per backend, naming it. The table
   key is the framework (language and test runner); every backend under it uses
-  that framework, so several backends can share one.
+  that framework, so several backends can share one. A backend may be named
+  after its framework (this repository uses `[[backend.vitest]] name =
+  "vitest"`).
 
 Paths are resolved relative to `livingdoc.toml`.
 
