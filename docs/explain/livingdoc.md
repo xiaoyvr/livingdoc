@@ -2,7 +2,7 @@
 livingdoc: true
 ---
 
-# Generating a check
+# Generating a test file
 
 `livingdoc generate` writes a test file for each document. The file's
 `describe` is the document's heading.

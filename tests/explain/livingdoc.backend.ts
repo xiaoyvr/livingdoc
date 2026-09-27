@@ -35,7 +35,7 @@ function describeOf(source: string): string {
 }
 
 export const bindings = {
-  'generating-a-check': {
+  'generating-a-test-file': {
     params: ['heading'],
     run({ heading }: { heading: string }) {
       const dir = project(heading)
