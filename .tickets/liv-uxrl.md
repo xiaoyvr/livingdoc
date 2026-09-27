@@ -51,17 +51,16 @@ name    = "pricing"
 adapter = "pytest"     # folder: tests/pricing
 ```
 
-- `backend_path` is the single root; a backend's folder defaults to
-  `<backend_path>/<name>`, so `path` is not repeated per backend.
+- `backend_path` is the single root; a backend's folder is
+  `<backend_path>/<name>`.
 - The adapter is named explicitly, not inferred from the backend file's
   extension — vitest and jest are both `.ts`.
-- The flat single-backend form keeps working: `livingdocs`, `backend_path`,
-  and `adapter`, with the sole backend's folder being `backend_path` itself.
+- There is no flat form: a single backend is still a `[[backend]]` entry.
+  `Example:` with no marker uses the sole backend, or the one named `default`.
 
 ## Scope
 
-- `Example (name):` marks the backend for a group. `Example:` alone uses the
-  default backend: the only backend, or the one named `default`.
+- `Example (name):` marks the backend for a group.
 - Generation is per (document, backend): a document that touches two backends
   produces two files, each in that backend's folder, named by that adapter.
 - The adapter owns its backend filename, generated filename, import, binding
@@ -70,6 +69,8 @@ adapter = "pytest"     # folder: tests/pricing
   `@livingdoc/core`, move the vitest codegen into `@livingdoc/adapter-vitest`,
   and register adapters by name. Only `vitest` is registered here; this story
   must not add a second language.
+- Migrate this repository's own `livingdoc.toml` to the new shape (one
+  `[[backend]]` for `tests/explain`).
 
 ## Out of scope
 
@@ -79,7 +80,7 @@ adapter = "pytest"     # folder: tests/pricing
 ## Implementation tasks
 
 - [ ] 1. Config: parse the top-level `backend_path` plus `[[backend]]`
-      (`name`, `adapter`), and the flat single-backend form.
+      (`name`, `adapter`).
 - [ ] 2. Adapter boundary: `@livingdoc/core` owns the token model and parser;
       `@livingdoc/adapter-vitest` owns the vitest codegen and its verbs; an
       adapter registry selects by name.
@@ -87,4 +88,5 @@ adapter = "pytest"     # folder: tests/pricing
 - [ ] 4. Generation per (document, backend): group cases per backend, one file
       per backend in `<backend_path>/<name>`.
 - [ ] 5. An unknown alias is a generate-time error.
-- [ ] 6. Docs: DESIGN §6/§13/§14.
+- [ ] 6. Migrate the repository's `livingdoc.toml`, then docs: DESIGN
+      §6/§13/§14.
