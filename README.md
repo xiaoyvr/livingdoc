@@ -4,23 +4,21 @@
 
 `livingdoc` turns the important behaviors of a system into living
 documentation: you describe them in ordinary prose, mark the inputs and
-expectations, and livingdoc executes the behavior against your real code at
-build time. See [DESIGN.md](./DESIGN.md) for the full design.
+expectations, and livingdoc generates the tests that verify them against your
+real code. See [DESIGN.md](./DESIGN.md) for the full design.
 
 ## Repository layout
 
 ```
 packages/
-  core/                  @livingdoc/core — tokenizer, parser, document model
-  adapters/
-    vitest/              @livingdoc/adapter-vitest — TS + Vitest adapter
   cli/                   @livingdoc/cli — the `livingdoc` command
+    src/document.ts      markdown parsing and the token model
+    src/frameworks/      one generator per framework (`vitest`, …)
 .tickets/                work items, tracked with `tk` (run `tk help`)
 ```
 
-`@livingdoc/core` is framework-agnostic. Each language/framework adapter lives
-in its own folder under `packages/adapters/` (design §8–9). See
-[`packages/adapters/README.md`](./packages/adapters/README.md).
+The CLI is a modular monolith: `document.ts` is framework-agnostic, and each
+framework's generator lives under `src/frameworks/` (design §8–9).
 
 ## Development
 

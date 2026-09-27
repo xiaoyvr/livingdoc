@@ -8,12 +8,11 @@
     "node": ">=22"
   },
   "workspaces": [
-    "packages/*",
-    "packages/adapters/*"
+    "packages/*"
   ],
   "scripts": {
     "build": "tsc -b",
-    "clean": "rm -rf packages/core/dist packages/adapters/vitest/dist packages/cli/dist",
+    "clean": "rm -rf packages/cli/dist",
     "clean:checks": "rm -f tests/explain/vitest/*.test.ts",
     "typecheck": "tsc -b",
     "test": "vitest run",

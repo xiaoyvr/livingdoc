@@ -97,6 +97,6 @@ name = "pricing"
       `Example (pricing):` groups: each group's cases are written into that
       backend's file, a bare `Example:` uses the first backend, and an unknown
       alias errors. One document produces two files.
-- [ ] 3. Remove the empty `@livingdoc/core` / `@livingdoc/adapter-vitest`
+- [x] 3. Remove the empty `@livingdoc/core` / `@livingdoc/adapter-vitest`
       packages (the generators live in the CLI), refresh the README layout, and
       verify DESIGN §6/§8/§9/§13/§14.
