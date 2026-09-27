@@ -10,23 +10,23 @@ assignee: xiaoyvr
 ---
 # Multiple backends in one document
 
-**As a** documentation author, **I want** to name each system under test and
-mark which one an example group targets, **so that** one document can explain
-and exercise several systems.
+**As a** documentation author, **I want** to name each backend and mark which
+one an `Example:` group targets, **so that** one document can explain and
+exercise several systems.
 
 ## Acceptance criteria
 
-- **Given** a `livingdoc.toml` with a `livingdocs` folder, a top-level
-  `backend_path`, and `[[backend]]` entries that each name an `adapter`
+- **Given** a `livingdoc.toml` with `livingdocs` and `code_path`, and
+  `[[backend.<framework>]]` entries naming each backend
   **When** I run `livingdoc generate`
-  **Then** each backend's folder is `<backend_path>/<name>` and its bindings are
-  resolved through that adapter
+  **Then** each backend's folder is `<code_path>/<name>` and its bindings are
+  resolved with that framework
 
 - **Given** a document with an `Example (web):` group and an
   `Example (pricing):` group
   **When** I run `livingdoc generate`
   **Then** each group's cases are written into its backend's folder with that
-  adapter's file naming
+  framework's file naming
 
 - **Given** an `Example:` with no marker
   **When** I run `livingdoc generate`
@@ -39,54 +39,56 @@ and exercise several systems.
 ## Config
 
 ```toml
-livingdocs   = "docs/explain"
-backend_path = "tests"
+livingdocs = "docs/explain"
+code_path  = "tests/explain"
 
-[[backend]]
-name    = "web"
-adapter = "vitest"     # folder: tests/web
+[[backend.vitest]]
+name = "web"
 
-[[backend]]
-name    = "pricing"
-adapter = "pytest"     # folder: tests/pricing
+[[backend.vitest]]
+name = "admin"
+
+[[backend.pytest]]
+name = "pricing"
 ```
 
-- `backend_path` is the single root; a backend's folder is
-  `<backend_path>/<name>`.
-- The adapter is named explicitly, not inferred from the backend file's
-  extension — vitest and jest are both `.ts`.
-- There is no flat form: a single backend is still a `[[backend]]` entry.
-  `Example:` with no marker uses the first configured backend.
+- The table key is the **framework** — the language and its test runner. Every
+  backend under it uses that framework, so two backends can share `vitest`.
+- A backend's folder is `<code_path>/<name>` and its backend file is
+  `backend.<ext>`. The framework is not part of the path.
+- `Example:` with no marker uses the first configured backend.
+
+## Vocabulary
+
+- **backend** — a named system under test with one framework (`web`, `pricing`).
+- **framework** — the language and test runner (`vitest`, `pytest`, `jest`).
+- **adapter** — reserved for a future runtime SDK that generated code would
+  import; not used in this story.
 
 ## Scope
 
 - `Example (name):` marks the backend for a group.
 - Generation is per (document, backend): a document that touches two backends
-  produces two files, each in that backend's folder, named by that adapter.
-- The adapter owns its backend filename, generated filename, import, binding
-  call, assertion shape, and verb set.
-- Realize the boundary DESIGN §8 promised: move the token model and parser into
-  `@livingdoc/core`, move the vitest codegen into `@livingdoc/adapter-vitest`,
-  and register adapters by name. Only `vitest` is registered here; this story
-  must not add a second language.
-- Migrate this repository's own `livingdoc.toml` to the new shape (one
-  `[[backend]]` for `tests/explain`).
+  produces two files, each in that backend's folder, named by its framework.
+- The framework owns the backend file extension, the generated filename, the
+  import, the binding call, the assertion shape, and the verbs.
+- Keep it a modular monolith: `packages/cli/src/document.ts` (parsing and token
+  model), `packages/cli/src/frameworks/<name>.ts` (one generator per framework),
+  `packages/cli/src/frameworks/index.ts` (the registry). No new packages. Only
+  `vitest` is registered here; this story must not add a second framework.
+- Migrate this repository's own `livingdoc.toml`.
 
 ## Out of scope
 
-- A second real adapter (liv-f6ao, pytest).
-- Per-case results (liv-hu8o), directives (liv-m0mf), rendering.
+- A second framework (liv-f6ao, pytest), per-case results (liv-hu8o), directives
+  (liv-m0mf), rendering.
 
 ## Implementation tasks
 
-- [ ] 1. Config: parse the top-level `backend_path` plus `[[backend]]`
-      (`name`, `adapter`).
-- [ ] 2. Adapter boundary: `@livingdoc/core` owns the token model and parser;
-      `@livingdoc/adapter-vitest` owns the vitest codegen and its verbs; an
-      adapter registry selects by name.
+- [ ] 1. Config: parse `code_path` and `[[backend.<framework>]]` (`name`).
+- [ ] 2. `frameworks/` registry keyed by framework name, with `vitest`.
 - [ ] 3. The `Example (name):` marker selects the backend for a group.
-- [ ] 4. Generation per (document, backend): group cases per backend, one file
-      per backend in `<backend_path>/<name>`.
-- [ ] 5. An unknown alias is a generate-time error.
-- [ ] 6. Migrate the repository's `livingdoc.toml`, then docs: DESIGN
-      §6/§13/§14.
+- [ ] 4. Generation per (document, backend): `<code_path>/<name>/backend.<ext>`
+      and one generated file per backend in `<code_path>/<name>`.
+- [ ] 5. Unknown framework and unknown alias are generate-time errors.
+- [ ] 6. Migrate the repository's `livingdoc.toml`, then DESIGN §6/§13/§14.

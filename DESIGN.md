@@ -139,6 +139,9 @@ The document's structure maps directly onto a test tree:
   (lowercase, whitespace → hyphen, digits kept, other punctuation dropped).
 - The **parameter names** locate the `it` (the parameterized test): the names in
   a bullet must match the binding's declared parameters.
+- `Example (name):` selects the backend for that group; `Example:` alone uses
+  the first configured backend. A document may hold groups for several
+  backends, and its cases are generated per backend.
 - The `it` **title** is the bullet's prose with input values substituted. Until
   rendering lands (§16.5) it still carries the raw assertion text, e.g. `toBe 90`.
 - A nested heading overrides the binding. A heading with no `Example:` bullets
@@ -293,37 +296,43 @@ binding body does.
 
 ## 13. Config
 
-One file at the project root, `livingdoc.toml`; the livingdocs folder and the
-backend folder are the key settings.
+One file at the project root, `livingdoc.toml`.
 
 ```toml
 # livingdoc.toml
-livingdocs = "docs"
-backend    = "tests"
+livingdocs = "docs/explain"
+code_path  = "tests/explain"
+
+[[backend.vitest]]
+name = "web"
+
+[[backend.pytest]]
+name = "pricing"
 ```
 
 - **`livingdocs`** — the folder whose `*.md` files are livingdoc documents.
-  `livingdoc generate` with no path generates a check for every opted-in
-  document under it.
-- **`backend`** — the folder holding the backend. livingdoc finds the backend
-  by its default name, `livingdoc.backend.<ext>`.
-- Paths are resolved relative to `livingdoc.toml`; generated checks are written
-  into `backend` as `<document>.test.ts`.
+  `livingdoc generate` with no path generates for every opted-in document under
+  it.
+- **`code_path`** — the root folder for the generated tests. A backend's folder
+  is `<code_path>/<name>`, holding `backend.<ext>` and the generated tests.
+- **`[[backend.<framework>]]`** — one entry per backend, naming it. The table
+  key is the framework (language and test runner); every backend under it uses
+  that framework, so several backends can share one.
 
-The framework adapter is not yet a setting; TypeScript + Vitest is the only
-target.
+Paths are resolved relative to `livingdoc.toml`.
 
 ## 14. Generating the checks
 
 ```
-livingdoc generate  # generate test code next to the backend
+livingdoc generate  # write the tests for every document and backend
 livingdoc render    # produce the static site with green/red baked in
 ```
 
-`generate` only writes the checks. They are part of the consumer's suite, so
-the consumer's own runner executes them and reports the result. A red assertion
-fails their build exactly like any other failing test; livingdoc never spawns
-the runner.
+A document that touches several backends produces one file per backend, in that
+backend's folder under `code_path`. `generate` only writes the checks. They are
+part of the consumer's suite, so the consumer's own runner executes them and
+reports the result. A red assertion fails their build exactly like any other
+failing test; livingdoc never spawns the runner.
 
 ## 15. Guarantees
 
