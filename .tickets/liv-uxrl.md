@@ -30,7 +30,7 @@ and exercise several systems.
 
 - **Given** an `Example:` with no marker
   **When** I run `livingdoc generate`
-  **Then** it uses the default backend
+  **Then** it uses the first configured backend
 
 - **Given** an `Example (unknown):` naming no configured backend
   **When** I run `livingdoc generate`
@@ -56,7 +56,7 @@ adapter = "pytest"     # folder: tests/pricing
 - The adapter is named explicitly, not inferred from the backend file's
   extension — vitest and jest are both `.ts`.
 - There is no flat form: a single backend is still a `[[backend]]` entry.
-  `Example:` with no marker uses the sole backend, or the one named `default`.
+  `Example:` with no marker uses the first configured backend.
 
 ## Scope
 
