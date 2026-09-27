@@ -1,7 +1,7 @@
 ---
 id: liv-l4s2
 status: open
-deps: [liv-ter0]
+deps: [liv-ter0, liv-0ou1]
 links: []
 created: 2026-09-26T23:00:28Z
 type: feature

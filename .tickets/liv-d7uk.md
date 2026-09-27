@@ -1,7 +1,7 @@
 ---
 id: liv-d7uk
 status: open
-deps: [liv-ybyq]
+deps: [liv-ybyq, liv-0ou1]
 links: []
 created: 2026-09-26T03:21:48Z
 type: feature
