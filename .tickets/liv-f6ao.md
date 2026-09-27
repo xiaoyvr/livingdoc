@@ -1,52 +1,54 @@
 ---
 id: liv-f6ao
 status: open
-deps: [liv-frgb]
+deps: [liv-frgb, liv-uxrl]
 links: []
 created: 2026-09-26T03:21:48Z
 type: feature
 priority: 0
 assignee: xiaoyvr
 ---
-# A second system under test: Python
+# The pytest adapter
 
-**As a** documentation author whose system is written in Python, **I want** the
-behaviors I document to be checked against my Python code, **so that** livingdoc
-verifies my project in the language it is actually written in, not only
-TypeScript.
-
-## Scope
-
-Basic, mirroring Story 1, for a Python system under test:
-
-- The `livingdoc check <file.md>` command against a Python project.
-- A document that opts in and contains one `Example:` bullet with one marked
-  input, written in Python's terms.
-- A check produced in Python and executed with the project's test framework.
-- The command reports the outcome and exits 0 on success, non-zero otherwise.
-
-Out of scope:
-
-- The consumer's binding and real assertions, expressions, multiple
-  bullets/headings, directives, per-case reporting, configuration, rendering.
+**As a** documentation author whose system is written in Python, **I want**
+livingdoc to generate pytest tests, **so that** my documented behaviors are
+checked in the language my project is written in, not only TypeScript.
 
 ## Acceptance criteria
 
-- **Given** a project whose system under test is Python and a document written
-  in Python's terms
-  **When** I run `livingdoc check`
-  **Then** a check is produced in Python
-  **And** it is executed with the project's test framework
-  **And** it passes and the command exits 0
+- **Given** a backend configured with `adapter = "pytest"` and a Python backend
+  file, and a document written in Python's terms
+  **When** I run `livingdoc generate`
+  **Then** a `test_<doc>.py` is written next to the backend
+  **And** running pytest on it passes
 
-- **Given** a project whose system under test is TypeScript and a document
-  written in TypeScript's terms
-  **When** I run `livingdoc check`
-  **Then** a check is produced in TypeScript
-  **And** it passes and the command exits 0
+- **Given** an expectation that no longer holds
+  **When** pytest runs
+  **Then** the generated test fails
 
-- **Given** a document written in one language's terms but checked against a
-  project whose system under test is another
-  **When** I run `livingdoc check`
-  **Then** the mismatch is reported, not silently accepted
+- **Given** an assertion whose verb pytest does not know
+  **When** I run `livingdoc generate`
+  **Then** the unknown verb is reported as an error
 
+## Scope
+
+- New `@livingdoc/adapter-pytest`, registered as `adapter = "pytest"`.
+- It owns its backend filename, generated filename (`test_<doc>.py`), import,
+  binding call, assertion shape (`assert outputs["result"] <verb> <args>`), and
+  verbs (`==`, `!=`, `in`).
+- Add `python3` + `pytest` to the flake devShell.
+- Verify by generating a fixture Python project and running pytest, for a pass
+  and a fail.
+
+## Out of scope
+
+- Multiple backends and the `Example (name):` marker (liv-uxrl).
+- Per-case results, directives, rendering.
+
+## Notes
+
+- Depends on liv-uxrl: the adapter registry, the explicit `adapter` setting, and
+  the core/adapter split do not exist yet.
+- A Python backend needs a module name Python can import; `livingdoc.backend`
+  is not one (module names cannot contain a dot), so the adapter picks the
+  backend filename.
