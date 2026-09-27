@@ -53,7 +53,7 @@ verbatim and ordinary prose and code spans are never mistaken for tokens.
 
 ## Implementation tasks
 
-- [ ] 1. Native tokens (AC1-AC3): tokenize the bullet's mdast inline nodes. A
+- [x] 1. Native tokens (AC1-AC3): tokenize the bullet's mdast inline nodes. A
       text node ending `name :=` (glued) before an `inlineCode` is an input; a
       text node ending `!!` before an `inlineCode` is an assertion. Generate
       from them and migrate the existing fixtures.

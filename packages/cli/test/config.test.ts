@@ -16,7 +16,7 @@ livingdoc: true
 
 Example:
 
-- a code {{ "SAVE10" }} is applied
+- a code :=\`"SAVE10"\` is applied
 `
 
 const backend = `export const bindings = {

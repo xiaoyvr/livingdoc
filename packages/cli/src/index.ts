@@ -13,9 +13,6 @@ import { parse as parseYaml } from 'yaml'
 
 const markdown = unified().use(remarkParse).use(remarkFrontmatter, ['yaml'])
 
-const INPUT_TOKEN = /\{\{(?!\s*!)([\s\S]*?)\}\}/g
-const ASSERTION_TOKEN = /\{\{!\s*([\s\S]*?)\s*\}\}/g
-
 export function check(file?: string): number {
   if (!file) return checkProject(process.cwd())
 
@@ -120,19 +117,24 @@ function slugify(text: string): string {
     .replace(/\s+/g, '-')
 }
 
-function exampleBullets(tree: Root): string[] {
+function exampleBullets(tree: Root): Nodes[] {
   const index = tree.children.findIndex(
     (node) => node.type === 'paragraph' && plainText(node).trim() === 'Example:',
   )
   if (index === -1) return []
   const next = tree.children[index + 1]
   if (!next || next.type !== 'list') return []
-  return next.children.map((item) => plainText(item).trim())
+  return next.children
 }
 
-function generateTest(title: string, bullets: string[], backend: string): string {
-  const assertions = bullets.flatMap((bullet) => bulletAssertions(bullet))
-  const vitest = ['describe', ...(assertions.length ? ['expect'] : []), 'it']
+type Token =
+  | { kind: 'input'; name: string; value: string }
+  | { kind: 'assertion'; verb: string; args: string }
+
+function generateTest(title: string, bullets: Nodes[], backend: string): string {
+  const tokens = bullets.flatMap((bullet) => bulletTokens(bullet))
+  const hasAssertion = tokens.some((token) => token.kind === 'assertion')
+  const vitest = ['describe', ...(hasAssertion ? ['expect'] : []), 'it']
   const output = [`import { ${vitest.join(', ')} } from 'vitest'`]
   if (bullets.length > 0) {
     output.push(`import { bindings } from './${parsePath(backend).name}'`)
@@ -140,7 +142,10 @@ function generateTest(title: string, bullets: string[], backend: string): string
   output.push('', `describe(${JSON.stringify(title)}, () => {`)
   for (const bullet of bullets) {
     output.push(`  it(${JSON.stringify(bulletTitle(bullet))}, () => {`)
-    const inputs = bulletInputs(bullet)
+    const bulletTokensList = bulletTokens(bullet)
+    const inputs = bulletTokensList.filter(
+      (token): token is Extract<Token, { kind: 'input' }> => token.kind === 'input',
+    )
     for (const input of inputs) {
       output.push(`    const ${input.name} = ${input.value}`)
     }
@@ -148,8 +153,10 @@ function generateTest(title: string, bullets: string[], backend: string): string
     output.push(
       `    const outputs = bindings[${JSON.stringify(slugify(title))}].run({ ${args} })`,
     )
-    for (const assertion of bulletAssertions(bullet)) {
-      output.push(`    expect(outputs.result).${assertion.verb}(${assertion.args})`)
+    for (const token of bulletTokensList) {
+      if (token.kind === 'assertion') {
+        output.push(`    expect(outputs.result).${token.verb}(${token.args})`)
+      }
     }
     output.push('  })')
   }
@@ -178,10 +185,67 @@ function plainText(node: Nodes): string {
   return ''
 }
 
-function bulletTitle(text: string): string {
-  return text
-    .replace(ASSERTION_TOKEN, (_match: string, body: string) => body.trim())
-    .replace(INPUT_TOKEN, (_match: string, body: string) => unquote(body.trim()))
+function bulletTitle(item: Nodes): string {
+  let out = ''
+  let pending: 'input' | 'assertion' | undefined
+  for (const node of flattenInline(item)) {
+    if (node.type === 'text') {
+      const input = node.value.match(/([A-Za-z_]\w*)\s*:=$/)
+      if (/!!$/.test(node.value)) {
+        pending = 'assertion'
+        out += node.value.slice(0, -2)
+      } else if (input) {
+        pending = 'input'
+        out += `${node.value.slice(0, input.index ?? 0)}${input[1] ?? ''} `
+      } else {
+        pending = undefined
+        out += node.value
+      }
+    } else if (node.type === 'inlineCode') {
+      out += pending === 'input' ? unquote(node.value.trim()) : node.value.trim()
+      pending = undefined
+    } else {
+      pending = undefined
+      out += plainText(node)
+    }
+  }
+  return out.trim()
+}
+
+function bulletTokens(item: Nodes): Token[] {
+  const parsed: Token[] = []
+  let pending:
+    | { kind: 'input'; name: string }
+    | { kind: 'assertion' }
+    | undefined
+  for (const node of flattenInline(item)) {
+    if (node.type === 'text') {
+      const input = node.value.match(/([A-Za-z_]\w*)\s*:=$/)
+      if (/!!$/.test(node.value)) {
+        pending = { kind: 'assertion' }
+      } else if (input?.[1]) {
+        pending = { kind: 'input', name: input[1] }
+      } else {
+        pending = undefined
+      }
+    } else if (node.type === 'inlineCode') {
+      if (pending?.kind === 'assertion') {
+        const [verb, ...rest] = node.value.trim().split(/\s+/)
+        if (verb) parsed.push({ kind: 'assertion', verb, args: rest.join(' ') })
+      } else if (pending?.kind === 'input') {
+        parsed.push({ kind: 'input', name: pending.name, value: node.value })
+      }
+      pending = undefined
+    } else {
+      pending = undefined
+    }
+  }
+  return parsed
+}
+
+function flattenInline(node: Nodes): Nodes[] {
+  if ('children' in node) return node.children.flatMap(flattenInline)
+  return [node]
 }
 
 function unquote(value: string): string {
@@ -190,31 +254,4 @@ function unquote(value: string): string {
   return (first === '"' || first === "'") && first === last
     ? value.slice(1, -1)
     : value
-}
-
-function bulletInputs(text: string): { name: string; value: string }[] {
-  const parsed: { name: string; value: string }[] = []
-  for (const match of text.matchAll(INPUT_TOKEN)) {
-    const name = previousWord(text, match.index ?? 0)
-    if (!name) continue
-    parsed.push({ name, value: (match[1] ?? '').trim() })
-  }
-  return parsed
-}
-
-function previousWord(text: string, index: number): string | undefined {
-  return text.slice(0, index).match(/([A-Za-z_]\w*)\s*$/)?.[1]
-}
-
-function bulletAssertions(
-  text: string,
-): { verb: string; args: string }[] {
-  const parsed: { verb: string; args: string }[] = []
-  for (const match of text.matchAll(ASSERTION_TOKEN)) {
-    const body = (match[1] ?? '').trim()
-    const [verb, ...rest] = body.split(/\s+/)
-    if (!verb) continue
-    parsed.push({ verb, args: rest.join(' ') })
-  }
-  return parsed
 }

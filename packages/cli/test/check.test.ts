@@ -37,7 +37,7 @@ livingdoc: true
 
 Example:
 
-- a code {{ "SAVE10" }} is applied
+- a code :=\`"SAVE10"\` is applied
 `
 
 const withAssertion = `---
@@ -48,7 +48,7 @@ livingdoc: true
 
 Example:
 
-- a code {{ "SAVE10" }} is applied, returning {{! toBe "OTHER" }}
+- a code :=\`"SAVE10"\` is applied, returning !!\`toBe "OTHER"\`
 `
 
 const withColonValue = `---
@@ -59,7 +59,7 @@ livingdoc: true
 
 Example:
 
-- a code {{ "http://x" }} is applied
+- a code :=\`"http://x"\` is applied
 `
 
 const withTwoAssertions = `---
@@ -70,7 +70,18 @@ livingdoc: true
 
 Example:
 
-- a code {{ "SAVE10" }} is applied, first {{! toBe "SAVE10" }} second {{! toBe "NOPE" }}
+- a code :=\`"SAVE10"\` is applied, first !!\`toBe "SAVE10"\` second !!\`toBe "NOPE"\`
+`
+
+const withNativeTokens = `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+Example:
+
+- a code :=\`"SAVE10"\` is applied, returning !!\`toBe "SAVE10"\`
 `
 
 const consumerBackend = `export const bindings = {
@@ -174,5 +185,15 @@ describe('livingdoc check', () => {
     writeFileSync(fixture, optedIn)
 
     expect(check(fixture)).not.toBe(0)
+  })
+
+  it('generates from a code span input and assertion', () => {
+    writeFileSync(fixture, withNativeTokens)
+
+    check(fixture)
+
+    const content = readFileSync(generated, 'utf8')
+    expect(content).toContain('const code = "SAVE10"')
+    expect(content).toContain('expect(outputs.result).toBe("SAVE10")')
   })
 })
