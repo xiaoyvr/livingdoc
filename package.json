@@ -18,8 +18,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "livingdoc": "tsx packages/cli/src/bin.ts",
-    "dogfood": "node packages/cli/dist/bin.js check",
-    "checks": "npm run typecheck && npm test && npm run dogfood"
+    "generate": "node packages/cli/dist/bin.js generate",
+    "checks": "npm run typecheck && npm run generate && npm test"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

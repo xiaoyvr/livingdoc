@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { check } from '@livingdoc/cli'
+import { generate } from '@livingdoc/cli'
 
 const config = `livingdocs = "docs"
 backend = "tests"
@@ -49,7 +49,7 @@ describe('livingdoc configuration', () => {
     writeFileSync(fixture, document)
     writeFileSync(join(root, 'tests', 'livingdoc.backend.ts'), backend)
 
-    expect(check(fixture)).toBe(0)
+    expect(generate(fixture)).toBe(0)
     expect(existsSync(join(root, 'tests', 'fixture.test.ts'))).toBe(true)
   })
 
@@ -57,7 +57,7 @@ describe('livingdoc configuration', () => {
     writeFileSync(fixture, document)
     rmSync(join(root, 'tests'), { recursive: true, force: true })
 
-    expect(() => check(fixture)).toThrow(/backend folder not found/)
+    expect(() => generate(fixture)).toThrow(/backend folder not found/)
   })
 
   it('reports a missing livingdocs folder', () => {
@@ -67,7 +67,7 @@ describe('livingdoc configuration', () => {
       `livingdocs = "missing"\nbackend = "tests"\n`,
     )
 
-    expect(() => check(fixture)).toThrow(/livingdocs folder not found/)
+    expect(() => generate(fixture)).toThrow(/livingdocs folder not found/)
   })
 
   it('rejects an absolute folder in the config', () => {
@@ -77,7 +77,7 @@ describe('livingdoc configuration', () => {
       `livingdocs = "docs"\nbackend = "${join(root, 'tests')}"\n`,
     )
 
-    expect(() => check(fixture)).toThrow(/relative/)
+    expect(() => generate(fixture)).toThrow(/relative/)
   })
 
   it('requires a config even without the opt-in', () => {
@@ -86,7 +86,7 @@ describe('livingdoc configuration', () => {
       const doc = join(plain, 'plain.md')
       writeFileSync(doc, '# Plain\n')
 
-      expect(() => check(doc)).toThrow(/livingdoc\.toml/)
+      expect(() => generate(doc)).toThrow(/livingdoc\.toml/)
     } finally {
       rmSync(plain, { recursive: true, force: true })
     }

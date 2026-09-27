@@ -9,7 +9,7 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { check } from '@livingdoc/cli'
+import { generate } from '@livingdoc/cli'
 
 const config = `livingdocs = "docs"
 backend = "tests"
@@ -106,7 +106,7 @@ const consumerBackend = `export const bindings = {
 }
 `
 
-describe('livingdoc check', () => {
+describe('livingdoc generate', () => {
   let dir: string
   let fixture: string
   let generated: string
@@ -128,7 +128,7 @@ describe('livingdoc check', () => {
   it('generates a describe for the heading of an opted-in document', () => {
     writeFileSync(fixture, optedIn)
 
-    check(fixture)
+    generate(fixture)
 
     expect(existsSync(generated)).toBe(true)
 
@@ -139,7 +139,7 @@ describe('livingdoc check', () => {
   it('writes nothing for a document without the opt-in', () => {
     writeFileSync(fixture, notOptedIn)
 
-    check(fixture)
+    generate(fixture)
 
     expect(existsSync(generated)).toBe(false)
   })
@@ -147,61 +147,61 @@ describe('livingdoc check', () => {
   it('generates an it for the bullet, binding its input', () => {
     writeFileSync(fixture, withBullet)
 
-    check(fixture)
+    generate(fixture)
 
     const content = readFileSync(generated, 'utf8')
     expect(content).toContain('it("a code SAVE10 is applied"')
     expect(content).toContain('const code = "SAVE10"')
   })
 
-  it('runs the generated check and passes', () => {
+  it('generates a check without running it', () => {
     writeFileSync(fixture, withBullet)
 
-    const code = check(fixture)
-
-    expect(code).toBe(0)
-  })
-
-  it('fails the check when the binding rejects the input', () => {
-    writeFileSync(fixture, withBullet.replace('SAVE10', 'WRONG'))
-
-    expect(check(fixture)).not.toBe(0)
-  })
-
-  it('fails the check when the expectation does not hold', () => {
-    writeFileSync(fixture, withAssertion)
-
-    expect(check(fixture)).not.toBe(0)
-  })
-
-  it('passes the check when the expectation holds', () => {
-    writeFileSync(fixture, withAssertion.replace('OTHER', 'SAVE10'))
-
-    expect(check(fixture)).toBe(0)
+    expect(generate(fixture)).toBe(0)
+    expect(existsSync(generated)).toBe(true)
   })
 
   it('binds a value containing a colon, verbatim', () => {
     writeFileSync(fixture, withColonValue)
 
-    expect(check(fixture)).toBe(0)
+    generate(fixture)
+
+    const content = readFileSync(generated, 'utf8')
+    expect(content).toContain('const code = "http://x"')
   })
 
-  it('evaluates every assertion in a bullet', () => {
+  it('emits an assertion for every assertion token', () => {
     writeFileSync(fixture, withTwoAssertions)
 
-    expect(check(fixture)).not.toBe(0)
+    generate(fixture)
+
+    const content = readFileSync(generated, 'utf8')
+    expect(content).toContain('expect(outputs.result).toBe("SAVE10")')
+    expect(content).toContain('expect(outputs.result).toBe("NOPE")')
   })
 
-  it('fails a structural document with no cases, as vitest does', () => {
+  it('emits a stale expectation as written', () => {
+    writeFileSync(fixture, withAssertion)
+
+    generate(fixture)
+
+    const content = readFileSync(generated, 'utf8')
+    expect(content).toContain('expect(outputs.result).toBe("OTHER")')
+  })
+
+  it('writes no case for a document with no examples', () => {
     writeFileSync(fixture, optedIn)
 
-    expect(check(fixture)).not.toBe(0)
+    generate(fixture)
+
+    const content = readFileSync(generated, 'utf8')
+    expect(content).not.toContain('it(')
   })
 
   it('generates from a code span input and assertion', () => {
     writeFileSync(fixture, withNativeTokens)
 
-    check(fixture)
+    generate(fixture)
 
     const content = readFileSync(generated, 'utf8')
     expect(content).toContain('const code = "SAVE10"')
@@ -211,7 +211,7 @@ describe('livingdoc check', () => {
   it('leaves an ordinary code span as prose', () => {
     writeFileSync(fixture, withProseCodeSpan)
 
-    check(fixture)
+    generate(fixture)
 
     const content = readFileSync(generated, 'utf8')
     expect(content).not.toContain('expect(')

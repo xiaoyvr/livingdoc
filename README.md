@@ -30,7 +30,8 @@ The devShell is provided by Nix + direnv; `direnv allow` once, then:
 npm install        # install dependencies and link workspaces
 npm test           # run the test suite (vitest)
 npm run typecheck  # tsc -b across all packages
-npm run checks     # typecheck + test
+npm run generate   # write the checks for docs/explain with the built CLI
+npm run checks     # typecheck + generate + test
 ```
 
 Work is tracked with `tk` in `.tickets/`; `tk ready` lists unblocked work.
@@ -42,5 +43,10 @@ after which `packages/cli/dist/bin.js` is the `livingdoc` executable.
 The CLI reads `livingdoc.toml` at the project root. It names the `livingdocs`
 folder to check and the `backend` folder, which holds the
 `livingdoc.backend.<ext>` file and where the generated checks are written. Run
-`livingdoc check <file.md>` for one document, or `livingdoc check` for every
-opted-in document under `livingdocs`.
+`livingdoc generate <file.md>` for one document, or `livingdoc generate` for
+every opted-in document under `livingdocs`.
+
+`generate` only writes the checks. They are ordinary test files, so the
+project's own runner executes them: `npm run checks` generates first, then
+`npm test` runs everything, including the livingdoc that documents livingdoc
+under `docs/explain`.

@@ -7,7 +7,7 @@
 livingdoc turns the important behaviors of a system into living documentation:
 you describe them in ordinary prose, mark the inputs and expectations, and
 livingdoc executes the behavior against your real code at build time. A claim
-whose expectation no longer holds turns red, and `livingdoc check` fails — so
+whose expectation no longer holds turns red, and the generated test fails — so
 the document and the implementation cannot drift.
 
 It documents a *subset* — the behaviors that matter for a human to understand
@@ -18,12 +18,12 @@ the system — and it is not a replacement for unit, integration, or e2e tests.
 livingdoc is a **prose → code generator**. It parses the document's fluent text
 into inputs and assertions, and generates test code — in the consumer's
 language, wrapped in the consumer's test framework — that executes the
-document against their real code.
+document against their real code. The consumer's own runner executes that code;
+livingdoc never runs it.
 
-- **is**: a parser, a text carrier, a code generator, a runner, a colorer, an
-  exit code.
-- **is not**: a test framework, a specification language, an assertion library,
-  a mocking tool, or a report generator.
+- **is**: a parser, a text carrier, a code generator, an exit code.
+- **is not**: a test runner, a test framework, a specification language, an
+  assertion library, a mocking tool, or a report generator.
 
 It has **no semantics of its own — not a type system, not an expression
 grammar, not an assertion vocabulary.** It carries text and names; the target
@@ -71,7 +71,7 @@ When the implementation changes so `SAVE10` gives 15%:
 
 > - applying a SAVE10 code to a $100 cart, the total ~~$90~~ **$85** ✗
 
-…and `livingdoc check` exits non-zero.
+…and the generated test fails.
 
 ## 5. The grammar
 
@@ -296,7 +296,8 @@ backend    = "tests"
 ```
 
 - **`livingdocs`** — the folder whose `*.md` files are livingdoc documents.
-  `livingdoc check` with no path checks every opted-in document under it.
+  `livingdoc generate` with no path generates a check for every opted-in
+  document under it.
 - **`backend`** — the folder holding the backend. livingdoc finds the backend
   by its default name, `livingdoc.backend.<ext>`.
 - Paths are resolved relative to `livingdoc.toml`; generated checks are written
@@ -305,18 +306,22 @@ backend    = "tests"
 The framework adapter is not yet a setting; TypeScript + Vitest is the only
 target.
 
-## 14. The check gate
+## 14. Generating the checks
 
 ```
-livingdoc check     # generate test code, run the consumer's framework, exit 1 on any red
+livingdoc generate  # generate test code next to the backend
 livingdoc render    # produce the static site with green/red baked in
 ```
 
-A red assertion fails the build, exactly like a failing test run.
+`generate` only writes the checks. They are part of the consumer's suite, so
+the consumer's own runner executes them and reports the result. A red assertion
+fails their build exactly like any other failing test; livingdoc never spawns
+the runner.
 
 ## 15. Guarantees
 
-1. **A document cannot be false** — a red assertion makes `livingdoc check` fail.
+1. **A document cannot be false** — a red assertion fails the generated test,
+   and therefore the consumer's test run.
 2. **A closed vocabulary** — parameter names and directive names are declared by
    the backend, and assertion verbs come from the framework the adapter knows;
    any undeclared name is red. Doc and code share one vocabulary, and drift is

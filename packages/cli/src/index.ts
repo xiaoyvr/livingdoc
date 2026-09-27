@@ -1,9 +1,8 @@
 // @livingdoc/cli
 //
 // Programmatic entry point; `bin.ts` is the executable wrapper.
-import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { basename, dirname, isAbsolute, join, parse as parsePath, resolve } from 'node:path'
+import { dirname, isAbsolute, join, parse as parsePath, resolve } from 'node:path'
 import type { Nodes, Root } from 'mdast'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkParse from 'remark-parse'
@@ -13,8 +12,8 @@ import { parse as parseYaml } from 'yaml'
 
 const markdown = unified().use(remarkParse).use(remarkFrontmatter, ['yaml'])
 
-export function check(file?: string): number {
-  if (!file) return checkProject(process.cwd())
+export function generate(file?: string): number {
+  if (!file) return generateProject(process.cwd())
 
   const config = loadConfig(dirname(resolve(file)))
   const source = readFileSync(file, 'utf8')
@@ -24,20 +23,18 @@ export function check(file?: string): number {
 
   const backend = resolveBackend(config)
   const code = generateTest(headingTitle(tree), exampleBullets(tree), backend)
-  const target = generatedPath(file, config)
-  writeFileSync(target, code)
+  writeFileSync(generatedPath(file, config), code)
 
-  return runCheck(target)
+  return 0
 }
 
-function checkProject(dir: string): number {
+function generateProject(dir: string): number {
   const config = loadConfig(dir)
-  let code = 0
   for (const name of readdirSync(config.livingdocs)) {
     if (!name.endsWith('.md')) continue
-    code = check(join(config.livingdocs, name)) || code
+    generate(join(config.livingdocs, name))
   }
-  return code
+  return 0
 }
 
 interface Config {
@@ -166,15 +163,6 @@ function generateTest(title: string, bullets: Nodes[], backend: string): string 
 
 function generatedPath(file: string, config: Config): string {
   return join(config.backend, `${parsePath(resolve(file)).name}.test.ts`)
-}
-
-function runCheck(testFile: string): number {
-  const result = spawnSync(
-    'npx',
-    ['vitest', 'run', '--root', dirname(testFile), basename(testFile)],
-    { encoding: 'utf8' },
-  )
-  return result.status ?? 1
 }
 
 function plainText(node: Nodes): string {

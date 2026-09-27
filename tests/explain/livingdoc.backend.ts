@@ -1,6 +1,7 @@
 // The backend for livingdoc's own explain document. Each fixture is a tiny
-// livingdoc project checked by the built CLI, so the document verifies the
-// real command rather than the source.
+// livingdoc project: generate its check with the built CLI, then run the
+// generated test with vitest. livingdoc only generates; the target runner does
+// the running.
 import { spawnSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -38,7 +39,7 @@ const documents: Record<string, string> = {
 }
 
 export const bindings = {
-  'checking-a-document': {
+  'generating-the-checks': {
     params: ['fixture'],
     run({ fixture }: { fixture: string }) {
       const dir = mkdtempSync(join(tmpdir(), 'livingdoc-dogfood-'))
@@ -51,11 +52,19 @@ export const bindings = {
           writeFileSync(join(dir, 'docs', 'fixture.md'), document)
           writeFileSync(join(dir, 'tests', 'livingdoc.backend.ts'), fixtureBackend)
         }
-        const result = spawnSync('node', [bin, 'check'], {
+
+        const generate = spawnSync('node', [bin, 'generate'], {
           cwd: dir,
           encoding: 'utf8',
         })
-        return { result: result.status ?? 1 }
+        if (generate.status !== 0) return { result: generate.status }
+
+        const run = spawnSync(
+          'npx',
+          ['vitest', 'run', '--root', join(dir, 'tests'), 'fixture.test.ts'],
+          { cwd: dir, encoding: 'utf8' },
+        )
+        return { result: run.status ?? 1 }
       } finally {
         rmSync(dir, { recursive: true, force: true })
       }
