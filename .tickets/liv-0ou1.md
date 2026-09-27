@@ -29,10 +29,6 @@ verbatim and ordinary prose and code spans are never mistaken for tokens.
   **When** I run `livingdoc check`
   **Then** it is left as prose and never executed
 
-- **Given** a literal `:=` or `!!` in front of a code span
-  **When** I escape it
-  **Then** it is not a token
-
 ## Scope
 
 - Markdown is the only base format. A token is an `inlineCode` node whose
@@ -43,7 +39,8 @@ verbatim and ordinary prose and code spans are never mistaken for tokens.
   dogfood document.
 - The token pass moves from a text regex (`INLINE_TOKEN` and the `(?!\s*!)`
   lookahead) to the mdast inline tree.
-- Escaping: `\:=` / `\!!` (or a doubled sigil) writes a literal marker.
+- No escaping. The sigil is glued to the backtick; a space breaks the glue and
+  opts the code span out. Documentation does not need a formal escape.
 
 ## Out of scope
 
@@ -56,9 +53,10 @@ verbatim and ordinary prose and code spans are never mistaken for tokens.
 
 ## Implementation tasks
 
-- [ ] 1. Tokenize over mdast: `:=` binds the preceding word to the following
-      `inlineCode`, `!!` marks an assertion on it.
-- [ ] 2. Generate from the new tokens; the downstream codegen is unchanged.
-- [ ] 3. Escaping for a literal `:=` / `!!` before a code span.
-- [ ] 4. Migrate the fixtures, the dogfood document, and DESIGN §4/§5/§10/§11.
+- [ ] 1. Native tokens (AC1-AC3): tokenize the bullet's mdast inline nodes. A
+      text node ending `name :=` (glued) before an `inlineCode` is an input; a
+      text node ending `!!` before an `inlineCode` is an assertion. Generate
+      from them and migrate the existing fixtures.
+- [ ] 2. Design: update DESIGN §4/§5/§10/§11 and record the AsciiDoc /
+      multi-format note.
 
