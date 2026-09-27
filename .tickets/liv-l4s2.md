@@ -34,20 +34,21 @@ instead of a bespoke test.
 
 ## Implementation tasks
 
-- [ ] 1. Add `livingdoc.toml` with `livingdocs = "docs/explain"` and
-      `backend = "tests/explain"`.
-- [ ] 2. Write `docs/explain/livingdoc.md` (heading plus passing/stale bullets)
-      in the current grammar.
-- [ ] 3. Write `tests/explain/livingdoc.backend.ts` driving
-      `packages/cli/dist/bin.js` on temp fixtures.
-- [ ] 4. Add the `dogfood` script to `checks` and gitignore the generated
-      `tests/explain/*.test.ts`.
-- [ ] 5. Delete `packages/cli/test/check.e2e.test.ts`.
+- [x] 1. The dogfood check passes (AC1, AC2): add `livingdoc.toml`,
+      `docs/explain/livingdoc.md`, and `tests/explain/livingdoc.backend.ts`
+      driving the built `packages/cli/dist/bin.js` on temp fixtures. Cover the
+      holds and stale cases, plus a misconfigured project so the e2e's error
+      path is not lost. Run `livingdoc check` to green.
+- [x] 2. Wire and retire (AC3): add the `dogfood` script to `checks`, confirm
+      the generated `tests/explain/livingdoc.test.ts` is gitignored, and delete
+      `packages/cli/test/check.e2e.test.ts`.
 
-## Notes
+### Notes
 
-- One document, one heading, two bullets (passing exit 0, stale exit 1),
-  current grammar.
-- Growth: liv-d7uk, liv-du6y, liv-m0mf, and liv-hu8o each add cases to this
-  document.
+- One assertion per bullet is all the grammar offers today, so each example
+  asserts the exit code (`outputs.result`).
+- The misconfigured example asserts the exit code only; the "no stack trace"
+  detail stays a coverage gap (liv-e3r0).
+- `tests/explain/livingdoc.backend.ts` is outside `packages/`, so `tsc -b` does
+  not typecheck it; the dogfood run is its only check.
 

@@ -1,0 +1,3 @@
+# livingdoc checking livingdoc.
+livingdocs = "docs/explain"
+backend    = "tests/explain"
