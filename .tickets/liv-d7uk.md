@@ -16,17 +16,22 @@ in the language my team already writes.
 
 ## Acceptance criteria
 
-- **Given** a document with several marked inputs and an expectation written as
-  a computation
-  **When** I run `livingdoc check`
-  **Then** the binding receives the declared inputs
-  **And** the computation is evaluated in the consumer's language
+- **Given** a document with several ``name :=`expr` `` inputs and an assertion
+  whose arguments are a computation
+  **When** I run `livingdoc generate`
+  **Then** the generated test binds each input and passes it to the binding
+  **And** the computation is emitted verbatim in the consumer's language
 
-- **Given** an expectation whose computation is wrong
-  **When** I run `livingdoc check`
-  **Then** the check fails
+- **Given** an assertion whose computation does not hold
+  **When** the project's tests run
+  **Then** the generated test fails
 
-- **Given** a document with an input name that is not a valid identifier
-  **When** I run `livingdoc check`
-  **Then** the invalid name is reported as an error
+- **Given** a document whose input name the binding does not declare
+  **When** I run `livingdoc generate`
+  **Then** the undeclared name is reported as an error
 
+## Notes
+
+- An input name is always a word before `:=`, so the old "not a valid
+  identifier" case cannot arise; the remaining check is that the name matches
+  the binding's declared parameters (DESIGN 6).

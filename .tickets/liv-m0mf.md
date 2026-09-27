@@ -17,15 +17,15 @@ not only return values.
 ## Acceptance criteria
 
 - **Given** a document using a consumer-defined assertion phrase, e.g.
-  `{{ calls "pricing service" "Once" }}`
-  **When** I run `livingdoc check`
-  **Then** the phrase receives the binding's outputs and its arguments
+  ``!!`calls "pricing service" "Once"` ``
+  **When** I run `livingdoc generate`
+  **Then** the generated test calls the directive with the binding's outputs
+  and the phrase's arguments
 
 - **Given** a directive that does not hold
-  **When** I run `livingdoc check`
-  **Then** the check fails
+  **When** the project's tests run
+  **Then** the generated test fails
 
-- **Given** a document using an unknown assertion phrase
-  **When** I run `livingdoc check`
-  **Then** the unknown phrase is reported as an error
-
+- **Given** an assertion phrase neither the framework nor the backend declares
+  **When** I run `livingdoc generate`
+  **Then** the unknown verb is reported as an error

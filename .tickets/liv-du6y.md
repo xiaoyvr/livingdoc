@@ -17,15 +17,14 @@ behaviors of a real system.
 ## Acceptance criteria
 
 - **Given** a document with two headings, each with an `Example:` bullet
-  **When** I run `livingdoc check`
-  **Then** each heading exercises its own binding
-  **And** each bullet becomes its own case, named after the bullet
+  **When** I run `livingdoc generate`
+  **Then** each heading selects its own binding
+  **And** each bullet becomes its own generated case, named after the bullet
 
 - **Given** a bullet asserting a named output
-  **When** I run `livingdoc check`
+  **When** I run `livingdoc generate`
   **Then** the assertion targets that output
 
-- **Given** a document in which one case fails
-  **When** I run `livingdoc check`
-  **Then** that case fails while the other cases still execute
-
+- **Given** a document in which one case is stale
+  **When** the project's tests run
+  **Then** that case fails while the other cases still run

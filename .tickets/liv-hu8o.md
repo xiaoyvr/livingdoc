@@ -16,11 +16,10 @@ assignee: xiaoyvr
 ## Acceptance criteria
 
 - **Given** a document with several bullets
-  **When** I run `livingdoc check`
-  **Then** each bullet has a stable, discoverable identity
+  **When** I run `livingdoc generate`
+  **Then** each generated case has a stable, discoverable identity
 
 - **Given** a case whose expectation does not hold
-  **When** I run `livingdoc check`
-  **Then** its identity and actual value are reported
+  **When** the project's tests run
+  **Then** the failing case's identity and actual value are reported
   **And** the report is machine-readable
-
