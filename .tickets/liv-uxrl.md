@@ -87,14 +87,16 @@ name = "pricing"
 
 ## Implementation tasks
 
-- [ ] 1. Config: parse `code_path` and `[[backend.<framework>]]` (`name`).
-- [ ] 2. `frameworks/` registry keyed by framework name, with `vitest`.
-- [ ] 3. The `Example (name):` marker selects the backend for a group.
-- [ ] 4. Generation per (document, backend): `<code_path>/<name>/backend.<ext>`
-      and one generated file per backend in `<code_path>/<name>`.
-- [ ] 5. Unknown framework and unknown alias are generate-time errors.
-- [ ] 6. Migrate the repository: `livingdoc.toml` becomes
-      `code_path = "tests/explain"` with `[[backend.vitest]] name = "vitest"`,
-      and remove the empty `@livingdoc/core` / `@livingdoc/adapter-vitest`
-      packages (the generators live in the CLI).
-- [ ] 7. Docs: DESIGN §6/§8/§9/§13/§14 and the README layout.
+- [ ] 1. One named backend generates its test file, end to end. A
+      `livingdoc.toml` with `code_path` and one `[[backend.vitest]] name = "…"`:
+      `generate` resolves `<code_path>/<name>`, the framework's `backend.ts`, and
+      writes `<code_path>/<name>/<doc>.test.ts` importing `./backend`. The vitest
+      codegen moves to `frameworks/vitest.ts` behind a registry, and an
+      unregistered framework errors. Migrates the repo config and the dogfood.
+- [ ] 2. A document addresses several backends, end to end. `Example (web):` and
+      `Example (pricing):` groups: each group's cases are written into that
+      backend's file, a bare `Example:` uses the first backend, and an unknown
+      alias errors. One document produces two files.
+- [ ] 3. Remove the empty `@livingdoc/core` / `@livingdoc/adapter-vitest`
+      packages (the generators live in the CLI), refresh the README layout, and
+      verify DESIGN §6/§8/§9/§13/§14.
