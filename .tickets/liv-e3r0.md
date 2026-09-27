@@ -52,3 +52,5 @@ Deferred findings from the liv-ybyq and liv-ter0 implementation reviews.
 - The backend error branches (missing, several) are only verified by hand, not
   in-process, and the e2e error assertion (`not.toContain('\n    at ')`) is a
   proxy for "no stack trace" rather than a check on the message shape.
+- Retiring `check.e2e.test.ts` dropped its "no stack trace" check; the dogfood
+  misconfigured example asserts the exit code only.
