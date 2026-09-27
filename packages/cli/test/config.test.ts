@@ -1,4 +1,11 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -70,6 +77,40 @@ describe('livingdoc configuration', () => {
     writeFileSync(fixture, document)
 
     expect(() => generate(fixture)).toThrow(/unknown framework/)
+  })
+
+  it('writes one file per backend a document addresses', () => {
+    writeFileSync(
+      join(root, 'livingdoc.toml'),
+      `livingdocs = "docs"\ncode_path = "tests"\n\n[[backend.vitest]]\nname = "web"\n\n[[backend.vitest]]\nname = "pricing"\n`,
+    )
+    mkdirSync(join(root, 'tests', 'web'), { recursive: true })
+    mkdirSync(join(root, 'tests', 'pricing'), { recursive: true })
+    writeFileSync(join(root, 'tests', 'web', 'backend.ts'), backend)
+    writeFileSync(join(root, 'tests', 'pricing', 'backend.ts'), backend)
+    writeFileSync(
+      fixture,
+      `---\nlivingdoc: true\n---\n\n# Walking skeleton\n\nExample (web):\n\n- a web code :=\`"SAVE10"\`\n\nExample (pricing):\n\n- a pricing code :=\`"SAVE10"\`\n`,
+    )
+
+    expect(generate(fixture)).toBe(0)
+    const web = readFileSync(join(root, 'tests', 'web', 'fixture.test.ts'), 'utf8')
+    const pricing = readFileSync(
+      join(root, 'tests', 'pricing', 'fixture.test.ts'),
+      'utf8',
+    )
+    expect(web).toContain('a web code SAVE10')
+    expect(pricing).toContain('a pricing code SAVE10')
+  })
+
+  it('reports an unknown backend alias', () => {
+    writeFileSync(join(root, 'tests', 'vitest', 'backend.ts'), backend)
+    writeFileSync(
+      fixture,
+      `---\nlivingdoc: true\n---\n\n# Walking skeleton\n\nExample (nope):\n\n- a code :=\`"SAVE10"\`\n`,
+    )
+
+    expect(() => generate(fixture)).toThrow(/unknown backend/)
   })
 
   it('reports a missing livingdocs folder', () => {

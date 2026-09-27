@@ -3,9 +3,10 @@
 // Programmatic entry point; `bin.ts` is the executable wrapper.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute, join, parse as parsePath, resolve } from 'node:path'
+import type { Nodes } from 'mdast'
 import { parse as parseToml } from 'smol-toml'
 import {
-  exampleBullets,
+  exampleGroups,
   frontmatter,
   headingTitle,
   isOptedIn,
@@ -20,8 +21,31 @@ export function generate(file?: string): number {
   const tree = parseMarkdown(readFileSync(file, 'utf8'))
   if (!isOptedIn(frontmatter(tree))) return 0
 
-  const backend = config.backends[0]
-  if (!backend) throw new Error('no backends configured')
+  const doc = parsePath(resolve(file)).name
+  const title = headingTitle(tree)
+
+  const groups = new Map<Backend, Nodes[]>()
+  for (const group of exampleGroups(tree)) {
+    const backend = resolveBackend(config, group.backend)
+    const bullets = groups.get(backend)
+    if (bullets) bullets.push(...group.bullets)
+    else groups.set(backend, [...group.bullets])
+  }
+
+  for (const [backend, bullets] of groups) {
+    writeBackend(config, backend, doc, title, bullets)
+  }
+
+  return 0
+}
+
+function writeBackend(
+  config: Config,
+  backend: Backend,
+  doc: string,
+  title: string,
+  bullets: Nodes[],
+): void {
   const framework = frameworks[backend.framework]
   if (!framework) throw new Error(`unknown framework: ${backend.framework}`)
 
@@ -31,11 +55,19 @@ export function generate(file?: string): number {
     throw new Error(`backend file not found: ${backendFile}`)
   }
 
-  const code = framework.generate(headingTitle(tree), exampleBullets(tree))
-  const target = join(dir, framework.generatedFile(parsePath(resolve(file)).name))
-  writeFileSync(target, code)
+  const code = framework.generate(title, bullets)
+  writeFileSync(join(dir, framework.generatedFile(doc)), code)
+}
 
-  return 0
+function resolveBackend(config: Config, alias?: string): Backend {
+  if (!alias) {
+    const first = config.backends[0]
+    if (!first) throw new Error('no backends configured')
+    return first
+  }
+  const match = config.backends.find((backend) => backend.name === alias)
+  if (!match) throw new Error(`unknown backend: ${alias}`)
+  return match
 }
 
 function generateProject(dir: string): number {

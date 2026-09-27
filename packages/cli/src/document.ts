@@ -36,14 +36,27 @@ export function slugify(text: string): string {
     .replace(/\s+/g, '-')
 }
 
-export function exampleBullets(tree: Root): Nodes[] {
-  const index = tree.children.findIndex(
-    (node) => node.type === 'paragraph' && plainText(node).trim() === 'Example:',
-  )
-  if (index === -1) return []
-  const next = tree.children[index + 1]
-  if (!next || next.type !== 'list') return []
-  return next.children
+export interface ExampleGroup {
+  backend?: string
+  bullets: Nodes[]
+}
+
+export function exampleGroups(tree: Root): ExampleGroup[] {
+  const groups: ExampleGroup[] = []
+  for (let i = 0; i < tree.children.length; i++) {
+    const node = tree.children[i]
+    if (node?.type !== 'paragraph') continue
+    const match = plainText(node)
+      .trim()
+      .match(/^Example\s*(?:\(([^)]+)\))?:$/)
+    if (!match) continue
+    const list = tree.children[i + 1]
+    groups.push({
+      backend: match[1],
+      bullets: list && list.type === 'list' ? list.children : [],
+    })
+  }
+  return groups
 }
 
 export type Token =

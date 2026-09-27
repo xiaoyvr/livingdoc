@@ -26,7 +26,7 @@ function project(heading: string): string {
   writeFileSync(join(dir, 'livingdoc.toml'), fixtureConfig)
   writeFileSync(
     join(dir, 'docs', 'fixture.md'),
-    `---\nlivingdoc: true\n---\n\n# ${heading}\n`,
+    `---\nlivingdoc: true\n---\n\n# ${heading}\n\nExample:\n`,
   )
   writeFileSync(join(dir, 'tests', 'vitest', 'backend.ts'), 'export const bindings = {}\n')
   return dir

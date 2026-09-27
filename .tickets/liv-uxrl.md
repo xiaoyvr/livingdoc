@@ -93,7 +93,7 @@ name = "pricing"
       writes `<code_path>/<name>/<doc>.test.ts` importing `./backend`. The vitest
       codegen moves to `frameworks/vitest.ts` behind a registry, and an
       unregistered framework errors. Migrates the repo config and the dogfood.
-- [ ] 2. A document addresses several backends, end to end. `Example (web):` and
+- [x] 2. A document addresses several backends, end to end. `Example (web):` and
       `Example (pricing):` groups: each group's cases are written into that
       backend's file, a bare `Example:` uses the first backend, and an unknown
       alias errors. One document produces two files.
