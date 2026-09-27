@@ -54,10 +54,10 @@ the right binding and the right assertion to call.
 
 Example:
 
-- applying a code {{ "SAVE10" }} to a total {{ 100 }} cart, the total
-  {{! toBe total * 0.9 }},
-  {{! calls "pricing service" "Once" }},
-  and the order {{! "order saved" toBe true }}.
+- applying a code :="SAVE10" to a total :=`100` cart, the total
+  !!`toBe total * 0.9`,
+  !!`calls "pricing service" "Once"`,
+  and the order !!`"order saved" toBe true`.
 ```
 
 `toBe` is the framework's own assertion, written directly. Rendered (all markup
@@ -84,36 +84,38 @@ format-independent.
 | heading | the binding, by slug (see §6) |
 | `Example:` | starts a group of test cases |
 | `- …` (bullet under `Example:`) | one test case (one `it`) |
-| `name {{ value }}` | an input; the word before the token is the parameter name; `value` is a native expression, verbatim |
-| `{{! verb args… }}` | an assertion; `verb` is a framework assertion or consumer directive |
-| `\{{ … }}` | a literal `{{ … }}` |
+| ``name :=`expr` `` | an input; `name` is the word before `:=`; `expr` is a native expression, verbatim |
+| ``!!`expr` `` | an assertion; `expr` is a framework assertion or consumer directive |
+| any other code span | prose, never executed |
 
 Assertion forms — the verb may appear first or in the middle:
 
-- `{{! toBe total * 0.9 }}` — verb first (the primary result)
-- `{{! "order saved" toBe true }}` — verb in the middle (subject + expected)
-- `{{! calls "pricing service" "Once" }}` — verb first, its own arguments
+- ``!!`toBe total * 0.9` `` — verb first (the primary result)
+- ``!!`"order saved" toBe true` `` — verb in the middle (subject + expected)
+- ``!!`calls "pricing service" "Once"` `` — verb first, its own arguments
 
 Prose around the tokens is completely free — that is the key principle. A
 bullet without tokens is prose and is never executed.
 
 **Tokenizer:**
 
-- *inputs* — `name {{ value }}`. The parameter name is the word immediately
-  before the token; the value is the raw text inside the braces, verbatim,
-  never lexed. `code {{ "SAVE 10" }}` → name `code`, value `"SAVE 10"`.
-- *assertions* — `{{! verb … }}`. The `!` marks an assertion, so an input and
-  an assertion are never confused. Find the declared verb (a word); the text
-  before it is the subject, the text after it is the arguments — each raw,
-  verbatim, never lexed. `{{! toBe total * 0.9 }}` → verb `toBe`, args
-  `total * 0.9` (one expression). `{{! calls "pricing service" "Once" }}` →
+- *inputs* — ``name :=`expr` ``. The parameter name is the word immediately
+  before `:=`; the expression is the code span, verbatim, never lexed.
+  ``code :="SAVE 10"`` → name `code`, value `"SAVE 10"`.
+- *assertions* — ``!!`expr` ``. `!!` marks an assertion, so an input and an
+  assertion are never confused. The first word of the span is the declared
+  verb; the text before it is the subject, the rest is the arguments — each
+  raw, verbatim, never lexed. ``!!`toBe total * 0.9` `` → verb `toBe`, args
+  `total * 0.9` (one expression). ``!!`calls "pricing service" "Once"` `` →
   verb `calls`, args `"pricing service" "Once"` (the verb splits its own
   arguments).
 
-Disambiguation: the marker after `{{` — `!` means an assertion, anything else
-is an input. Because nothing inside the braces is lexed, expressions with
-spaces (`total * 0.9`), colons (`url("http://x")`), and directive argument
-lists all pass through untouched — interpretation is the generated code's job.
+Disambiguation: the sigil is glued to the opening backtick — `:=` for an
+input, `!!` for an assertion. A space breaks the glue and leaves the code span
+as prose; there is no escape. Because nothing inside the span is lexed,
+expressions with spaces (`total * 0.9`), colons (`url("http://x")`), `+`, `]`,
+quotes, and braces all pass through untouched — interpretation is the generated
+code's job.
 
 ## 6. Scoping: heading = describe, bullet = it
 
@@ -123,7 +125,7 @@ The document's structure maps directly onto a test tree:
 |---|---|
 | `describe("Applying a discount")` | the heading `## Applying a discount` |
 | `it(...)` — one case | one bullet under `Example:` |
-| parameter names in the signature | the `name {{ value }}` / `{{! verb … }}` tokens |
+| parameter names in the signature | the ``name :=`expr` `` / ``!!`expr` `` tokens |
 
 - The **heading** locates the `describe` (the action being tested): its slug is
   the binding name — `## Applying a discount` → `applying-a-discount`
@@ -177,7 +179,7 @@ livingdoc generates test code in two layers:
    assertion form, directly, with no translation.
 
 ```js
-// jest adapter (JavaScript) — the doc's {{! toBe total * 0.9 }}
+// jest adapter (JavaScript) — the doc's !!`toBe total * 0.9`
 describe("Applying a discount", () => {
   it("applying a SAVE10 code to a $100 cart", () => {
     const code = "SAVE10";
@@ -210,8 +212,8 @@ A document is bound to one framework, so it writes that framework's verbs
 directly. The adapter transcribes:
 
 ```
-{{! toBe total * 0.9 }}       →  expect(result).toBe(total * 0.9)     (jest)
-{{! == total * 0.9 }}         →  assert result == (total * 0.9)       (pytest)
+!!`toBe total * 0.9`          →  expect(result).toBe(total * 0.9)     (jest)
+!!`== total * 0.9`            →  assert result == (total * 0.9)       (pytest)
 ```
 
 Consumer directives (`calls`) are transcribed as direct calls —
@@ -225,11 +227,11 @@ is red: "no assertion `foo`".
 ## 10. How one bullet is generated
 
 ```
-- applying a code {{ "SAVE10" }} to a total {{ 100 }} cart, the total {{! toBe total * 0.9 }}.
+- applying a code :="SAVE10" to a total :=`100` cart, the total !!`toBe total * 0.9`.
 
 1. heading "Applying a discount"           → binding "applying-a-discount"
-2. code {{ "SAVE10" }} total {{ 100 }}     → inputs; names must match binding.params
-3. {{! toBe total * 0.9 }}                 → assertion: verb "toBe", args "total * 0.9"
+2. code :="SAVE10" total :=`100`           → inputs; names must match binding.params
+3. !!`toBe total * 0.9`                     → assertion: verb "toBe", args "total * 0.9"
 4. generate (jest):
      const code = "SAVE10"; const total = 100;
      const outputs = bindings["applying-a-discount"].run({ code, total });
@@ -258,8 +260,8 @@ the team already speaks, with their own tools.
 
 Consequences:
 
-- **Currency and formatting are prose, not data** — `total {{ 100 }}`,
-  `{{! toBe total * 0.9 }}`. `$100` is not an expression.
+- **Currency and formatting are prose, not data** — ``total :=`100` ``,
+  ``!!`toBe total * 0.9` ``. `$100` is not an expression.
 - **Booleans, string quotes, and validity follow the target** — `true` (JS) vs
   `True` (Python); `'bla bla'` is a JS string but a C++ error. The target's
   compiler/interpreter is the judge, and its verdict surfaces as red.
@@ -272,7 +274,7 @@ Consequences:
 livingdoc mandates no testing style:
 
 - **setup** — the binding body does its own setup, mock or real, in its own
-  framework. A named premise in the prose (`given {{ standard-cart }}`) is just
+  framework. A named premise in the prose (``given :=`standard-cart` ``) is just
   another input the binding understands.
 - **side effects** — the binding observes them and returns them as named
   outputs (`"pricing service": 1`, `"order saved": true`); the document asserts
@@ -323,7 +325,7 @@ A red assertion fails the build, exactly like a failing test run.
    the generated tests run under the consumer's real runner, in their CI.
 4. **Native expressions** — values are target-language code, evaluated by the
    target's own runtime; livingdoc never types or parses.
-5. **Prose is free** — livingdoc only reads the `{{ … }}` marks; everything else
+5. **Prose is free** — livingdoc only reads the `:=` and `!!` marks; everything else
    is the author's own words.
 
 ## 16. Open questions
@@ -336,8 +338,12 @@ A red assertion fails the build, exactly like a failing test run.
    node:test, vitest, cargo-test, go-test, gtest?
 3. **Generated-file lifecycle** — commit for review, or regenerate each `check`
    and gitignore?
-4. **Compound values** — `[1, 2]`, `{ "a": 1 }` need bracket nesting in the
-   tokenizer (to find the closing `}}`). Deferred; native code makes them
-   possible but not yet specified.
+4. **Compound and multi-line values** — a code span covers `[1, 2]` and
+   `{ "a": 1 }` on one line; a multi-line expression needs a fenced variant
+   (`!!` before a fenced block). Deferred.
 5. **Rendering** — deliberately deferred. How `Example:` markers and green/red
    results are presented in HTML is not being designed yet.
+6. **Base formats beyond Markdown** — the `:=` / `!!` sigils port, but the
+   verbatim carrier does not: AsciiDoc's inline literal cannot hold `+` or `]`,
+   so a second format would need a livingdoc-owned body delimiter rather than
+   the host's literal syntax.

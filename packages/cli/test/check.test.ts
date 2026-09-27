@@ -84,6 +84,17 @@ Example:
 - a code :=\`"SAVE10"\` is applied, returning !!\`toBe "SAVE10"\`
 `
 
+const withProseCodeSpan = `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+Example:
+
+- run \`toBe SAVE10\` now
+`
+
 const consumerBackend = `export const bindings = {
   "walking-skeleton": {
     params: ["code"],
@@ -195,5 +206,14 @@ describe('livingdoc check', () => {
     const content = readFileSync(generated, 'utf8')
     expect(content).toContain('const code = "SAVE10"')
     expect(content).toContain('expect(outputs.result).toBe("SAVE10")')
+  })
+
+  it('leaves an ordinary code span as prose', () => {
+    writeFileSync(fixture, withProseCodeSpan)
+
+    check(fixture)
+
+    const content = readFileSync(generated, 'utf8')
+    expect(content).not.toContain('expect(')
   })
 })

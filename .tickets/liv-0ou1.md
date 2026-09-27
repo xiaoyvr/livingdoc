@@ -57,6 +57,6 @@ verbatim and ordinary prose and code spans are never mistaken for tokens.
       text node ending `name :=` (glued) before an `inlineCode` is an input; a
       text node ending `!!` before an `inlineCode` is an assertion. Generate
       from them and migrate the existing fixtures.
-- [ ] 2. Design: update DESIGN §4/§5/§10/§11 and record the AsciiDoc /
+- [x] 2. Design: update DESIGN §4/§5/§10/§11 and record the AsciiDoc /
       multi-format note.
 
