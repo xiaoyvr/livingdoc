@@ -18,7 +18,8 @@ document itself.
 
 - **Given** a document with a `>>` block
   **When** I run `livingdoc generate`
-  **Then** the block's statements are part of the generated test
+  **Then** the block's statements are inside the generated `describe`, before
+  its cases
 
 - **Given** a document with a `>>` block that binds an action, and an `Example:`
   group whose action is that binding
@@ -34,9 +35,10 @@ document itself.
 
 - A fenced block whose info is `<language> >>` — e.g. ```` ```ts >> ```` —
   contributes its content, verbatim, to the generated test.
-- Placement follows position: a `>>` block under a heading, outside any case, is
-  appended at the top of the generated file, before the `describe`; a `>>` block
-  inside a bullet is appended inside that case, in order with its assertions.
+- Only heading-level blocks: a `>>` block sits under a heading, outside any
+  case. There is no bullet-level form.
+- The block is emitted inside the `describe`, before its cases, so what it
+  defines is in scope for them.
 - Inline bindings are visible only in that document's generated test; the
   backend's bindings are visible to every document.
 - The backend is not replaced — it stays for the system under test; the inline
@@ -47,22 +49,29 @@ document itself.
 
 - `>>` means "append to the test", in the same sigil family as `:=` (input) and
   `!!` (assertion). It is deliberately not `!!`, which means "assert".
-- The block's content is verbatim; livingdoc never parses it. The `bind(...)`
-  idiom works because the generated test declares a mutable `bindings` seeded
-  from the backend and a `bind(name, binding)` that throws on a duplicate:
+- The block's content is verbatim; livingdoc never parses it. `bind(...)` is the
+  first use, and the generated test provides the scaffold at module scope — a
+  mutable `bindings` seeded from the backend, and a `bind(name, binding)` that
+  throws on a duplicate — with the import renamed to `bindings as backend`:
 
   ```ts
   import { bindings as backend } from '../backend'
+
   const bindings = { ...backend }
   function bind(name, binding) {
     if (name in bindings) throw new Error(`duplicate binding: ${name}`)
     bindings[name] = binding
   }
+
+  describe("…", () => {
+    bind('what-a-document-means', { … })
+    it("…", () => { … })
+  })
   ```
 
 ## Open questions
 
-- Whether several `Example:` groups in one document share a heading-level block,
-  or each group needs its own.
+- Several headings (liv-du6y): a heading-level block belongs to its heading's
+  `describe`; whether one block can serve several groups stays open.
 - Is the emitted `bind`/`bindings` scaffold the start of the "runtime SDK" the
   word *adapter* was reserved for?
