@@ -12,7 +12,7 @@ import {
 import { dirname, isAbsolute, join, parse as parsePath, relative, resolve } from 'node:path'
 import type { Nodes } from 'mdast'
 import { loadConfig, type Backend, type Config } from './config.js'
-import { formatError, type DomainError } from './errors.js'
+import type { DomainError } from './errors.js'
 import {
   exampleGroups,
   frontmatter,
@@ -20,7 +20,6 @@ import {
   isOptedIn,
   parseMarkdown,
 } from './document.js'
-import { find } from './frameworks/index.js'
 import type { Result } from './result.js'
 
 export { formatError } from './errors.js'
@@ -75,14 +74,7 @@ function writeBackend(
   title: string,
   bullets: Nodes[],
 ): Result<void, DomainError> {
-  const framework = find(backend.framework)
-  if (!framework) {
-    return fail({
-      kind: 'invalid-config',
-      file: join(config.root, 'livingdoc.toml'),
-      issues: [`unknown framework: ${backend.framework}`],
-    })
-  }
+  const framework = backend.framework
 
   const backendFile = join(
     config.codePath,
@@ -126,11 +118,10 @@ function cleanGenerated(config: Config): void {
 // Drop one document's outputs from every backend, without touching siblings.
 function cleanDoc(config: Config, name: string): void {
   for (const backend of config.backends) {
-    const framework = find(backend.framework)
-    if (!framework) continue
-    rmSync(join(generatedDir(config, backend), framework.generatedFile(name)), {
-      force: true,
-    })
+    rmSync(
+      join(generatedDir(config, backend), backend.framework.generatedFile(name)),
+      { force: true },
+    )
   }
 }
 

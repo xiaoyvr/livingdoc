@@ -27,9 +27,9 @@ Deferred findings from the liv-ybyq, liv-ter0, and liv-uxrl reviews.
 
 - A missing `livingdoc.toml` is reported as `invalid-config` with
   `issues: ['not found']`; a distinct `config-not-found` kind would read better.
-- `Config` stores `framework: string`. Resolving each backend's `Framework` once
-  at load would remove the defensive unknown-framework branch in `writeBackend`,
-  the `as Backend` cast in `resolveBackend`, and the guard in `cleanDoc`.
+- `resolveBackend` casts `config.backends[0] as Backend`, because the non-empty
+  guarantee is not in the type; a `defaultBackend` field or a `[Backend,
+  ...Backend[]]` tuple would remove it.
 
 ## Coverage
 

@@ -4,14 +4,13 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
 import { z } from 'zod'
-import { has } from './frameworks/index.js'
+import { find, type Framework } from './frameworks/index.js'
 import type { DomainError } from './errors.js'
 import type { Result } from './result.js'
 
-export type Backend = { name: string; framework: string }
+export type Backend = { name: string; framework: Framework }
 
 export type Config = {
-  root: string
   livingdocs: string
   codePath: string
   backends: Backend[]
@@ -60,10 +59,9 @@ export function loadConfig(start: string): Result<Config, DomainError> {
 
   const backends: Backend[] = []
   const names = new Set<string>()
-  for (const [framework, entries] of Object.entries(backend)) {
-    if (!has(framework)) {
-      return fail(file, `unknown framework: ${framework}`)
-    }
+  for (const [frameworkName, entries] of Object.entries(backend)) {
+    const framework = find(frameworkName)
+    if (!framework) return fail(file, `unknown framework: ${frameworkName}`)
     for (const { name } of entries) {
       if (names.has(name)) return fail(file, `duplicate backend name: ${name}`)
       names.add(name)
@@ -77,7 +75,6 @@ export function loadConfig(start: string): Result<Config, DomainError> {
   return {
     ok: true,
     value: {
-      root,
       livingdocs: livingdocsDir,
       codePath: join(root, codePath),
       backends,
