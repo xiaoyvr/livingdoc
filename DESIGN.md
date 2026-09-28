@@ -336,6 +336,12 @@ part of the consumer's suite, so the consumer's own runner executes them and
 reports the result. A red assertion fails their build exactly like any other
 failing test; livingdoc never spawns the runner.
 
+Domain failures — a bad config, an unknown backend, a missing file — are
+returned as `Result` values whose error is a `DomainError`: a `kind` per domain
+error, carrying data (`file` and `issues`, `name`, `path`) rather than a display
+string. `bin` renders the message from the kind. Only unexpected environment
+failures (disk full, out of memory) throw, and those crash the process.
+
 ## 15. Guarantees
 
 1. **A document cannot be false** — a red assertion fails the generated test,

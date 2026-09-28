@@ -26,15 +26,25 @@ Deferred findings from the liv-ybyq, liv-ter0, and liv-uxrl reviews.
 ## Config
 
 - An `Example ( web ):` alias is not trimmed and fails as an unknown backend.
-- `Config.root` is written and never read.
+- A missing `livingdoc.toml` is reported as `invalid-config` with
+  `issues: ['not found']`; a distinct `config-not-found` kind would read better.
+- `Config` stores `framework: string`. Resolving each backend's `Framework` once
+  at load would remove the defensive unknown-framework branch in `writeBackend`,
+  the `as Backend` cast in `resolveBackend`, and the guard in `cleanDoc`.
 
 ## Layout and lifecycle
 
 - Generated test files are named after the document basename, so two documents
   sharing a basename overwrite each other in a backend folder (DESIGN 16.3).
 
+## Robustness
+
+- `generateDoc` reads the document without guarding against `EACCES`/`EISDIR`; a
+  directory named `*.md` under `livingdocs` throws. Accepted as an
+  out-of-assumption failure, but deliberate.
+
 ## Coverage
 
-- The `bin` error path is uncovered: nothing drives an unexpected exception
-  through `bin` to show it now surfaces with a stack while `ConfigError` stays a
-  one-liner. The untrimmed alias is untested too.
+- `bin` itself is untested: the Result-to-message path and the exit code are not
+  driven through the built command, and `document-missing` has no test. The
+  untrimmed alias is untested too.

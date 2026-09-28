@@ -9,7 +9,13 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { generate } from '@livingdoc/cli'
+import { formatError, generate } from '@livingdoc/cli'
+
+const errorOf = (result: ReturnType<typeof generate>) =>
+  result.ok ? '' : formatError(result.error)
+
+const kindOf = (result: ReturnType<typeof generate>) =>
+  result.ok ? undefined : result.error.kind
 
 const config = `livingdocs = "docs"
 code_path = "tests"
@@ -59,7 +65,7 @@ describe('livingdoc configuration', () => {
     writeFileSync(join(root, 'tests', 'vitest', 'backend.ts'), backend)
     writeFileSync(fixture, document)
 
-    expect(generate(fixture)).toBe(0)
+    expect(generate(fixture).ok).toBe(true)
     expect(
       existsSync(join(root, 'tests', 'vitest', 'generated', 'fixture.test.ts')),
     ).toBe(true)
@@ -68,7 +74,9 @@ describe('livingdoc configuration', () => {
   it('reports a missing backend file', () => {
     writeFileSync(fixture, document)
 
-    expect(() => generate(fixture)).toThrow(/backend file not found/)
+    const result = generate(fixture)
+    expect(kindOf(result)).toBe('backend-file-missing')
+    expect(errorOf(result)).toMatch(/backend file not found/)
   })
 
   it('reports an unknown framework', () => {
@@ -78,7 +86,21 @@ describe('livingdoc configuration', () => {
     )
     writeFileSync(fixture, document)
 
-    expect(() => generate(fixture)).toThrow(/unknown framework/)
+    const result = generate(fixture)
+    expect(kindOf(result)).toBe('invalid-config')
+    expect(errorOf(result)).toMatch(/unknown framework/)
+  })
+
+  it('reports a framework name taken from the prototype chain', () => {
+    writeFileSync(
+      join(root, 'livingdoc.toml'),
+      `livingdocs = "docs"\ncode_path = "tests"\n\n[[backend.toString]]\nname = "web"\n`,
+    )
+    writeFileSync(fixture, document)
+
+    const result = generate(fixture)
+    expect(kindOf(result)).toBe('invalid-config')
+    expect(errorOf(result)).toMatch(/unknown framework/)
   })
 
   it('writes one file per backend a document addresses', () => {
@@ -95,7 +117,7 @@ describe('livingdoc configuration', () => {
       `---\nlivingdoc: true\n---\n\n# Walking skeleton\n\nExample (web):\n\n- a web code :=\`"SAVE10"\`\n\nExample (pricing):\n\n- a pricing code :=\`"SAVE10"\`\n`,
     )
 
-    expect(generate(fixture)).toBe(0)
+    expect(generate(fixture).ok).toBe(true)
     const web = readFileSync(
       join(root, 'tests', 'web', 'generated', 'fixture.test.ts'),
       'utf8',
@@ -144,7 +166,9 @@ describe('livingdoc configuration', () => {
       `---\nlivingdoc: true\n---\n\n# Walking skeleton\n\nExample (nope):\n\n- a code :=\`"SAVE10"\`\n`,
     )
 
-    expect(() => generate(fixture)).toThrow(/unknown backend/)
+    const result = generate(fixture)
+    expect(kindOf(result)).toBe('unknown-backend')
+    expect(errorOf(result)).toMatch(/unknown backend/)
   })
 
   it('reports a duplicate backend name', () => {
@@ -156,7 +180,9 @@ describe('livingdoc configuration', () => {
     writeFileSync(join(root, 'tests', 'web', 'backend.ts'), backend)
     writeFileSync(fixture, document)
 
-    expect(() => generate(fixture)).toThrow(/duplicate backend name/)
+    const result = generate(fixture)
+    expect(kindOf(result)).toBe('invalid-config')
+    expect(errorOf(result)).toMatch(/duplicate backend name/)
   })
 
   it('reports a wrongly shaped backend config', () => {
@@ -166,7 +192,9 @@ describe('livingdoc configuration', () => {
     )
     writeFileSync(fixture, document)
 
-    expect(() => generate(fixture)).toThrow(/livingdoc\.toml/)
+    const result = generate(fixture)
+    expect(kindOf(result)).toBe('invalid-config')
+    expect(errorOf(result)).toMatch(/livingdoc\.toml/)
   })
 
   it('reports a missing livingdocs folder', () => {
@@ -176,7 +204,9 @@ describe('livingdoc configuration', () => {
       `livingdocs = "missing"\ncode_path = "tests"\n\n[[backend.vitest]]\nname = "vitest"\n`,
     )
 
-    expect(() => generate(fixture)).toThrow(/livingdocs folder not found/)
+    const result = generate(fixture)
+    expect(kindOf(result)).toBe('invalid-config')
+    expect(errorOf(result)).toMatch(/livingdocs folder not found/)
   })
 
   it('rejects an absolute folder in the config', () => {
@@ -186,7 +216,9 @@ describe('livingdoc configuration', () => {
       `livingdocs = "docs"\ncode_path = "${join(root, 'tests')}"\n\n[[backend.vitest]]\nname = "vitest"\n`,
     )
 
-    expect(() => generate(fixture)).toThrow(/relative/)
+    const result = generate(fixture)
+    expect(kindOf(result)).toBe('invalid-config')
+    expect(errorOf(result)).toMatch(/relative/)
   })
 
   it('requires a config even without the opt-in', () => {
@@ -195,7 +227,9 @@ describe('livingdoc configuration', () => {
       const doc = join(plain, 'plain.md')
       writeFileSync(doc, '# Plain\n')
 
-      expect(() => generate(doc)).toThrow(/livingdoc\.toml/)
+      const result = generate(doc)
+      expect(kindOf(result)).toBe('invalid-config')
+      expect(errorOf(result)).toMatch(/livingdoc\.toml/)
     } finally {
       rmSync(plain, { recursive: true, force: true })
     }

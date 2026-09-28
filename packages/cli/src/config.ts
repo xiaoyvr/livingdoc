@@ -5,16 +5,12 @@ import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
 import { z } from 'zod'
 import { frameworks } from './frameworks/index.js'
+import type { DomainError } from './errors.js'
+import type { Result } from './result.js'
 
-// A user-facing config problem: `bin` prints its message, no stack.
-export class ConfigError extends Error {}
+export type Backend = { name: string; framework: string }
 
-export interface Backend {
-  name: string
-  framework: string
-}
-
-export interface Config {
+export type Config = {
   root: string
   livingdocs: string
   codePath: string
@@ -29,64 +25,68 @@ const ConfigSchema = z.object({
     .default({}),
 })
 
-export function loadConfig(start: string): Config {
+export function loadConfig(start: string): Result<Config, DomainError> {
   const from = resolve(start)
   const file = findConfig(from)
-  if (!file) throw new ConfigError(`no livingdoc.toml found from ${from}`)
+  if (!file) return fail(join(from, 'livingdoc.toml'), 'not found')
   const root = dirname(file)
 
-  const parsed = ConfigSchema.safeParse(readToml(file))
+  let raw: unknown
+  try {
+    raw = parseToml(readFileSync(file, 'utf8'))
+  } catch (error) {
+    return fail(file, error instanceof Error ? error.message : String(error))
+  }
+
+  const parsed = ConfigSchema.safeParse(raw)
   if (!parsed.success) {
-    const issues = parsed.error.issues
-      .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
-      .join('; ')
-    throw new ConfigError(`${file}: ${issues}`)
+    return fail(
+      file,
+      ...parsed.error.issues.map(
+        (issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`,
+      ),
+    )
   }
   const { livingdocs, code_path: codePath, backend } = parsed.data
 
   if (isAbsolute(livingdocs) || isAbsolute(codePath)) {
-    throw new ConfigError(`${file}: livingdocs and code_path must be relative`)
+    return fail(file, 'livingdocs and code_path must be relative')
   }
 
   const livingdocsDir = join(root, livingdocs)
   if (!existsSync(livingdocsDir)) {
-    throw new ConfigError(`livingdocs folder not found: ${livingdocsDir}`)
+    return fail(file, `livingdocs folder not found: ${livingdocsDir}`)
   }
 
   const backends: Backend[] = []
   const names = new Set<string>()
   for (const [framework, entries] of Object.entries(backend)) {
-    if (!(framework in frameworks)) {
-      throw new ConfigError(`unknown framework: ${framework}`)
+    if (!Object.hasOwn(frameworks, framework)) {
+      return fail(file, `unknown framework: ${framework}`)
     }
     for (const { name } of entries) {
-      if (names.has(name)) throw new ConfigError(`duplicate backend name: ${name}`)
+      if (names.has(name)) return fail(file, `duplicate backend name: ${name}`)
       names.add(name)
       backends.push({ name, framework })
     }
   }
   if (backends.length === 0) {
-    throw new ConfigError(
-      `${file}: at least one [[backend.<framework>]] is required`,
-    )
+    return fail(file, 'at least one [[backend.<framework>]] is required')
   }
 
   return {
-    root,
-    livingdocs: livingdocsDir,
-    codePath: join(root, codePath),
-    backends,
+    ok: true,
+    value: {
+      root,
+      livingdocs: livingdocsDir,
+      codePath: join(root, codePath),
+      backends,
+    },
   }
 }
 
-function readToml(file: string): unknown {
-  try {
-    return parseToml(readFileSync(file, 'utf8'))
-  } catch (error) {
-    throw new ConfigError(
-      `${file}: ${error instanceof Error ? error.message : String(error)}`,
-    )
-  }
+function fail(file: string, ...issues: string[]): Result<never, DomainError> {
+  return { ok: false, error: { kind: 'invalid-config', file, issues } }
 }
 
 function findConfig(from: string): string | undefined {

@@ -192,7 +192,7 @@ describe('livingdoc generate', () => {
   it('generates a check without running it', () => {
     writeFileSync(fixture, withBullet)
 
-    expect(generate(fixture)).toBe(0)
+    expect(generate(fixture).ok).toBe(true)
     expect(existsSync(generated)).toBe(true)
   })
 

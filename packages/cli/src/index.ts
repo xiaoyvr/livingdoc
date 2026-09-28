@@ -11,12 +11,8 @@ import {
 } from 'node:fs'
 import { dirname, join, parse as parsePath, resolve } from 'node:path'
 import type { Nodes } from 'mdast'
-import {
-  ConfigError,
-  loadConfig,
-  type Backend,
-  type Config,
-} from './config.js'
+import { loadConfig, type Backend, type Config } from './config.js'
+import { formatError, type DomainError } from './errors.js'
 import {
   exampleGroups,
   frontmatter,
@@ -25,29 +21,33 @@ import {
   parseMarkdown,
 } from './document.js'
 import { frameworks } from './frameworks/index.js'
+import type { Result } from './result.js'
 
-export { ConfigError } from './config.js'
+export { formatError } from './errors.js'
 
-export function generate(file?: string): number {
-  if (!file) {
-    const config = loadConfig(process.cwd())
-    cleanGenerated(config)
-    for (const name of readdirSync(config.livingdocs)) {
-      if (!name.endsWith('.md')) continue
-      generateDoc(config, join(config.livingdocs, name))
-    }
-    return 0
+export function generate(file?: string): Result<void, DomainError> {
+  const config = loadConfig(file ? dirname(resolve(file)) : process.cwd())
+  if (!config.ok) return config
+
+  if (file) {
+    const path = resolve(file)
+    if (!existsSync(path)) return fail({ kind: 'document-missing', path })
+    cleanDoc(config.value, parsePath(path).name)
+    return generateDoc(config.value, path)
   }
 
-  const config = loadConfig(dirname(resolve(file)))
-  cleanDoc(config, parsePath(resolve(file)).name)
-  generateDoc(config, resolve(file))
-  return 0
+  cleanGenerated(config.value)
+  for (const name of readdirSync(config.value.livingdocs)) {
+    if (!name.endsWith('.md')) continue
+    const result = generateDoc(config.value, join(config.value.livingdocs, name))
+    if (!result.ok) return result
+  }
+  return { ok: true, value: undefined }
 }
 
-function generateDoc(config: Config, file: string): void {
+function generateDoc(config: Config, file: string): Result<void, DomainError> {
   const tree = parseMarkdown(readFileSync(file, 'utf8'))
-  if (!isOptedIn(frontmatter(tree))) return
+  if (!isOptedIn(frontmatter(tree))) return { ok: true, value: undefined }
 
   const doc = parsePath(resolve(file)).name
   const title = headingTitle(tree)
@@ -55,14 +55,65 @@ function generateDoc(config: Config, file: string): void {
   const groups = new Map<Backend, Nodes[]>()
   for (const group of exampleGroups(tree)) {
     const backend = resolveBackend(config, group.backend)
-    const bullets = groups.get(backend)
+    if (!backend.ok) return backend
+    const bullets = groups.get(backend.value)
     if (bullets) bullets.push(...group.bullets)
-    else groups.set(backend, [...group.bullets])
+    else groups.set(backend.value, [...group.bullets])
   }
 
   for (const [backend, bullets] of groups) {
-    writeBackend(config, backend, doc, title, bullets)
+    const result = writeBackend(config, backend, doc, title, bullets)
+    if (!result.ok) return result
   }
+  return { ok: true, value: undefined }
+}
+
+function writeBackend(
+  config: Config,
+  backend: Backend,
+  doc: string,
+  title: string,
+  bullets: Nodes[],
+): Result<void, DomainError> {
+  const framework = frameworks[backend.framework]
+  if (!framework) {
+    return fail({
+      kind: 'invalid-config',
+      file: join(config.root, 'livingdoc.toml'),
+      issues: [`unknown framework: ${backend.framework}`],
+    })
+  }
+
+  const backendFile = join(
+    config.codePath,
+    backend.name,
+    `backend.${framework.extension}`,
+  )
+  if (!existsSync(backendFile)) {
+    return fail({ kind: 'backend-file-missing', path: backendFile })
+  }
+
+  const dir = generatedDir(config, backend)
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(
+    join(dir, framework.generatedFile(doc)),
+    framework.generate(title, bullets),
+  )
+  return { ok: true, value: undefined }
+}
+
+function resolveBackend(
+  config: Config,
+  alias?: string,
+): Result<Backend, DomainError> {
+  if (!alias) return { ok: true, value: config.backends[0] as Backend }
+  const match = config.backends.find((backend) => backend.name === alias)
+  if (!match) return fail({ kind: 'unknown-backend', name: alias })
+  return { ok: true, value: match }
+}
+
+function fail(error: DomainError): Result<never, DomainError> {
+  return { ok: false, error }
 }
 
 // Drop every backend's generated folder, so outputs for deleted documents go too.
@@ -85,35 +136,4 @@ function cleanDoc(config: Config, doc: string): void {
 
 function generatedDir(config: Config, backend: Backend): string {
   return join(config.codePath, backend.name, 'generated')
-}
-
-function writeBackend(
-  config: Config,
-  backend: Backend,
-  doc: string,
-  title: string,
-  bullets: Nodes[],
-): void {
-  const framework = frameworks[backend.framework]
-  if (!framework) throw new ConfigError(`unknown framework: ${backend.framework}`)
-
-  const backendFile = join(
-    config.codePath,
-    backend.name,
-    `backend.${framework.extension}`,
-  )
-  if (!existsSync(backendFile)) {
-    throw new ConfigError(`backend file not found: ${backendFile}`)
-  }
-
-  const dir = generatedDir(config, backend)
-  mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, framework.generatedFile(doc)), framework.generate(title, bullets))
-}
-
-function resolveBackend(config: Config, alias?: string): Backend {
-  if (!alias) return config.backends[0] as Backend
-  const match = config.backends.find((backend) => backend.name === alias)
-  if (!match) throw new ConfigError(`unknown backend: ${alias}`)
-  return match
 }
