@@ -171,6 +171,16 @@ describe('livingdoc configuration', () => {
     expect(errorOf(result)).toMatch(/unknown backend/)
   })
 
+  it('trims whitespace around a backend alias', () => {
+    writeFileSync(join(root, 'tests', 'vitest', 'backend.ts'), backend)
+    writeFileSync(
+      fixture,
+      `---\nlivingdoc: true\n---\n\n# Walking skeleton\n\nExample ( vitest ):\n\n- a code :=\`"SAVE10"\`\n`,
+    )
+
+    expect(generate(fixture).ok).toBe(true)
+  })
+
   it('reports a duplicate backend name', () => {
     writeFileSync(
       join(root, 'livingdoc.toml'),

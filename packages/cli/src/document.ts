@@ -52,7 +52,7 @@ export function exampleGroups(tree: Root): ExampleGroup[] {
     if (!match) continue
     const list = tree.children[i + 1]
     groups.push({
-      backend: match[1],
+      backend: match[1]?.trim(),
       bullets: list && list.type === 'list' ? list.children : [],
     })
   }

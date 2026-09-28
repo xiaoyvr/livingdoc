@@ -25,7 +25,6 @@ Deferred findings from the liv-ybyq, liv-ter0, and liv-uxrl reviews.
 
 ## Config
 
-- An `Example ( web ):` alias is not trimmed and fails as an unknown backend.
 - A missing `livingdoc.toml` is reported as `invalid-config` with
   `issues: ['not found']`; a distinct `config-not-found` kind would read better.
 - `Config` stores `framework: string`. Resolving each backend's `Framework` once
@@ -46,5 +45,4 @@ Deferred findings from the liv-ybyq, liv-ter0, and liv-uxrl reviews.
 ## Coverage
 
 - `bin` itself is untested: the Result-to-message path and the exit code are not
-  driven through the built command, and `document-missing` has no test. The
-  untrimmed alias is untested too.
+  driven through the built command, and `document-missing` has no test.
