@@ -1,7 +1,7 @@
 ---
 id: liv-f6ao
 status: open
-deps: [liv-frgb]
+deps: [liv-frgb, liv-ty09]
 links: []
 created: 2026-09-26T03:21:48Z
 type: feature
@@ -48,7 +48,8 @@ checked in the language my project is written in, not only TypeScript.
 
 ## Notes
 
-- Depends on liv-uxrl: the `frameworks/` registry and the backend config do not
-  exist yet.
+- Depends on liv-ty09: the generated pytest test imports the Python runtime from
+  it, so the binding lookup and the backend import go through the runtime, the
+  same shape as vitest.
 - A Python backend needs a module name Python can import; whatever the file is
   called, the generated test imports it, so the framework owns the naming.

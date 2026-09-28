@@ -5,7 +5,7 @@ deps: []
 links: [liv-m0mf, liv-hu8o]
 created: 2026-09-27T00:00:00Z
 type: feature
-priority: 2
+priority: 0
 assignee: xiaoyvr
 ---
 # The livingdoc runtime
@@ -32,8 +32,9 @@ results — behave consistently.
 
 ## Scope
 
-- One package per target language the generated code runs in:
-  `@livingdoc/runtime` (npm) for vitest, and a Python package with liv-f6ao.
+- One story ships the runtime for both target languages: `@livingdoc/runtime`
+  (npm) for vitest and its Python sibling. The Python half is exercised by
+  liv-f6ao, which depends on this.
 - It provides the scoped bindings registry: a factory seeded from the backend's
   bindings, with register and lookup.
 - The generated test imports it, so today's codegen — `bindings[<slug>].run(…)`
@@ -50,4 +51,5 @@ results — behave consistently.
 - Introduces the target-side "runtime SDK" the word *adapter* was reserved for.
 - A module-level registry would be shared across every generated file in a run,
   so scoping to one document requires a per-file instance — hence a factory.
-- liv-7zw2 (append code / inline bindings) depends on this.
+- liv-7zw2 (append code / inline bindings) and liv-f6ao (the pytest generator)
+  depend on this.
