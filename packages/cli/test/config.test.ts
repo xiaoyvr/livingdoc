@@ -147,6 +147,28 @@ describe('livingdoc configuration', () => {
     expect(() => generate(fixture)).toThrow(/unknown backend/)
   })
 
+  it('reports a duplicate backend name', () => {
+    writeFileSync(
+      join(root, 'livingdoc.toml'),
+      `livingdocs = "docs"\ncode_path = "tests"\n\n[[backend.vitest]]\nname = "web"\n\n[[backend.vitest]]\nname = "web"\n`,
+    )
+    mkdirSync(join(root, 'tests', 'web'), { recursive: true })
+    writeFileSync(join(root, 'tests', 'web', 'backend.ts'), backend)
+    writeFileSync(fixture, document)
+
+    expect(() => generate(fixture)).toThrow(/duplicate backend name/)
+  })
+
+  it('reports a wrongly shaped backend config', () => {
+    writeFileSync(
+      join(root, 'livingdoc.toml'),
+      `livingdocs = "docs"\ncode_path = "tests"\nbackend = 1\n`,
+    )
+    writeFileSync(fixture, document)
+
+    expect(() => generate(fixture)).toThrow(/livingdoc\.toml/)
+  })
+
   it('reports a missing livingdocs folder', () => {
     writeFileSync(fixture, document)
     writeFileSync(

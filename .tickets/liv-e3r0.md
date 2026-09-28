@@ -25,15 +25,6 @@ Deferred findings from the liv-ybyq, liv-ter0, and liv-uxrl reviews.
 
 ## Config
 
-- `bin` catches every error and prints only the message, so a programming fault
-  loses its stack. A typed config error would keep the actionable path without
-  masking bugs.
-- A malformed `livingdoc.toml` surfaces the raw `smol-toml` message.
-- `readBackends` silently skips a `backend.<framework>` value that is not an
-  array, so `backend = 1` reports "no backends configured" instead of the actual
-  mistake.
-- Two backends may share a name; the first silently wins. A duplicate name
-  should be a config error.
 - An `Example ( web ):` alias is not trimmed and fails as an unknown backend.
 - `Config.root` is written and never read.
 
@@ -44,5 +35,6 @@ Deferred findings from the liv-ybyq, liv-ter0, and liv-uxrl reviews.
 
 ## Coverage
 
-- The retired e2e's "no stack trace" check was not replaced; the `bin` error
-  path is uncovered, as are duplicate names and an untrimmed alias.
+- The `bin` error path is uncovered: nothing drives an unexpected exception
+  through `bin` to show it now surfaces with a stack while `ConfigError` stays a
+  one-liner. The untrimmed alias is untested too.
