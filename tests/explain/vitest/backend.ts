@@ -1,6 +1,6 @@
 // The backend for livingdoc's own explain documents. Each binding builds a tiny
 // livingdoc project, generates its test file with the built CLI, and returns
-// that file so the document can assert on its content.
+// either the file's text or its path, for the document to assert on.
 import { spawnSync } from 'node:child_process'
 import {
   mkdirSync,
@@ -10,44 +10,64 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../../../', import.meta.url))
 const bin = join(root, 'packages/cli/dist/bin.js')
 
-const fixtureConfig =
+const config =
   'livingdocs = "docs"\ncode_path = "tests"\n\n[[backend.vitest]]\nname = "vitest"\n'
 
-function project(heading: string): string {
+// Build a project whose only document is `doc` at `docs/<name>`, generate, and
+// return the generated file's path (relative to the project) and its text.
+function build(name: string, doc: string): { path: string; content: string } {
   const dir = mkdtempSync(join(tmpdir(), 'livingdoc-explain-'))
-  mkdirSync(join(dir, 'docs'))
-  mkdirSync(join(dir, 'tests', 'vitest'), { recursive: true })
-  writeFileSync(join(dir, 'livingdoc.toml'), fixtureConfig)
-  writeFileSync(
-    join(dir, 'docs', 'fixture.md'),
-    `---\nlivingdoc: true\n---\n\n# ${heading}\n\nExample:\n`,
-  )
-  writeFileSync(join(dir, 'tests', 'vitest', 'backend.ts'), 'export const bindings = {}\n')
-  return dir
+  try {
+    mkdirSync(join(dir, 'docs'), { recursive: true })
+    mkdirSync(join(dir, 'tests', 'vitest'), { recursive: true })
+    writeFileSync(join(dir, 'livingdoc.toml'), config)
+    const target = join(dir, 'docs', name)
+    mkdirSync(dirname(target), { recursive: true })
+    writeFileSync(target, doc)
+    writeFileSync(
+      join(dir, 'tests', 'vitest', 'backend.ts'),
+      'export const bindings = {}\n',
+    )
+    spawnSync('node', [bin, 'generate', join('docs', name)], {
+      cwd: dir,
+      encoding: 'utf8',
+    })
+    const generated = join(
+      dir,
+      'tests',
+      'vitest',
+      'generated',
+      name.replace(/\.md$/, '.test.ts'),
+    )
+    return { path: relative(dir, generated), content: readFileSync(generated, 'utf8') }
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
 }
 
 export const bindings = {
-  'generating-a-test-file': {
-    params: ['heading'],
-    run({ heading }: { heading: string }) {
-      const dir = project(heading)
-      try {
-        spawnSync('node', [bin, 'generate'], { cwd: dir, encoding: 'utf8' })
-        return {
-          result: readFileSync(
-            join(dir, 'tests', 'vitest', 'generated', 'fixture.test.ts'),
-            'utf8',
-          ),
-        }
-      } finally {
-        rmSync(dir, { recursive: true, force: true })
-      }
+  'what-a-document-means': {
+    params: ['doc'],
+    run({ doc }: { doc: string }) {
+      return { result: build('fixture.md', doc).content }
+    },
+  },
+  'what-livingdoc-generates': {
+    params: ['doc'],
+    run({ doc }: { doc: string }) {
+      return { result: build('fixture.md', doc).content }
+    },
+  },
+  'what-a-project-provides': {
+    params: ['name', 'doc'],
+    run({ name, doc }: { name: string; doc: string }) {
+      return { result: build(name, doc).path }
     },
   },
 }
