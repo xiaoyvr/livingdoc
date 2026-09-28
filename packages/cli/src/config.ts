@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { parse as parseToml } from 'smol-toml'
 import { z } from 'zod'
-import { frameworks } from './frameworks/index.js'
+import { has } from './frameworks/index.js'
 import type { DomainError } from './errors.js'
 import type { Result } from './result.js'
 
@@ -61,7 +61,7 @@ export function loadConfig(start: string): Result<Config, DomainError> {
   const backends: Backend[] = []
   const names = new Set<string>()
   for (const [framework, entries] of Object.entries(backend)) {
-    if (!Object.hasOwn(frameworks, framework)) {
+    if (!has(framework)) {
       return fail(file, `unknown framework: ${framework}`)
     }
     for (const { name } of entries) {

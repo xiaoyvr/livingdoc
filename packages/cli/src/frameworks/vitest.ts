@@ -4,6 +4,7 @@ import type { Nodes } from 'mdast'
 import { bulletTitle, bulletTokens, slugify, type Token } from '../document.js'
 
 export const vitest = {
+  name: 'vitest',
   extension: 'ts',
   generatedFile: (doc: string) => `${doc}.test.ts`,
 

@@ -40,5 +40,10 @@ Work is tracked with `tk` (tickets live in `.tickets/`). Run `tk help` when you
 need to use it. `tk ready` lists unblocked work, `tk show <id>` reads a ticket,
 and `tk dep tree <id>` shows what it depends on.
 
+## Conventions
+
+- Prefer `type` over `interface` and `class`. Model data and error shapes as
+  `type` aliases, including discriminated unions.
+
 ## Layout
 

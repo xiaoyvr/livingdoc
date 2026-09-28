@@ -20,7 +20,7 @@ import {
   isOptedIn,
   parseMarkdown,
 } from './document.js'
-import { frameworks } from './frameworks/index.js'
+import { find } from './frameworks/index.js'
 import type { Result } from './result.js'
 
 export { formatError } from './errors.js'
@@ -75,7 +75,7 @@ function writeBackend(
   title: string,
   bullets: Nodes[],
 ): Result<void, DomainError> {
-  const framework = frameworks[backend.framework]
+  const framework = find(backend.framework)
   if (!framework) {
     return fail({
       kind: 'invalid-config',
@@ -126,7 +126,7 @@ function cleanGenerated(config: Config): void {
 // Drop one document's outputs from every backend, without touching siblings.
 function cleanDoc(config: Config, doc: string): void {
   for (const backend of config.backends) {
-    const framework = frameworks[backend.framework]
+    const framework = find(backend.framework)
     if (!framework) continue
     rmSync(join(generatedDir(config, backend), framework.generatedFile(doc)), {
       force: true,
