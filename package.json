@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "rm -rf packages/cli/dist",
-    "clean:checks": "rm -f tests/explain/vitest/*.test.ts",
+    "clean:checks": "rm -rf tests/explain/vitest/generated",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",

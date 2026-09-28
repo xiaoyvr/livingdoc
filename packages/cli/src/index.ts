@@ -1,7 +1,14 @@
 // @livingdoc/cli
 //
 // Programmatic entry point; `bin.ts` is the executable wrapper.
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { dirname, isAbsolute, join, parse as parsePath, resolve } from 'node:path'
 import type { Nodes } from 'mdast'
 import { parse as parseToml } from 'smol-toml'
@@ -15,11 +22,25 @@ import {
 import { frameworks } from './frameworks/index.js'
 
 export function generate(file?: string): number {
-  if (!file) return generateProject(process.cwd())
+  if (!file) {
+    const config = loadConfig(process.cwd())
+    cleanGenerated(config)
+    for (const name of readdirSync(config.livingdocs)) {
+      if (!name.endsWith('.md')) continue
+      generateDoc(config, join(config.livingdocs, name))
+    }
+    return 0
+  }
 
   const config = loadConfig(dirname(resolve(file)))
+  cleanDoc(config, parsePath(resolve(file)).name)
+  generateDoc(config, resolve(file))
+  return 0
+}
+
+function generateDoc(config: Config, file: string): void {
   const tree = parseMarkdown(readFileSync(file, 'utf8'))
-  if (!isOptedIn(frontmatter(tree))) return 0
+  if (!isOptedIn(frontmatter(tree))) return
 
   const doc = parsePath(resolve(file)).name
   const title = headingTitle(tree)
@@ -35,8 +56,28 @@ export function generate(file?: string): number {
   for (const [backend, bullets] of groups) {
     writeBackend(config, backend, doc, title, bullets)
   }
+}
 
-  return 0
+// Drop every backend's generated folder, so outputs for deleted documents go too.
+function cleanGenerated(config: Config): void {
+  for (const backend of config.backends) {
+    rmSync(generatedDir(config, backend), { recursive: true, force: true })
+  }
+}
+
+// Drop one document's outputs from every backend, without touching siblings.
+function cleanDoc(config: Config, doc: string): void {
+  for (const backend of config.backends) {
+    const framework = frameworks[backend.framework]
+    if (!framework) continue
+    rmSync(join(generatedDir(config, backend), framework.generatedFile(doc)), {
+      force: true,
+    })
+  }
+}
+
+function generatedDir(config: Config, backend: Backend): string {
+  return join(config.codePath, backend.name, 'generated')
 }
 
 function writeBackend(
@@ -49,14 +90,18 @@ function writeBackend(
   const framework = frameworks[backend.framework]
   if (!framework) throw new Error(`unknown framework: ${backend.framework}`)
 
-  const dir = join(config.codePath, backend.name)
-  const backendFile = join(dir, `backend.${framework.extension}`)
+  const backendFile = join(
+    config.codePath,
+    backend.name,
+    `backend.${framework.extension}`,
+  )
   if (!existsSync(backendFile)) {
     throw new Error(`backend file not found: ${backendFile}`)
   }
 
-  const code = framework.generate(title, bullets)
-  writeFileSync(join(dir, framework.generatedFile(doc)), code)
+  const dir = generatedDir(config, backend)
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, framework.generatedFile(doc)), framework.generate(title, bullets))
 }
 
 function resolveBackend(config: Config, alias?: string): Backend {
@@ -68,15 +113,6 @@ function resolveBackend(config: Config, alias?: string): Backend {
   const match = config.backends.find((backend) => backend.name === alias)
   if (!match) throw new Error(`unknown backend: ${alias}`)
   return match
-}
-
-function generateProject(dir: string): number {
-  const config = loadConfig(dir)
-  for (const name of readdirSync(config.livingdocs)) {
-    if (!name.endsWith('.md')) continue
-    generate(join(config.livingdocs, name))
-  }
-  return 0
 }
 
 interface Backend {

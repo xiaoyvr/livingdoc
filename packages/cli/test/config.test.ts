@@ -60,7 +60,9 @@ describe('livingdoc configuration', () => {
     writeFileSync(fixture, document)
 
     expect(generate(fixture)).toBe(0)
-    expect(existsSync(join(root, 'tests', 'vitest', 'fixture.test.ts'))).toBe(true)
+    expect(
+      existsSync(join(root, 'tests', 'vitest', 'generated', 'fixture.test.ts')),
+    ).toBe(true)
   })
 
   it('reports a missing backend file', () => {
@@ -94,13 +96,45 @@ describe('livingdoc configuration', () => {
     )
 
     expect(generate(fixture)).toBe(0)
-    const web = readFileSync(join(root, 'tests', 'web', 'fixture.test.ts'), 'utf8')
+    const web = readFileSync(
+      join(root, 'tests', 'web', 'generated', 'fixture.test.ts'),
+      'utf8',
+    )
     const pricing = readFileSync(
-      join(root, 'tests', 'pricing', 'fixture.test.ts'),
+      join(root, 'tests', 'pricing', 'generated', 'fixture.test.ts'),
       'utf8',
     )
     expect(web).toContain('a web code SAVE10')
     expect(pricing).toContain('a pricing code SAVE10')
+  })
+
+  it("removes a document's stale output when it stops touching a backend", () => {
+    writeFileSync(
+      join(root, 'livingdoc.toml'),
+      `livingdocs = "docs"\ncode_path = "tests"\n\n[[backend.vitest]]\nname = "web"\n\n[[backend.vitest]]\nname = "pricing"\n`,
+    )
+    mkdirSync(join(root, 'tests', 'web'), { recursive: true })
+    mkdirSync(join(root, 'tests', 'pricing'), { recursive: true })
+    writeFileSync(join(root, 'tests', 'web', 'backend.ts'), backend)
+    writeFileSync(join(root, 'tests', 'pricing', 'backend.ts'), backend)
+    writeFileSync(
+      fixture,
+      `---\nlivingdoc: true\n---\n\n# Walking skeleton\n\nExample (web):\n\n- a code :=\`"SAVE10"\`\n`,
+    )
+    generate(fixture)
+    const web = join(root, 'tests', 'web', 'generated', 'fixture.test.ts')
+    expect(existsSync(web)).toBe(true)
+
+    writeFileSync(
+      fixture,
+      `---\nlivingdoc: true\n---\n\n# Walking skeleton\n\nExample (pricing):\n\n- a code :=\`"SAVE10"\`\n`,
+    )
+    generate(fixture)
+
+    expect(existsSync(web)).toBe(false)
+    expect(
+      existsSync(join(root, 'tests', 'pricing', 'generated', 'fixture.test.ts')),
+    ).toBe(true)
   })
 
   it('reports an unknown backend alias', () => {

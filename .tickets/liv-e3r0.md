@@ -39,14 +39,10 @@ Deferred findings from the liv-ybyq, liv-ter0, and liv-uxrl reviews.
 
 ## Layout and lifecycle
 
-- A document that stops touching a backend leaves its generated file behind:
-  `generate` writes but never removes stale outputs, so an old test keeps
-  running. The repo hides this with `clean:checks`.
 - Generated test files are named after the document basename, so two documents
   sharing a basename overwrite each other in a backend folder (DESIGN 16.3).
 
 ## Coverage
 
 - The retired e2e's "no stack trace" check was not replaced; the `bin` error
-  path is uncovered, as are duplicate names, an untrimmed alias, and stale
-  generated files.
+  path is uncovered, as are duplicate names and an untrimmed alias.

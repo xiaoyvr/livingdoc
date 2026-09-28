@@ -41,7 +41,7 @@ export const bindings = {
         spawnSync('node', [bin, 'generate'], { cwd: dir, encoding: 'utf8' })
         return {
           result: readFileSync(
-            join(dir, 'tests', 'vitest', 'fixture.test.ts'),
+            join(dir, 'tests', 'vitest', 'generated', 'fixture.test.ts'),
             'utf8',
           ),
         }

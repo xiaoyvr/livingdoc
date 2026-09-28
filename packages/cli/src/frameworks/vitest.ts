@@ -13,7 +13,7 @@ export const vitest = {
     const imports = ['describe', ...(hasAssertion ? ['expect'] : []), 'it']
     const output = [`import { ${imports.join(', ')} } from 'vitest'`]
     if (bullets.length > 0) {
-      output.push("import { bindings } from './backend'")
+      output.push("import { bindings } from '../backend'")
     }
     output.push('', `describe(${JSON.stringify(title)}, () => {`)
     for (const bullet of bullets) {

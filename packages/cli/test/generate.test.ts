@@ -152,7 +152,7 @@ describe('livingdoc generate', () => {
     mkdirSync(join(dir, 'tests', 'vitest'), { recursive: true })
     writeFileSync(join(dir, 'livingdoc.toml'), config)
     fixture = join(dir, 'docs', 'fixture.md')
-    generated = join(dir, 'tests', 'vitest', 'fixture.test.ts')
+    generated = join(dir, 'tests', 'vitest', 'generated', 'fixture.test.ts')
     writeFileSync(join(dir, 'tests', 'vitest', 'backend.ts'), consumerBackend)
   })
 
