@@ -35,15 +35,16 @@ npm run checks     # typecheck + generate + test
 
 Work is tracked with `tk` in `.tickets/`; `tk ready` lists unblocked work.
 
-The CLI runs from source with `npm run livingdoc -- check <file.md>`
+The CLI runs from source with `npm run livingdoc -- generate <file.md>`
 (or `tsx packages/cli/src/bin.ts`). `npm run build` emits `dist/` per package,
 after which `packages/cli/dist/bin.js` is the `livingdoc` executable.
 
 The CLI reads `livingdoc.toml` at the project root. It names the `livingdocs`
-folder to check and the `backend` folder, which holds the
-`livingdoc.backend.<ext>` file and where the generated checks are written. Run
-`livingdoc generate <file.md>` for one document, or `livingdoc generate` for
-every opted-in document under `livingdocs`.
+folder, the `code_path` root, and one `[[backend.<framework>]]` entry per
+backend. Each backend's folder is `<code_path>/<name>`, holding its
+`backend.<ext>` and a `generated/` folder. Run `livingdoc generate <file.md>`
+for one document, or `livingdoc generate` for every opted-in document under
+`livingdocs`.
 
 `generate` only writes the checks. They are ordinary test files, so the
 project's own runner executes them: `npm run checks` generates first, then

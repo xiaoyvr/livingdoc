@@ -34,7 +34,8 @@ language and framework give that text meaning.
 A document is a **parameterized test expressed as prose**:
 
 - the **binding body** (how to run the behavior) lives once in the consumer's
-  project;
+  project — or, for a simple, self-contained example, in the document itself
+  (a `>>` block, planned liv-7zw2);
 - the **document** supplies the parameters — inputs and expected results — as
   free prose with marked values, using the language and test framework the
   system is actually built with;
@@ -85,6 +86,7 @@ format-independent.
 | `- …` (bullet under `Example:`) | one test case (one `it`) |
 | ``name :=`expr` `` | an input; `name` is the word before `:=`; `expr` is a native expression, verbatim |
 | fenced block, info ending `name :=` | a multi-line input; the block's content is the value, as a string |
+| ``<lang> >>`` fenced block | target code appended inside the `describe` (planned, liv-7zw2) |
 | ``!!`expr` `` | an assertion; `expr` is a framework assertion or consumer directive |
 | any other code span | prose, never executed |
 
@@ -138,16 +140,19 @@ The document's structure maps directly onto a test tree:
 - The **heading** locates the `describe` (the action being tested): its slug is
   the binding name — `## Applying a discount` → `applying-a-discount`
   (lowercase, whitespace → hyphen, digits kept, other punctuation dropped).
+- `Example:` alone uses the first configured backend. A document may hold
+  groups for several backends, and its cases are generated per backend.
+  Planned (liv-otqr): `Example (backend: web, action: applying-a-discount):`
+  names the group's backend and action, and a missing `action:` falls back to
+  the heading's slug.
 - The **parameter names** locate the `it` (the parameterized test): the names in
   a bullet must match the binding's declared parameters.
-- `Example (name):` selects the backend for that group; `Example:` alone uses
-  the first configured backend. A document may hold groups for several
-  backends, and its cases are generated per backend.
 - The `it` **title** is the bullet's prose with input values substituted. Until
   rendering lands (§16.5) it still carries the raw assertion text, e.g. `toBe 90`.
 - A nested heading overrides the binding. A heading with no `Example:` bullets
-  is just structure. No explicit binding override exists — renaming a heading
-  changes the slug and breaks the lookup, which is drift caught red.
+  is just structure. Today the heading's slug is the binding name, so renaming a
+  heading changes the lookup; naming the action on the group (above, planned)
+  removes that coupling.
 
 ## 7. The consumer's backend
 
@@ -203,6 +208,10 @@ describe("Applying a discount", () => {
 
 (Directives and named outputs — `calls(...)`, `outputs["order saved"]` — are
 planned; §16.1, liv-m0mf, liv-du6y.)
+
+The generated test is a plain test file plus a small target-language runtime
+(the scoped bindings registry — `@livingdoc/runtime` and its Python sibling,
+planned liv-ty09) that the cases call.
 
 The verb `toBe` is used **as-is** — the generator only knows *where* a verb goes
 (`expect(SUBJECT).VERB(ARGS)`) and *which* verbs belong to its framework. It
@@ -369,14 +378,16 @@ failures (disk full, out of memory) throw, and those crash the process.
 1. **Result mapping** — the framework's pass/fail is the CI gate, but livingdoc
    needs per-case results (including the actual on failure) to color each
    bullet. Parse the framework's reporter (TAP/junit/spec), or have each
-   generated test also call a `record(id, ok, actual)` helper? Leaning: helper.
+   generated test also call a `record(id, ok, actual)` helper? Leaning: helper,
+   which would live in the runtime (liv-ty09) alongside the registry.
 2. **Which frameworks next** — vitest is implemented; pytest (liv-f6ao) and
    jest are the next candidates, then node:test, Catch2, cargo-test, go-test,
    gtest.
 3. **Generated-file lifecycle** — generating into `generated/` and gitignoring
    is the current answer; whether to ever commit them is still open.
-4. **Fenced assertions** — a fenced *input* is supported; a fenced *assertion*
-   (`!!` before a block), for a multi-line expression, is deferred.
+4. **Fenced assertions** — a fenced *input* is supported; a multi-line
+   expression can be a `>>` block (planned liv-7zw2), so a dedicated fenced
+   *assertion* (`!!` before a block) is deferred.
 5. **Rendering** — deliberately deferred. How `Example:` markers and green/red
    results are presented in HTML is not being designed yet.
 6. **Base formats beyond Markdown** — the `:=` / `!!` sigils port, but the

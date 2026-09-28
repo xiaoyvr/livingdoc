@@ -18,8 +18,10 @@ behaviors of a real system.
 
 - **Given** a document with two headings, each with an `Example:` bullet
   **When** I run `livingdoc generate`
-  **Then** each heading selects its own binding
+  **Then** each heading is its own `describe`
   **And** each bullet becomes its own generated case, named after the bullet
+  **And** the action a case targets is the group's (liv-otqr) or, if unnamed,
+  its heading's
 
 - **Given** a bullet asserting a named output
   **When** I run `livingdoc generate`
@@ -28,3 +30,9 @@ behaviors of a real system.
 - **Given** a document in which one case is stale
   **When** the project's tests run
   **Then** that case fails while the other cases still run
+
+## Notes
+
+- The heading is a `describe` and the default action; liv-otqr lets a group name
+  its action, so a multi-heading document composes with that instead of relying
+  on the heading slug alone.
