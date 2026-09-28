@@ -9,7 +9,7 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs'
-import { dirname, join, parse as parsePath, resolve } from 'node:path'
+import { dirname, isAbsolute, join, parse as parsePath, relative, resolve } from 'node:path'
 import type { Nodes } from 'mdast'
 import { loadConfig, type Backend, type Config } from './config.js'
 import { formatError, type DomainError } from './errors.js'
@@ -32,7 +32,7 @@ export function generate(file?: string): Result<void, DomainError> {
   if (file) {
     const path = resolve(file)
     if (!existsSync(path)) return fail({ kind: 'document-missing', path })
-    cleanDoc(config.value, parsePath(path).name)
+    cleanDoc(config.value, docName(config.value, path))
     return generateDoc(config.value, path)
   }
 
@@ -49,7 +49,7 @@ function generateDoc(config: Config, file: string): Result<void, DomainError> {
   const tree = parseMarkdown(readFileSync(file, 'utf8'))
   if (!isOptedIn(frontmatter(tree))) return { ok: true, value: undefined }
 
-  const doc = parsePath(resolve(file)).name
+  const name = docName(config, file)
   const title = headingTitle(tree)
 
   const groups = new Map<Backend, Nodes[]>()
@@ -62,7 +62,7 @@ function generateDoc(config: Config, file: string): Result<void, DomainError> {
   }
 
   for (const [backend, bullets] of groups) {
-    const result = writeBackend(config, backend, doc, title, bullets)
+    const result = writeBackend(config, backend, name, title, bullets)
     if (!result.ok) return result
   }
   return { ok: true, value: undefined }
@@ -71,7 +71,7 @@ function generateDoc(config: Config, file: string): Result<void, DomainError> {
 function writeBackend(
   config: Config,
   backend: Backend,
-  doc: string,
+  name: string,
   title: string,
   bullets: Nodes[],
 ): Result<void, DomainError> {
@@ -93,12 +93,12 @@ function writeBackend(
     return fail({ kind: 'backend-file-missing', path: backendFile })
   }
 
-  const dir = generatedDir(config, backend)
-  mkdirSync(dir, { recursive: true })
-  writeFileSync(
-    join(dir, framework.generatedFile(doc)),
-    framework.generate(title, bullets),
+  const target = join(
+    generatedDir(config, backend),
+    framework.generatedFile(name),
   )
+  mkdirSync(dirname(target), { recursive: true })
+  writeFileSync(target, framework.generate(title, bullets))
   return { ok: true, value: undefined }
 }
 
@@ -124,14 +124,24 @@ function cleanGenerated(config: Config): void {
 }
 
 // Drop one document's outputs from every backend, without touching siblings.
-function cleanDoc(config: Config, doc: string): void {
+function cleanDoc(config: Config, name: string): void {
   for (const backend of config.backends) {
     const framework = find(backend.framework)
     if (!framework) continue
-    rmSync(join(generatedDir(config, backend), framework.generatedFile(doc)), {
+    rmSync(join(generatedDir(config, backend), framework.generatedFile(name)), {
       force: true,
     })
   }
+}
+
+// The document's path relative to `livingdocs`, without extension. The
+// generated file mirrors it, so two documents can't share one output.
+function docName(config: Config, file: string): string {
+  const path = resolve(file)
+  const rel = relative(config.livingdocs, path)
+  if (rel.startsWith('..') || isAbsolute(rel)) return parsePath(path).name
+  const { dir, name } = parsePath(rel)
+  return dir ? join(dir, name) : name
 }
 
 function generatedDir(config: Config, backend: Backend): string {

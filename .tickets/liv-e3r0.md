@@ -31,17 +31,6 @@ Deferred findings from the liv-ybyq, liv-ter0, and liv-uxrl reviews.
   at load would remove the defensive unknown-framework branch in `writeBackend`,
   the `as Backend` cast in `resolveBackend`, and the guard in `cleanDoc`.
 
-## Layout and lifecycle
-
-- Generated test files are named after the document basename, so two documents
-  sharing a basename overwrite each other in a backend folder (DESIGN 16.3).
-
-## Robustness
-
-- `generateDoc` reads the document without guarding against `EACCES`/`EISDIR`; a
-  directory named `*.md` under `livingdocs` throws. Accepted as an
-  out-of-assumption failure, but deliberate.
-
 ## Coverage
 
 - `bin` itself is untested: the Result-to-message path and the exit code are not

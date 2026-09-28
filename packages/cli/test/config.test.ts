@@ -71,6 +71,20 @@ describe('livingdoc configuration', () => {
     ).toBe(true)
   })
 
+  it('mirrors a nested document path under generated', () => {
+    writeFileSync(join(root, 'tests', 'vitest', 'backend.ts'), backend)
+    mkdirSync(join(root, 'docs', 'a'), { recursive: true })
+    const nested = join(root, 'docs', 'a', 'something.md')
+    writeFileSync(nested, document)
+
+    expect(generate(nested).ok).toBe(true)
+    expect(
+      existsSync(
+        join(root, 'tests', 'vitest', 'generated', 'a', 'something.test.ts'),
+      ),
+    ).toBe(true)
+  })
+
   it('reports a missing backend file', () => {
     writeFileSync(fixture, document)
 

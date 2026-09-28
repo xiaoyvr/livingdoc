@@ -6,7 +6,7 @@ import { bulletTitle, bulletTokens, slugify, type Token } from '../document.js'
 export const vitest = {
   name: 'vitest',
   extension: 'ts',
-  generatedFile: (doc: string) => `${doc}.test.ts`,
+  generatedFile: (name: string) => `${name}.test.ts`,
 
   generate(title: string, bullets: Nodes[]): string {
     const tokens = bullets.flatMap((bullet) => bulletTokens(bullet))
