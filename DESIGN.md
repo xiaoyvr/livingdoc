@@ -6,9 +6,9 @@
 
 livingdoc turns the important behaviors of a system into living documentation:
 you describe them in ordinary prose, mark the inputs and expectations, and
-livingdoc executes the behavior against your real code at build time. A claim
-whose expectation no longer holds turns red, and the generated test fails — so
-the document and the implementation cannot drift.
+livingdoc generates the tests that run those behaviors against your real code.
+A claim whose expectation no longer holds turns red, and the generated test
+fails — so the document and the implementation cannot drift.
 
 It documents a *subset* — the behaviors that matter for a human to understand
 the system — and it is not a replacement for unit, integration, or e2e tests.
@@ -39,8 +39,7 @@ A document is a **parameterized test expressed as prose**:
   free prose with marked values, using the language and test framework the
   system is actually built with;
 - livingdoc generates test code that calls those bindings and evaluates those
-  expectations, runs it through the consumer's own test framework, and colors
-  the result.
+  expectations; the consumer's own test framework runs it.
 
 The document is *authored*, never generated. Its markup is a *locator*: it finds
 the right binding and the right assertion to call.
@@ -89,11 +88,13 @@ format-independent.
 | ``!!`expr` `` | an assertion; `expr` is a framework assertion or consumer directive |
 | any other code span | prose, never executed |
 
-Assertion forms — the verb may appear first or in the middle:
+Assertion forms — the verb comes first:
 
 - ``!!`toBe total * 0.9` `` — verb first (the primary result)
-- ``!!`"order saved" toBe true` `` — verb in the middle (subject + expected)
 - ``!!`calls "pricing service" "Once"` `` — verb first, its own arguments
+
+A middle form — ``!!`"order saved" toBe true` ``, subject then verb — is not yet
+supported (§16.7).
 
 Prose around the tokens is completely free — that is the key principle. A
 bullet without tokens is prose and is never executed.
@@ -105,11 +106,11 @@ bullet without tokens is prose and is never executed.
   ``code :="SAVE 10"`` → name `code`, value `"SAVE 10"`.
 - *assertions* — ``!!`expr` ``. `!!` marks an assertion, so an input and an
   assertion are never confused. The first word of the span is the declared
-  verb; the text before it is the subject, the rest is the arguments — each
-  raw, verbatim, never lexed. ``!!`toBe total * 0.9` `` → verb `toBe`, args
-  `total * 0.9` (one expression). ``!!`calls "pricing service" "Once"` `` →
-  verb `calls`, args `"pricing service" "Once"` (the verb splits its own
-  arguments).
+  verb; the rest is the arguments, raw, verbatim, never lexed.
+  ``!!`toBe total * 0.9` `` → verb `toBe`, args `total * 0.9` (one expression).
+  ``!!`calls "pricing service" "Once"` `` → verb `calls`, args
+  `"pricing service" "Once"` (the verb splits its own arguments). The subject
+  is the primary result; a middle form is not yet supported (§16.7).
 - *fenced inputs* — a fenced code block whose info string ends with `name :=`
   binds the block's content as the string `name`. The language is optional:
   `data :=` and `ts data :=` both bind `data`; anything before the name is the
@@ -188,19 +189,20 @@ livingdoc generates test code in two layers:
 2. **Framework generator** — transcribe the document's verbs into the
    framework's assertion form, directly, with no translation.
 
-```js
-// jest generator (JavaScript) — the doc's !!`toBe total * 0.9`
+```ts
+// vitest generator (TypeScript) — the doc's !!`toBe total * 0.9`
 describe("Applying a discount", () => {
   it("applying a SAVE10 code to a $100 cart", () => {
     const code = "SAVE10";
     const total = 100;
     const outputs = bindings["applying-a-discount"].run({ code, total });
     expect(outputs.result).toBe(total * 0.9);
-    calls(outputs, "pricing service", "Once");
-    expect(outputs["order saved"]).toBe(true);
   });
 });
 ```
+
+(Directives and named outputs — `calls(...)`, `outputs["order saved"]` — are
+planned; §16.1, liv-m0mf, liv-du6y.)
 
 The verb `toBe` is used **as-is** — the generator only knows *where* a verb goes
 (`expect(SUBJECT).VERB(ARGS)`) and *which* verbs belong to its framework. It
@@ -212,18 +214,18 @@ is what runs.
 Each generator knows two things: its framework's assertion *shape*, and its
 assertion *verbs*.
 
-| framework | shape | verbs (examples) |
-|---|---|---|
-| jest | `expect(SUBJECT).VERB(ARGS)` | `toBe`, `toEqual`, `toContain`, `toMatch` |
-| pytest | `assert SUBJECT VERB ARGS` | `==`, `!=`, `in`, `<` |
-| Catch2 | `REQUIRE(SUBJECT VERB ARGS)` | `==`, `!=`, `<=` |
+| framework | shape | verbs (examples) | status |
+|---|---|---|---|
+| vitest | `expect(SUBJECT).VERB(ARGS)` | `toBe`, `toEqual`, `toContain`, `toMatch` | implemented |
+| pytest | `assert SUBJECT VERB ARGS` | `==`, `!=`, `in`, `<` | planned (liv-f6ao) |
+| jest | `expect(SUBJECT).VERB(ARGS)` | `toBe`, `toEqual`, `toContain`, `toMatch` | planned |
 
 A document is bound to one framework, so it writes that framework's verbs
 directly. The generator transcribes:
 
 ```
-!!`toBe total * 0.9`          →  expect(result).toBe(total * 0.9)     (jest)
-!!`== total * 0.9`            →  assert result == (total * 0.9)       (pytest)
+!!`toBe total * 0.9`          →  expect(outputs.result).toBe(total * 0.9)     (vitest)
+!!`== total * 0.9`            →  assert outputs["result"] == (total * 0.9)    (pytest)
 ```
 
 Consumer directives (`calls`) are transcribed as direct calls —
@@ -242,11 +244,11 @@ verb is red: "no assertion `foo`".
 1. heading "Applying a discount"           → binding "applying-a-discount"
 2. code :="SAVE10" total :=`100`           → inputs; names must match binding.params
 3. !!`toBe total * 0.9`                     → assertion: verb "toBe", args "total * 0.9"
-4. generate (jest):
+4. generate (vitest):
      const code = "SAVE10"; const total = 100;
      const outputs = bindings["applying-a-discount"].run({ code, total });
      expect(outputs.result).toBe(total * 0.9);
-5. run `jest`; map each test's result back to its bullet; color green/red
+5. write the file; the consumer's runner executes it (§14)
 ```
 
 ## 11. Values are native expressions
@@ -314,7 +316,12 @@ name = "pricing"
   `livingdoc generate` with no path generates for every opted-in document under
   it.
 - **`code_path`** — the root folder for the generated tests. A backend's folder
-  is `<code_path>/<name>`, holding `backend.<ext>` and the generated tests.
+  is `<code_path>/<name>`, holding `backend.<ext>` and a `generated/`
+  subfolder. A document's test is written to
+  `<code_path>/<name>/generated/<path>.test.ts`, where `<path>` is the
+  document's path relative to `livingdocs` without its extension, so
+  `docs/explain/a/something.md` becomes `generated/a/something.test.ts` and two
+  documents cannot collide.
 - **`[[backend.<framework>]]`** — one entry per backend, naming it. The table
   key is the framework (language and test runner); every backend under it uses
   that framework, so several backends can share one. A backend may be named
@@ -363,16 +370,18 @@ failures (disk full, out of memory) throw, and those crash the process.
    needs per-case results (including the actual on failure) to color each
    bullet. Parse the framework's reporter (TAP/junit/spec), or have each
    generated test also call a `record(id, ok, actual)` helper? Leaning: helper.
-2. **Which frameworks first** — jest + pytest + Catch2 as the seed? Then
-   node:test, vitest, cargo-test, go-test, gtest?
-3. **Generated-file lifecycle** — commit for review, or regenerate each `check`
-   and gitignore?
-4. **Compound and multi-line values** — a code span covers `[1, 2]` and
-   `{ "a": 1 }` on one line; a multi-line expression needs a fenced variant
-   (`!!` before a fenced block). Deferred.
+2. **Which frameworks next** — vitest is implemented; pytest (liv-f6ao) and
+   jest are the next candidates, then node:test, Catch2, cargo-test, go-test,
+   gtest.
+3. **Generated-file lifecycle** — generating into `generated/` and gitignoring
+   is the current answer; whether to ever commit them is still open.
+4. **Fenced assertions** — a fenced *input* is supported; a fenced *assertion*
+   (`!!` before a block), for a multi-line expression, is deferred.
 5. **Rendering** — deliberately deferred. How `Example:` markers and green/red
    results are presented in HTML is not being designed yet.
 6. **Base formats beyond Markdown** — the `:=` / `!!` sigils port, but the
    verbatim carrier does not: AsciiDoc's inline literal cannot hold `+` or `]`,
    so a second format would need a livingdoc-owned body delimiter rather than
    the host's literal syntax.
+7. **The middle assertion form** — ``!!`"order saved" toBe true` `` (subject
+   then verb) and named outputs are not yet supported (liv-du6y, liv-m0mf).

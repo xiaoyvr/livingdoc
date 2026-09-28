@@ -19,7 +19,7 @@ checked in the language my project is written in, not only TypeScript.
 - **Given** a backend declared as `[[backend.pytest]]` with a Python backend
   file, and a document written in Python's terms
   **When** I run `livingdoc generate`
-  **Then** a `test_<doc>.py` is written into the backend's folder
+  **Then** a `test_<doc>.py` is written into the backend's `generated/` folder
   **And** running pytest on it passes
 
 - **Given** an expectation that no longer holds

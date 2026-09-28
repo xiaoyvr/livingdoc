@@ -8,27 +8,22 @@ type: feature
 priority: 4
 assignee: xiaoyvr
 ---
-# Configuration and commands
+# Render the living documentation
 
-**As a** developer adopting livingdoc, **I want** a clear command surface and
-actionable errors, **so that** I can wire livingdoc into my project and my CI.
+**As a** reader, **I want** the document's prose with each example's green/red
+result, **so that** I can read the living documentation without running the
+tests myself.
 
 ## Acceptance criteria
 
-- **Given** a configured project
-  **When** I run `livingdoc generate`
-  **Then** the tests are written and nothing else runs
-
-- **Given** a misconfigured project (no config, an unknown framework, an
-  unknown backend)
-  **When** I run `livingdoc generate`
-  **Then** it fails with an actionable message, not a stack trace
+- **Given** a document and the result of a test run
+  **When** I run `livingdoc render`
+  **Then** the prose is rendered with each bullet marked green or red
+  **And** the marked values are shown
 
 ## Notes
 
-- The `livingdoc.toml` shape (`livingdocs`, `code_path`,
-  `[[backend.<framework>]]`) and per-backend generation are delivered by
-  liv-ter0 and liv-uxrl; this story covers the remaining command surface and
-  error reporting.
-- `livingdoc check` no longer exists: `generate` writes the tests, and the
-  project's own runner executes them (liv-mpoe).
+- Configuration, generation, and actionable errors are already delivered
+  (liv-ter0, liv-uxrl, liv-mpoe); this story is the remaining command.
+- Rendering needs per-case results, hence the liv-hu8o dependency.
+- DESIGN §16.5 is the deferred rendering design.
