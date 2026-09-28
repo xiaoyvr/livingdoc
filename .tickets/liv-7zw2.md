@@ -1,7 +1,7 @@
 ---
 id: liv-7zw2
 status: open
-deps: []
+deps: [liv-ty09]
 links: [liv-otqr]
 created: 2026-09-27T00:00:00Z
 type: feature
@@ -37,6 +37,8 @@ document itself.
   contributes its content, verbatim, to the generated test.
 - Only heading-level blocks: a `>>` block sits under a heading, outside any
   case. There is no bullet-level form.
+- With several headings (liv-du6y), a block belongs to the heading it sits under
+  and is emitted into that heading's `describe`.
 - The block is emitted inside the `describe`, before its cases, so what it
   defines is in scope for them.
 - Inline bindings are visible only in that document's generated test; the
@@ -50,20 +52,18 @@ document itself.
 - `>>` means "append to the test", in the same sigil family as `:=` (input) and
   `!!` (assertion). It is deliberately not `!!`, which means "assert".
 - The block's content is verbatim; livingdoc never parses it. `bind(...)` is the
-  first use, and the generated test provides the scaffold at module scope — a
-  mutable `bindings` seeded from the backend, and a `bind(name, binding)` that
-  throws on a duplicate — with the import renamed to `bindings as backend`:
+  first use: the generated test creates a scoped registry from the runtime
+  (liv-ty09), seeded from the backend, and the block registers into it. The
+  duplicate rule is the runtime's, so it holds the same way for every document.
 
   ```ts
   import { bindings as backend } from '../backend'
+  import { createBindings } from '@livingdoc/runtime'
 
-  const bindings = { ...backend }
-  function bind(name, binding) {
-    if (name in bindings) throw new Error(`duplicate binding: ${name}`)
-    bindings[name] = binding
-  }
+  const bindings = createBindings(backend)
 
   describe("…", () => {
+    // the document's >> block, registering into the registry
     bind('what-a-document-means', { … })
     it("…", () => { … })
   })
@@ -71,7 +71,5 @@ document itself.
 
 ## Open questions
 
-- Several headings (liv-du6y): a heading-level block belongs to its heading's
-  `describe`; whether one block can serve several groups stays open.
-- Is the emitted `bind`/`bindings` scaffold the start of the "runtime SDK" the
-  word *adapter* was reserved for?
+- (none — the runtime (liv-ty09) owns the registry, including the duplicate and
+  missing-binding rules; the API shape is decided there)

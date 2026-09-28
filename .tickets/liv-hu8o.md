@@ -2,7 +2,7 @@
 id: liv-hu8o
 status: open
 deps: [liv-du6y, liv-m0mf]
-links: []
+links: [liv-ty09, liv-m0mf]
 created: 2026-09-26T03:21:48Z
 type: feature
 priority: 3
