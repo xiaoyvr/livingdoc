@@ -236,7 +236,7 @@ assertion *verbs*.
 | framework | shape | verbs (examples) | status |
 |---|---|---|---|
 | vitest | `expect(SUBJECT).VERB(ARGS)` | `toBe`, `toEqual`, `toContain`, `toMatch` | implemented |
-| pytest | `assert SUBJECT VERB ARGS` | `==`, `!=`, `in`, `<` | planned (liv-f6ao) |
+| pytest | `assert SUBJECT VERB ARGS` | `==`, `!=`, `in`, `<` | implemented (liv-f6ao; verbs in scope: `==`, `!=`, `in`) |
 | jest | `expect(SUBJECT).VERB(ARGS)` | `toBe`, `toEqual`, `toContain`, `toMatch` | planned |
 
 A document is bound to one framework, so it writes that framework's verbs

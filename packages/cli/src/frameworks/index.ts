@@ -1,6 +1,7 @@
 // The framework registry: the generators livingdoc knows, one per framework
 // name. The backend config's table key selects one.
 import type { Nodes } from 'mdast'
+import { pytest } from './pytest.js'
 import { vitest } from './vitest.js'
 
 export type Framework = {
@@ -14,7 +15,7 @@ export function registry(...list: Framework[]): Framework[] {
   return list
 }
 
-export const frameworks = registry(vitest)
+export const frameworks = registry(vitest, pytest)
 
 export function has(name: string): boolean {
   return frameworks.some((framework) => framework.name === name)

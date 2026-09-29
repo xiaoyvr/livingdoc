@@ -1,8 +1,8 @@
 ---
 id: liv-f6ao
-status: open
+status: closed
 deps: [liv-frgb, liv-ty09]
-links: []
+links: [liv-m0mf]
 created: 2026-09-26T03:21:48Z
 type: feature
 priority: 0
@@ -26,13 +26,9 @@ checked in the language my project is written in, not only TypeScript.
   **When** pytest runs
   **Then** the generated test fails
 
-- **Given** an assertion whose verb pytest does not know
-  **When** I run `livingdoc generate`
-  **Then** the unknown verb is reported as an error
-
 ## Scope
 
-- A new pytests generator in `packages/cli/src/frameworks/pytest.ts`, registered
+- A new pytest generator in `packages/cli/src/frameworks/pytest.ts`, registered
   under the framework name `pytest`.
 - It owns the backend file extension (`backend.py`), the generated filename
   (`test_<doc>.py`), the import, the binding call, the assertion shape
@@ -45,6 +41,8 @@ checked in the language my project is written in, not only TypeScript.
 
 - A runtime SDK; multiple backends (liv-uxrl); per-case results; directives;
   rendering.
+- Rejecting unknown assertion verbs at generate time — liv-m0mf owns the closed
+  vocabulary for every framework (including pytest).
 
 ## Notes
 
@@ -54,3 +52,27 @@ checked in the language my project is written in, not only TypeScript.
 - A Python backend needs a module name Python can import; whatever the file is
   called, the generated test imports it, so the framework owns the naming.
 - Dogfood under pytest is a follow-on (liv-99hz), not part of this story.
+
+## Implementation tasks
+
+Vertical slices (each delivers a usable path, not a layer):
+
+- [x] 1. **One case goes green under pytest**
+
+      End-to-end: `[[backend.pytest]]` + generate `test_<doc>.py` (file-scoped
+      bindings, `register`, `assert outputs["result"] <verb> <args>`) + minimal
+      `backend.py` + `python3`/`pytest` in the flake + pytest run passes.
+      Import shape for `livingdoc_runtime` and `backend` is decided here.
+      Vitest generation stays unchanged.
+
+- [x] 2. **A stale expectation goes red under pytest**
+
+      Same path; wrong assertion → pytest fails. Proves generate does not
+      "check" — the runner does.
+
+### Notes
+
+- Verb vocabulary for codegen follows the ticket scope (`==`, `!=`, `in`), not
+  the wider DESIGN examples (`<`, …). Widen later if needed.
+- Multiple backends already work in config; this story only adds the pytest
+  generator. Repo dogfood stays vitest-only until liv-99hz.

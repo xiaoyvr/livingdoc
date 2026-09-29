@@ -58,6 +58,7 @@
             packages = [
               pkgs.nodejs_24
               pkgs.nixfmt
+              (pkgs.python3.withPackages (ps: [ ps.pytest ]))
               ticket-cli
             ];
 
