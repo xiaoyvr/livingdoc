@@ -200,18 +200,17 @@ livingdoc generates test code in two layers:
 
 ```ts
 // vitest generator (TypeScript) — the doc's !!`toBe total * 0.9`
-import { createBindings } from '@livingdoc/runtime'
-import { register } from '../backend'
+import { setup } from '@livingdoc/runtime'
+import * as backend from '../backend'
 
-const bindings = createBindings()
-register(bindings)
+const { run } = setup(backend)
 
 describe("Applying a discount", () => {
   it("applying a SAVE10 code to a $100 cart", () => {
     const code = "SAVE10";
     const total = 100;
-    const outputs = bindings.get("applying-a-discount").run({ code, total });
-    expect(outputs.result).toBe(total * 0.9);
+    const result = run("applying-a-discount", { code, total });
+    expect(result).toBe(total * 0.9);
   });
 });
 ```
@@ -220,7 +219,7 @@ describe("Applying a discount", () => {
 planned; §16.1, liv-m0mf, liv-du6y.)
 
 The generated test is a plain test file plus a small target-language runtime
-(file-scoped `bindings` — `@livingdoc/runtime` and its Python sibling) that
+(`setup` → `bind` / `run` — `@livingdoc/runtime` and its Python sibling) that
 the cases call.
 
 The verb `toBe` is used **as-is** — the generator only knows *where* a verb goes
@@ -243,8 +242,8 @@ A document is bound to one framework, so it writes that framework's verbs
 directly. The generator transcribes:
 
 ```
-!!`toBe total * 0.9`          →  expect(outputs.result).toBe(total * 0.9)     (vitest)
-!!`== total * 0.9`            →  assert outputs["result"] == (total * 0.9)    (pytest)
+!!`toBe total * 0.9`          →  expect(result).toBe(total * 0.9)     (vitest)
+!!`== total * 0.9`            →  assert result == (total * 0.9)       (pytest)
 ```
 
 Consumer directives (`calls`) are transcribed as direct calls —
@@ -265,8 +264,8 @@ verb is red: "no assertion `foo`".
 3. !!`toBe total * 0.9`                     → assertion: verb "toBe", args "total * 0.9"
 4. generate (vitest):
      const code = "SAVE10"; const total = 100;
-     const outputs = bindings.get("applying-a-discount").run({ code, total });
-     expect(outputs.result).toBe(total * 0.9);
+     const result = run("applying-a-discount", { code, total });
+     expect(result).toBe(total * 0.9);
 5. write the file; the consumer's runner executes it (§14)
 ```
 

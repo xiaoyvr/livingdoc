@@ -10,89 +10,19 @@ span is prose:
 - an input, `name :=`expr``, binds the name to the expression;
 - an assertion, `!!`verb args``, asserts the verb on the case's result.
 
-The heading names the behavior, `Example:` opens a group, and each bullet is one
-case.
+The cases below are a small checkout — applying a discount — so the marks sit
+in ordinary product prose. The heading's slug is the binding; `>>` defines it
+in this document:
+
+```ts >>
+bind('what-a-document-means', ['code', 'total'], ({ code, total }) =>
+  code === 'SAVE10' ? total * 0.9 : total,
+)
+```
+
+`Example:` opens a group; each bullet is one case.
 
 Example:
 
-- an input becomes a variable, doc :=
-  ```markdown doc :=
-  ---
-  livingdoc: true
-  ---
-
-  # Showing an input
-
-  Example:
-
-  - a code :=`"SAVE10"` is applied
-  ```
-  the generated test !!`toContain 'const code = "SAVE10"'`
-- an assertion becomes an expect, doc :=
-  ```markdown doc :=
-  ---
-  livingdoc: true
-  ---
-
-  # Showing an assertion
-
-  Example:
-
-  - a code :=`"SAVE10"` so the total !!`toBe total * 0.9`
-  ```
-  the generated test !!`toContain 'expect(outputs.result).toBe(total * 0.9)'`
-- a plain code span is prose, doc :=
-  ```markdown doc :=
-  ---
-  livingdoc: true
-  ---
-
-  # Showing prose
-
-  Example:
-
-  - run `git commit` now
-  ```
-  the generated test !!`not.toContain 'const run'`
-
-Example (pytest):
-
-- an input becomes a variable, doc :=
-  ```markdown doc :=
-  ---
-  livingdoc: true
-  ---
-
-  # Showing an input
-
-  Example:
-
-  - a code :=`"SAVE10"` is applied
-  ```
-  looking for needle :=`'code = "SAVE10"'` !!`== True`
-- an assertion becomes an assert, doc :=
-  ```markdown doc :=
-  ---
-  livingdoc: true
-  ---
-
-  # Showing an assertion
-
-  Example:
-
-  - a code :=`"SAVE10"` so the total !!`== total * 0.9`
-  ```
-  looking for needle :=`'assert outputs["result"] == total * 0.9'` !!`== True`
-- a plain code span is prose, doc :=
-  ```markdown doc :=
-  ---
-  livingdoc: true
-  ---
-
-  # Showing prose
-
-  Example:
-
-  - run `git commit` now
-  ```
-  looking for needle :=`'run ='` !!`== False`
+- applying a code :=`"SAVE10"` to a total :=`100` cart, the total !!`toBe 90`
+- applying a code :=`"NONE"` to a total :=`100` cart, the total !!`toBe total`

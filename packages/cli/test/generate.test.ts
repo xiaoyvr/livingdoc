@@ -211,8 +211,8 @@ describe('livingdoc generate', () => {
     generate(fixture)
 
     const content = readFileSync(generated, 'utf8')
-    expect(content).toContain('expect(outputs.result).toBe("SAVE10")')
-    expect(content).toContain('expect(outputs.result).toBe("NOPE")')
+    expect(content).toContain('expect(result).toBe("SAVE10")')
+    expect(content).toContain('expect(result).toBe("NOPE")')
   })
 
   it('emits a stale expectation as written', () => {
@@ -221,7 +221,7 @@ describe('livingdoc generate', () => {
     generate(fixture)
 
     const content = readFileSync(generated, 'utf8')
-    expect(content).toContain('expect(outputs.result).toBe("OTHER")')
+    expect(content).toContain('expect(result).toBe("OTHER")')
   })
 
   it('writes no case for a document with no examples', () => {
@@ -240,7 +240,7 @@ describe('livingdoc generate', () => {
 
     const content = readFileSync(generated, 'utf8')
     expect(content).toContain('const code = "SAVE10"')
-    expect(content).toContain('expect(outputs.result).toBe("SAVE10")')
+    expect(content).toContain('expect(result).toBe("SAVE10")')
   })
 
   it('leaves an ordinary code span as prose', () => {
@@ -262,19 +262,18 @@ describe('livingdoc generate', () => {
 
     const content = readFileSync(generated, 'utf8')
     expect(content).toContain('const expected = "hello\\nworld"')
-    expect(content).toContain('expect(outputs.result).toBe(expected)')
+    expect(content).toContain('expect(result).toBe(expected)')
   })
 
-  it('creates file-scoped bindings and registers the backend into them', () => {
+  it('sets up bind/run via the runtime and the backend', () => {
     writeFileSync(fixture, withBullet)
 
     generate(fixture)
 
     const content = readFileSync(generated, 'utf8')
-    expect(content).toContain("import { createBindings } from '@livingdoc/runtime'")
-    expect(content).toContain("import { register } from '../backend'")
-    expect(content).toContain('const bindings = createBindings()')
-    expect(content).toContain('register(bindings)')
-    expect(content).toContain('bindings.get("walking-skeleton").run({ code })')
+    expect(content).toContain("import { setup } from '@livingdoc/runtime'")
+    expect(content).toContain("import * as backend from '../backend'")
+    expect(content).toContain('const { run } = setup(backend)')
+    expect(content).toContain('run("walking-skeleton", { code })')
   })
 })

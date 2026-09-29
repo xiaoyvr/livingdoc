@@ -35,3 +35,22 @@ class Bindings:
 
 def create_bindings():
     return Bindings()
+
+
+# Document-facing surface: bind and run. Backends still use create_bindings + register.
+def setup(backend):
+    from types import SimpleNamespace
+
+    bindings = create_bindings()
+    backend.register(bindings)
+
+    def bind(name, params, run):
+        bindings.bind(
+            name,
+            SimpleNamespace(params=params, run=lambda args: {"result": run(args)}),
+        )
+
+    def run(name, args=None):
+        return bindings.get(name).run(args or {})["result"]
+
+    return bind, run

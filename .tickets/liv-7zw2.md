@@ -1,6 +1,6 @@
 ---
 id: liv-7zw2
-status: open
+status: in_progress
 deps: [liv-ty09]
 links: [liv-otqr]
 created: 2026-09-27T00:00:00Z
@@ -47,6 +47,30 @@ document itself.
   form is for simple cases.
 - A duplicate action is an error.
 
+## Implementation tasks
+
+Vertical slices (each delivers a usable path, not a layer):
+
+- [x] 1. **One inline bind goes green under vitest**
+
+      Document with a heading-level `` ```ts >> `` that `bindings.bind`s an
+      action, plus an `Example:` that targets it → generate → vitest passes.
+      Delivers parse, emit-inside-`describe`, and the bind path together.
+
+- [x] 2. **A duplicate bind goes red**
+
+      Same path; binding twice in `>>`, or once in `>>` and once in the
+      backend → runtime `duplicate binding` error when the test loads/runs.
+
+- [x] 3. **One inline bind goes green under pytest**
+
+      Same document shape with `` ```python >> ``; generate → pytest passes.
+
+- [x] 4. **Dogfood: bind in the explain document**
+
+      Move `what-a-document-means` into `docs/explain/document.md` via `>>`;
+      drop it from the vitest backend; dogfood stays green.
+
 ## Notes
 
 - `>>` means "append to the test", in the same sigil family as `:=` (input) and
@@ -57,15 +81,14 @@ document itself.
   duplicate rule is the runtime's, so it holds the same way for every document.
 
   ```ts
-  import { createBindings } from '@livingdoc/runtime'
-  import { register } from '../backend'
+  import { setup } from '@livingdoc/runtime'
+  import * as backend from '../backend'
 
-  const bindings = createBindings()
-  register(bindings)
+  const { bind, run } = setup(backend)
 
   describe("…", () => {
-    // the document's >> block, binding into bindings
-    bindings.bind('what-a-document-means', { … })
+    // the document's >> block
+    bind('what-a-document-means', ['doc'], ({ doc }) => …)
     it("…", () => { … })
   })
   ```

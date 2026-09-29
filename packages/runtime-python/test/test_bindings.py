@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
-from livingdoc_runtime import create_bindings
+from livingdoc_runtime import create_bindings, setup
 
 
 def binding(params, run):
@@ -72,6 +72,31 @@ class CreateBindingsTest(unittest.TestCase):
             stored.run = lambda args: {"result": 0}
         with self.assertRaises(Exception):
             stored.params.append("nope")
+
+
+class SetupTest(unittest.TestCase):
+    def test_lets_a_case_use_setup_bind_and_run(self):
+        class Backend:
+            def register(self, bindings):
+                bindings.bind(
+                    "applying-a-discount",
+                    binding(
+                        ["code", "total"],
+                        lambda args: {"result": args["total"] * 0.9},
+                    ),
+                )
+
+        _bind, run = setup(Backend())
+        self.assertEqual(run("applying-a-discount", {"code": "SAVE10", "total": 100}), 90)
+
+    def test_lets_a_document_bind_without_seeing_bindings(self):
+        class Backend:
+            def register(self, _bindings):
+                pass
+
+        bind, run = setup(Backend())
+        bind("inline", ["code"], lambda args: args["code"])
+        self.assertEqual(run("inline", {"code": "SAVE10"}), "SAVE10")
 
 
 if __name__ == "__main__":

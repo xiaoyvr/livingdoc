@@ -25,7 +25,7 @@ const inputLine = (input: Input) =>
   `const ${input.name} = ${input.literal ? quote(input.value) : input.value}`
 
 const assertLine = (assertion: Assertion) =>
-  `expect(outputs.result).${assertion.verb}(${assertion.args})`
+  `expect(result).${assertion.verb}(${assertion.args})`
 
 const caseBlock = (title: string, bullet: Nodes): string => {
   const tokens = bulletTokens(bullet)
@@ -40,7 +40,7 @@ const caseBlock = (title: string, bullet: Nodes): string => {
     indent(
       lines(
         ...inputs.map(inputLine),
-        `const outputs = bindings.get(${quote(slugify(title))}).run({ ${args} })`,
+        `const result = run(${quote(slugify(title))}, { ${args} })`,
         ...assertions.map(assertLine),
       ),
     ),
@@ -53,20 +53,26 @@ export const vitest = {
   extension: 'ts',
   generatedFile: (name: string) => `${name}.test.ts`,
 
-  generate(title: string, bullets: Nodes[]): string {
+  generate(title: string, bullets: Nodes[], appends: string[]): string {
     const tokens = bullets.flatMap((bullet) => bulletTokens(bullet))
     const hasAssertion = tokens.some((token) => token.kind === 'assertion')
     const imports = ['describe', ...(hasAssertion ? ['expect'] : []), 'it']
+    const needsBindings = bullets.length > 0 || appends.length > 0
+    const setupNames = [
+      ...(appends.length > 0 ? ['bind'] : []),
+      ...(bullets.length > 0 ? ['run'] : []),
+    ]
 
     return lines(
       `import { ${imports.join(', ')} } from 'vitest'`,
-      bullets.length > 0 && `import { createBindings } from '@livingdoc/runtime'`,
-      bullets.length > 0 && `import { register } from '../backend'`,
+      needsBindings && `import { setup } from '@livingdoc/runtime'`,
+      needsBindings && `import * as backend from '../backend'`,
       '',
-      bullets.length > 0 && `const bindings = createBindings()`,
-      bullets.length > 0 && `register(bindings)`,
-      bullets.length > 0 && '',
+      needsBindings &&
+        `const { ${setupNames.join(', ')} } = setup(backend)`,
+      needsBindings && '',
       `describe(${quote(title)}, () => {`,
+      appends.length > 0 && indent(lines(...appends)),
       bullets.length > 0 &&
         indent(lines(...bullets.map((bullet) => caseBlock(title, bullet)))),
       '})',

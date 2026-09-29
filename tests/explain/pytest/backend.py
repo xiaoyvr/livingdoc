@@ -27,7 +27,7 @@ def _generated_name(name: str) -> str:
     return "/".join(parts)
 
 
-def build(name: str, doc: str) -> dict[str, str]:
+def build(doc: str, name: str = "fixture.md") -> dict[str, str]:
     dir = Path(tempfile.mkdtemp(prefix="livingdoc-explain-"))
     try:
         (dir / "docs").mkdir()
@@ -56,19 +56,17 @@ def build(name: str, doc: str) -> dict[str, str]:
 
 
 def register(bindings):
-    def contains_needle(args):
-        return {
-            "result": args["needle"] in build("fixture.md", args["doc"])["content"]
-        }
-
-    content_check = SimpleNamespace(params=["doc", "needle"], run=contains_needle)
-
     bindings.bind(
         "what-a-project-provides",
         SimpleNamespace(
             params=["name", "doc"],
-            run=lambda args: {"result": build(args["name"], args["doc"])["path"]},
+            run=lambda args: {"result": build(args["doc"], args["name"])["path"]},
         ),
     )
-    bindings.bind("what-livingdoc-generates", content_check)
-    bindings.bind("what-a-document-means", content_check)
+    bindings.bind(
+        "what-livingdoc-generates",
+        SimpleNamespace(
+            params=["doc"],
+            run=lambda args: {"result": build(args["doc"])["content"]},
+        ),
+    )

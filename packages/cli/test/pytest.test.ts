@@ -3,6 +3,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from 'node:fs'
@@ -58,6 +59,25 @@ def register(bindings):
     )
 `
 
+const emptyBackend = `def register(_bindings):
+    pass
+`
+
+const withAppend = `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+~~~python >>
+bind("walking-skeleton", ["code"], lambda args: args["code"])
+~~~
+
+Example:
+
+- a code :=\`"SAVE10"\` is applied, returning !!\`== "SAVE10"\`
+`
+
 describe('livingdoc pytest', () => {
   let dir: string
   let fixture: string
@@ -110,5 +130,28 @@ describe('livingdoc pytest', () => {
     })
 
     expect(result.status, result.stdout + result.stderr).not.toBe(0)
+  })
+
+  it('runs a case whose action is bound in a >> block', () => {
+    writeFileSync(join(backendDir, 'backend.py'), emptyBackend)
+    writeFileSync(fixture, withAppend)
+
+    expect(generate(fixture).ok).toBe(true)
+
+    const content = readFileSync(generated, 'utf8')
+    expect(content).toContain('bind("walking-skeleton"')
+    expect(content.indexOf('bind("walking-skeleton"')).toBeLessThan(
+      content.indexOf('def test_'),
+    )
+
+    const result = spawnSync('pytest', [generated, '-q'], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PYTHONPATH: [backendDir, runtimeSrc].join(':'),
+      },
+    })
+
+    expect(result.status, result.stdout + result.stderr).toBe(0)
   })
 })

@@ -59,6 +59,19 @@ export function exampleGroups(tree: Root): ExampleGroup[] {
   return groups
 }
 
+// Heading-level fences whose info ends with `>>` (optional language before it).
+// Their content is appended verbatim into the generated describe/class.
+export function appendBlocks(tree: Root): string[] {
+  const blocks: string[] = []
+  for (const node of tree.children) {
+    if (node.type !== 'code') continue
+    const info = [node.lang, node.meta].filter(Boolean).join(' ').trim()
+    if (!/(?:^|\s)>>$/.test(info)) continue
+    blocks.push(node.value)
+  }
+  return blocks
+}
+
 export type Token =
   | { kind: 'input'; name: string; value: string; literal?: boolean }
   | { kind: 'assertion'; verb: string; args: string }

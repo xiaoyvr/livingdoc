@@ -23,6 +23,10 @@ export type Bindings = {
   ): void
 }
 
+type Backend = {
+  register(bindings: Bindings): void
+}
+
 const snapshot = <Args extends Record<string, unknown>, Result>(
   binding: Binding<Args, Result>,
 ): Binding<Args, Result> =>
@@ -54,4 +58,26 @@ export const createBindings = (): Bindings => {
   }
 
   return { get, bind }
+}
+
+// Document-facing surface: bind and run. Backends still use createBindings + register.
+export const setup = (backend: Backend) => {
+  const bindings = createBindings()
+  backend.register(bindings)
+
+  const bind = (
+    name: string,
+    params: ReadonlyArray<string>,
+    run: (args: Record<string, unknown>) => unknown,
+  ): void => {
+    bindings.bind(name, {
+      params,
+      run: (args) => ({ result: run(args) }),
+    })
+  }
+
+  const run = (name: string, args: Record<string, unknown> = {}) =>
+    bindings.get(name).run(args).result
+
+  return { bind, run }
 }

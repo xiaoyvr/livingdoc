@@ -37,6 +37,8 @@ After every loop, update the task list, and revise it as needed.
   next; do not run ahead.
 - Make each task end to end — a vertical slice, not a layer. Split a step that
   is too big.
+- Always use `write` or `edit` tool instead of bash command to write a file. If
+  have problems, use `touch` to create the file then `edit`.
 
 ## Tickets
 

@@ -25,7 +25,7 @@ const inputLine = (input: Input) =>
   `${input.name} = ${input.literal ? quote(input.value) : input.value}`
 
 const assertLine = (assertion: Assertion) =>
-  `assert outputs["result"] ${assertion.verb} ${assertion.args}`
+  `assert result ${assertion.verb} ${assertion.args}`
 
 const testName = (bullet: Nodes) =>
   `test_${slugify(bulletTitle(bullet)).replace(/-/g, '_') || 'case'}`
@@ -51,7 +51,7 @@ const caseBlock = (title: string, bullet: Nodes): string => {
     indent(
       lines(
         ...inputs.map(inputLine),
-        `outputs = bindings.get(${quote(slugify(title))}).run({${args}})`,
+        `result = run(${quote(slugify(title))}, {${args}})`,
         ...assertions.map(assertLine),
       ),
     ),
@@ -67,18 +67,26 @@ export const pytest = {
     return [...parts, `test_${file}.py`].join('/')
   },
 
-  generate(title: string, bullets: Nodes[]): string {
+  generate(title: string, bullets: Nodes[], appends: string[]): string {
+    const needsBindings = bullets.length > 0 || appends.length > 0
+    const body =
+      appends.length > 0 || bullets.length > 0
+        ? indent(
+            lines(
+              ...appends,
+              ...bullets.map((bullet) => caseBlock(title, bullet)),
+            ),
+          )
+        : indent('pass')
+
     return lines(
-      bullets.length > 0 && `from livingdoc_runtime import create_bindings`,
-      bullets.length > 0 && `from backend import register`,
-      bullets.length > 0 && '',
-      bullets.length > 0 && `bindings = create_bindings()`,
-      bullets.length > 0 && `register(bindings)`,
-      bullets.length > 0 && '',
+      needsBindings && `from livingdoc_runtime import setup`,
+      needsBindings && `import backend`,
+      needsBindings && '',
+      needsBindings && `bind, run = setup(backend)`,
+      needsBindings && '',
       `class ${className(title)}:`,
-      bullets.length > 0
-        ? indent(lines(...bullets.map((bullet) => caseBlock(title, bullet))))
-        : indent('pass'),
+      body,
       '',
     )
   },

@@ -21,7 +21,7 @@ document's own path relative to `livingdocs`.
 
 Example:
 
-- a document keeps its name, name :=`"fixture.md"` doc :=
+- a document keeps its name, name :=`"fixture.md"`
   ```markdown doc :=
   ---
   livingdoc: true
@@ -34,7 +34,7 @@ Example:
   - a case
   ```
   the generated path !!`toBe "tests/vitest/generated/fixture.test.ts"`
-- a nested document keeps its path, name :=`"a/something.md"` doc :=
+- a nested document keeps its path, name :=`"a/something.md"`
   ```markdown doc :=
   ---
   livingdoc: true
@@ -50,7 +50,7 @@ Example:
 
 Example (pytest):
 
-- a document keeps its name, name :=`"fixture.md"` doc :=
+- a document keeps its name, name :=`"fixture.md"`
   ```markdown doc :=
   ---
   livingdoc: true
@@ -63,7 +63,7 @@ Example (pytest):
   - a case
   ```
   the generated path !!`== "tests/pytest/generated/test_fixture.py"`
-- a nested document keeps its path, name :=`"a/something.md"` doc :=
+- a nested document keeps its path, name :=`"a/something.md"`
   ```markdown doc :=
   ---
   livingdoc: true

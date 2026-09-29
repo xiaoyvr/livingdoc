@@ -20,9 +20,12 @@ const bin = join(root, 'packages/cli/dist/bin.js')
 const config =
   'livingdocs = "docs"\ncode_path = "tests"\n\n[[backend.vitest]]\nname = "vitest"\n'
 
-// Build a project whose only document is `doc` at `docs/<name>`, generate, and
-// return the generated file's path (relative to the project) and its text.
-function build(name: string, doc: string): { path: string; content: string } {
+// Build a project whose only document is `doc` (default name `fixture.md`),
+// generate, and return the generated file's path and text.
+export function build(
+  doc: string,
+  name = 'fixture.md',
+): { path: string; content: string } {
   const dir = mkdtempSync(join(tmpdir(), 'livingdoc-explain-'))
   try {
     mkdirSync(join(dir, 'docs'), { recursive: true })
@@ -53,22 +56,16 @@ function build(name: string, doc: string): { path: string; content: string } {
 }
 
 export function register(bindings: Bindings) {
-  bindings.bind('what-a-document-means', {
-    params: ['doc'],
-    run({ doc }: { doc: string }) {
-      return { result: build('fixture.md', doc).content }
-    },
-  })
   bindings.bind('what-livingdoc-generates', {
     params: ['doc'],
     run({ doc }: { doc: string }) {
-      return { result: build('fixture.md', doc).content }
+      return { result: build(doc).content }
     },
   })
   bindings.bind('what-a-project-provides', {
     params: ['name', 'doc'],
     run({ name, doc }: { name: string; doc: string }) {
-      return { result: build(name, doc).path }
+      return { result: build(doc, name).path }
     },
   })
 }

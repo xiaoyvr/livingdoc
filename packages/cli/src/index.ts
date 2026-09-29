@@ -14,6 +14,7 @@ import type { Nodes } from 'mdast'
 import { loadConfig, type Backend, type Config } from './config.js'
 import type { DomainError } from './errors.js'
 import {
+  appendBlocks,
   exampleGroups,
   frontmatter,
   headingTitle,
@@ -50,6 +51,7 @@ function generateDoc(config: Config, file: string): Result<void, DomainError> {
 
   const name = docName(config, file)
   const title = headingTitle(tree)
+  const appends = appendBlocks(tree)
 
   const groups = new Map<Backend, Nodes[]>()
   for (const group of exampleGroups(tree)) {
@@ -61,7 +63,7 @@ function generateDoc(config: Config, file: string): Result<void, DomainError> {
   }
 
   for (const [backend, bullets] of groups) {
-    const result = writeBackend(config, backend, name, title, bullets)
+    const result = writeBackend(config, backend, name, title, bullets, appends)
     if (!result.ok) return result
   }
   return { ok: true, value: undefined }
@@ -73,6 +75,7 @@ function writeBackend(
   name: string,
   title: string,
   bullets: Nodes[],
+  appends: string[],
 ): Result<void, DomainError> {
   const framework = backend.framework
 
@@ -90,7 +93,7 @@ function writeBackend(
     framework.generatedFile(name),
   )
   mkdirSync(dirname(target), { recursive: true })
-  writeFileSync(target, framework.generate(title, bullets))
+  writeFileSync(target, framework.generate(title, bullets, appends))
   return { ok: true, value: undefined }
 }
 
