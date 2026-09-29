@@ -8,6 +8,7 @@ export default defineConfig({
     // Tests run against workspace sources so `tsc -b` is not a prerequisite.
     alias: {
       '@livingdoc/cli': src('./packages/cli/src/index.ts'),
+      '@livingdoc/runtime': src('./packages/runtime/src/index.ts'),
     },
   },
   test: {

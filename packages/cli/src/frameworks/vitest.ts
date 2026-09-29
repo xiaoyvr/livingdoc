@@ -60,8 +60,11 @@ export const vitest = {
 
     return lines(
       `import { ${imports.join(', ')} } from 'vitest'`,
-      bullets.length > 0 && `import { bindings } from '../backend'`,
+      bullets.length > 0 && `import { bindings as backend } from '../backend'`,
+      bullets.length > 0 && `import { createBindings } from '@livingdoc/runtime'`,
       '',
+      bullets.length > 0 && `const bindings = createBindings(backend)`,
+      bullets.length > 0 && '',
       `describe(${quote(title)}, () => {`,
       bullets.length > 0 &&
         indent(lines(...bullets.map((bullet) => caseBlock(title, bullet)))),

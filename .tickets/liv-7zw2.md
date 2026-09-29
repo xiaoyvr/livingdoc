@@ -52,8 +52,8 @@ document itself.
 - `>>` means "append to the test", in the same sigil family as `:=` (input) and
   `!!` (assertion). It is deliberately not `!!`, which means "assert".
 - The block's content is verbatim; livingdoc never parses it. `bind(...)` is the
-  first use: the generated test creates a scoped registry from the runtime
-  (liv-ty09), seeded from the backend, and the block registers into it. The
+  first use: the generated test creates file-scoped `bindings` from the runtime
+  (liv-ty09), with the backend's bindings, and the block binds into them. The
   duplicate rule is the runtime's, so it holds the same way for every document.
 
   ```ts
@@ -63,7 +63,7 @@ document itself.
   const bindings = createBindings(backend)
 
   describe("…", () => {
-    // the document's >> block, registering into the registry
+    // the document's >> block, binding into bindings
     bind('what-a-document-means', { … })
     it("…", () => { … })
   })
@@ -71,5 +71,5 @@ document itself.
 
 ## Open questions
 
-- (none — the runtime (liv-ty09) owns the registry, including the duplicate and
+- (none — the runtime (liv-ty09) owns `bindings`, including the duplicate and
   missing-binding rules; the API shape is decided there)

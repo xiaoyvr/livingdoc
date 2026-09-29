@@ -5,7 +5,8 @@
 `livingdoc` turns the important behaviors of a system into living
 documentation: you describe them in ordinary prose, mark the inputs and
 expectations, and livingdoc generates the tests that verify them against your
-real code. See [DESIGN.md](./DESIGN.md) for the full design.
+real code. See [DESIGN.md](./DESIGN.md) for the full design and
+[DOMAIN.md](./DOMAIN.md) for the domain terms.
 
 ## Repository layout
 

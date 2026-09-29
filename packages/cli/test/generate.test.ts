@@ -264,4 +264,16 @@ describe('livingdoc generate', () => {
     expect(content).toContain('const expected = "hello\\nworld"')
     expect(content).toContain('expect(outputs.result).toBe(expected)')
   })
+
+  it('creates file-scoped bindings from the backend via the runtime', () => {
+    writeFileSync(fixture, withBullet)
+
+    generate(fixture)
+
+    const content = readFileSync(generated, 'utf8')
+    expect(content).toContain("import { bindings as backend } from '../backend'")
+    expect(content).toContain("import { createBindings } from '@livingdoc/runtime'")
+    expect(content).toContain('const bindings = createBindings(backend)')
+    expect(content).toContain('bindings["walking-skeleton"].run({ code })')
+  })
 })

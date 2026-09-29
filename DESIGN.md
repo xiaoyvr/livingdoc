@@ -2,6 +2,9 @@
 
 > Documentation that cannot be published while it is false.
 
+Domain terms that have caused confusion are listed in [DOMAIN.md](./DOMAIN.md);
+this document narrates the design using those names.
+
 ## 1. Vision
 
 livingdoc turns the important behaviors of a system into living documentation:
@@ -210,7 +213,7 @@ describe("Applying a discount", () => {
 planned; §16.1, liv-m0mf, liv-du6y.)
 
 The generated test is a plain test file plus a small target-language runtime
-(the scoped bindings registry — `@livingdoc/runtime` and its Python sibling,
+(file-scoped `bindings` — `@livingdoc/runtime` and its Python sibling,
 planned liv-ty09) that the cases call.
 
 The verb `toBe` is used **as-is** — the generator only knows *where* a verb goes
@@ -379,7 +382,7 @@ failures (disk full, out of memory) throw, and those crash the process.
    needs per-case results (including the actual on failure) to color each
    bullet. Parse the framework's reporter (TAP/junit/spec), or have each
    generated test also call a `record(id, ok, actual)` helper? Leaning: helper,
-   which would live in the runtime (liv-ty09) alongside the registry.
+   which would live in the runtime (liv-ty09) alongside file-scoped `bindings`.
 2. **Which frameworks next** — vitest is implemented; pytest (liv-f6ao) and
    jest are the next candidates, then node:test, Catch2, cargo-test, go-test,
    gtest.

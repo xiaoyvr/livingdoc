@@ -49,7 +49,7 @@ checked in the language my project is written in, not only TypeScript.
 ## Notes
 
 - Depends on liv-ty09: the generated pytest test imports the Python runtime from
-  it, so the binding lookup and the backend import go through the runtime, the
-  same shape as vitest.
+  it, so `bindings` and the backend import go through the runtime, the same
+  shape as vitest.
 - A Python backend needs a module name Python can import; whatever the file is
   called, the generated test imports it, so the framework owns the naming.
