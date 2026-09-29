@@ -18,7 +18,7 @@ class CreateBindingsTest(unittest.TestCase):
         }
 
         bindings = create_bindings(backend)
-        outputs = bindings["applying-a-discount"].run(
+        outputs = bindings.get("applying-a-discount").run(
             {"code": "SAVE10", "total": 100},
         )
 
@@ -38,7 +38,7 @@ class CreateBindingsTest(unittest.TestCase):
         one.bind("inline", binding([], lambda args: {"result": 1}))
 
         with self.assertRaisesRegex(Exception, r"unknown binding|no binding|not bound"):
-            another["inline"]
+            another.get("inline")
 
     def test_rejects_binding_a_name_already_present(self):
         backend = {
@@ -62,7 +62,7 @@ class CreateBindingsTest(unittest.TestCase):
         bindings = create_bindings({})
 
         with self.assertRaisesRegex(Exception, r"unknown binding|no binding|not bound"):
-            bindings["missing"].run({})
+            bindings.get("missing").run({})
 
 
 if __name__ == "__main__":

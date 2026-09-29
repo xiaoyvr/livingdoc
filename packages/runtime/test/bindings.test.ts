@@ -13,7 +13,7 @@ describe('createBindings', () => {
     }
 
     const bindings = createBindings(backend)
-    const outputs = bindings['applying-a-discount'].run({
+    const outputs = bindings.get('applying-a-discount').run({
       code: 'SAVE10',
       total: 100,
     })
@@ -39,7 +39,9 @@ describe('createBindings', () => {
       run: () => ({ result: 1 }),
     })
 
-    expect(() => another['inline']).toThrow(/unknown binding|no binding|not bound/i)
+    expect(() => another.get('inline')).toThrow(
+      /unknown binding|no binding|not bound/i,
+    )
   })
 
   it('rejects binding a name already present', () => {
@@ -77,7 +79,7 @@ describe('createBindings', () => {
   it('rejects using a name that is not bound', () => {
     const bindings = createBindings({})
 
-    expect(() => bindings['missing'].run({})).toThrow(
+    expect(() => bindings.get('missing').run({})).toThrow(
       /unknown binding|no binding|not bound/i,
     )
   })

@@ -1,29 +1,38 @@
 type Binding = {
   params: string[]
-  run: (args: never) => unknown
+  run: (args: Record<string, unknown>) => unknown
 }
 
-export const createBindings = (backend: Record<string, Binding>) => {
-  const entries: Record<string, Binding> = { ...backend }
+type Entry = {
+  name: string
+  binding: Binding
+}
 
-  const bindings = {
-    bind(name: string, binding: Binding) {
-      if (name in entries) {
-        throw new Error(`duplicate binding: ${name}`)
-      }
-      entries[name] = binding
-    },
+type Bindings = {
+  get(name: string): Binding
+  bind(name: string, binding: Binding): void
+}
+
+export const createBindings = (
+  backend: Record<string, Binding>,
+): Bindings => {
+  const entries: Entry[] = Object.entries(backend).map(([name, binding]) => ({
+    name,
+    binding,
+  }))
+
+  const get = (name: string): Binding => {
+    const found = entries.find((entry) => entry.name === name)
+    if (!found) throw new Error(`unknown binding: ${name}`)
+    return found.binding
   }
 
-  return new Proxy(bindings, {
-    get(target, prop, receiver) {
-      if (prop === 'bind') return Reflect.get(target, prop, receiver)
-      if (typeof prop === 'symbol') return Reflect.get(entries, prop, receiver)
-      if (prop in entries) return entries[prop]
-      throw new Error(`unknown binding: ${String(prop)}`)
-    },
-    has(_target, prop) {
-      return prop === 'bind' || prop in entries
-    },
-  })
+  const bind = (name: string, binding: Binding): void => {
+    if (entries.some((entry) => entry.name === name)) {
+      throw new Error(`duplicate binding: ${name}`)
+    }
+    entries.push({ name, binding })
+  }
+
+  return { get, bind }
 }

@@ -24,5 +24,5 @@ Example:
   ```
   the generated test !!`toContain 'describe("Applying a discount"'`
   the generated test !!`toContain 'const code = "SAVE10"'`
-  the generated test !!`toContain 'bindings["applying-a-discount"].run({ code, total })'`
+  the generated test !!`toContain 'bindings.get("applying-a-discount").run({ code, total })'`
   the generated test !!`toContain 'expect(outputs.result).toBe(total * 0.9)'`

@@ -274,6 +274,6 @@ describe('livingdoc generate', () => {
     expect(content).toContain("import { bindings as backend } from '../backend'")
     expect(content).toContain("import { createBindings } from '@livingdoc/runtime'")
     expect(content).toContain('const bindings = createBindings(backend)')
-    expect(content).toContain('bindings["walking-skeleton"].run({ code })')
+    expect(content).toContain('bindings.get("walking-skeleton").run({ code })')
   })
 })

@@ -203,7 +203,7 @@ describe("Applying a discount", () => {
   it("applying a SAVE10 code to a $100 cart", () => {
     const code = "SAVE10";
     const total = 100;
-    const outputs = bindings["applying-a-discount"].run({ code, total });
+    const outputs = bindings.get("applying-a-discount").run({ code, total });
     expect(outputs.result).toBe(total * 0.9);
   });
 });
@@ -258,9 +258,9 @@ verb is red: "no assertion `foo`".
 3. !!`toBe total * 0.9`                     → assertion: verb "toBe", args "total * 0.9"
 4. generate (vitest):
      const code = "SAVE10"; const total = 100;
-     const outputs = bindings["applying-a-discount"].run({ code, total });
+     const outputs = bindings.get("applying-a-discount").run({ code, total });
      expect(outputs.result).toBe(total * 0.9);
-5. write the file; the consumer's runner executes it (§14)
+   5. write the file; the consumer's runner executes it (§14)
 ```
 
 ## 11. Values are native expressions

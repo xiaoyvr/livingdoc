@@ -40,7 +40,7 @@ const caseBlock = (title: string, bullet: Nodes): string => {
     indent(
       lines(
         ...inputs.map(inputLine),
-        `const outputs = bindings[${quote(slugify(title))}].run({ ${args} })`,
+        `const outputs = bindings.get(${quote(slugify(title))}).run({ ${args} })`,
         ...assertions.map(assertLine),
       ),
     ),
