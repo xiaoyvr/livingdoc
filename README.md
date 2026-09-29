@@ -15,6 +15,8 @@ packages/
   cli/                   @livingdoc/cli — the `livingdoc` command
     src/document.ts      markdown parsing and the token model
     src/frameworks/      one generator per framework (`vitest`, …)
+  runtime/               @livingdoc/runtime — file-scoped bindings for generated tests
+  runtime-python/        Python sibling of the runtime
 .tickets/                work items, tracked with `tk` (run `tk help`)
 ```
 
@@ -27,11 +29,12 @@ The devShell is provided by Nix + direnv; `direnv allow` once, then:
 
 ```sh
 npm install        # install dependencies and link workspaces
-npm test           # run the test suite (vitest)
-npm run typecheck  # tsc -b across all packages
+npm test           # run the vitest suite
+npm run test:python # run the Python runtime tests
+npm run typecheck  # tsc -b across all packages (plus runtime type checks)
 npm run generate   # write the checks for docs/explain with the built CLI
 npm run dogfood    # clean the checks, rebuild, generate, then run them
-npm run checks     # typecheck + generate + test
+npm run checks     # typecheck + generate + test + test:python
 ```
 
 Work is tracked with `tk` in `.tickets/`; `tk ready` lists unblocked work.

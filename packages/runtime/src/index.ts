@@ -12,16 +12,11 @@ export type Binding<
 
 type Entry = {
   name: string
-  binding: Binding<Record<string, unknown>, unknown>
+  binding: Binding
 }
 
 export type Bindings = {
-  get<
-    Args extends Record<string, unknown> = Record<string, unknown>,
-    Result = Outputs,
-  >(
-    name: string,
-  ): Binding<Args, Result>
+  get(name: string): Binding
   bind<Args extends Record<string, unknown>, Result>(
     name: string,
     binding: Binding<Args, Result>,
@@ -39,15 +34,10 @@ const snapshot = <Args extends Record<string, unknown>, Result>(
 export const createBindings = (): Bindings => {
   const entries: Entry[] = []
 
-  const get = <
-    Args extends Record<string, unknown> = Record<string, unknown>,
-    Result = Outputs,
-  >(
-    name: string,
-  ): Binding<Args, Result> => {
+  const get = (name: string): Binding => {
     const found = entries.find((entry) => entry.name === name)
     if (!found) throw new Error(`unknown binding: ${name}`)
-    return found.binding as Binding<Args, Result>
+    return found.binding
   }
 
   const bind = <Args extends Record<string, unknown>, Result>(
@@ -59,7 +49,7 @@ export const createBindings = (): Bindings => {
     }
     entries.push({
       name,
-      binding: snapshot(binding) as Binding<Record<string, unknown>, unknown>,
+      binding: snapshot(binding) as unknown as Binding,
     })
   }
 

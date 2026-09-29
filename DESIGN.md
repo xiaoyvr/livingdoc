@@ -220,8 +220,8 @@ describe("Applying a discount", () => {
 planned; §16.1, liv-m0mf, liv-du6y.)
 
 The generated test is a plain test file plus a small target-language runtime
-(file-scoped `bindings` — `@livingdoc/runtime` and its Python sibling,
-planned liv-ty09) that the cases call.
+(file-scoped `bindings` — `@livingdoc/runtime` and its Python sibling) that
+the cases call.
 
 The verb `toBe` is used **as-is** — the generator only knows *where* a verb goes
 (`expect(SUBJECT).VERB(ARGS)`) and *which* verbs belong to its framework. It
@@ -267,7 +267,7 @@ verb is red: "no assertion `foo`".
      const code = "SAVE10"; const total = 100;
      const outputs = bindings.get("applying-a-discount").run({ code, total });
      expect(outputs.result).toBe(total * 0.9);
-   5. write the file; the consumer's runner executes it (§14)
+5. write the file; the consumer's runner executes it (§14)
 ```
 
 ## 11. Values are native expressions

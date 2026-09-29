@@ -1,5 +1,5 @@
 // Compile-only checks that bind ties params to run's argument type.
-import { createBindings } from './index.js'
+import { createBindings } from '../src/index.js'
 
 const bindings = createBindings()
 

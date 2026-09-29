@@ -36,3 +36,10 @@ instead of being passed silently.
   the TS backend executes it, and a Python backend cannot be imported at all.
   A declaration of the names that does not run the bindings is what a second
   language needs.
+
+## Revisit when working this
+
+- The runtime does not check `run(args)` keys against `params` either — only
+  `bind` ties `params` to `run`'s TypeScript type. Decide whether generate-time
+  validation is enough, or whether `@livingdoc/runtime` / the Python sibling
+  should also reject mismatched args at call time.
