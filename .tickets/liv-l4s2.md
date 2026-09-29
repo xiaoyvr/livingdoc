@@ -2,7 +2,7 @@
 id: liv-l4s2
 status: closed
 deps: [liv-ter0, liv-0ou1]
-links: []
+links: [liv-99hz]
 created: 2026-09-26T23:00:28Z
 type: feature
 priority: 1

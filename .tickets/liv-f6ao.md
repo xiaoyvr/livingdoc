@@ -53,3 +53,4 @@ checked in the language my project is written in, not only TypeScript.
   shape as vitest.
 - A Python backend needs a module name Python can import; whatever the file is
   called, the generated test imports it, so the framework owns the naming.
+- Dogfood under pytest is a follow-on (liv-99hz), not part of this story.
