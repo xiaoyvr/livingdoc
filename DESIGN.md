@@ -38,7 +38,7 @@ A document is a **parameterized test expressed as prose**:
 
 - the **binding body** (how to run the behavior) lives once in the consumer's
   project — or, for a simple, self-contained example, in the document itself
-  (a `>>` block, planned liv-7zw2);
+  (a `>>` block);
 - the **document** supplies the parameters — inputs and expected results — as
   free prose with marked values, using the language and test framework the
   system is actually built with;
@@ -89,7 +89,7 @@ format-independent.
 | `- …` (bullet under `Example:`) | one test case (one `it`) |
 | ``name :=`expr` `` | an input; `name` is the word before `:=`; `expr` is a native expression, verbatim |
 | fenced block, info ending `name :=` | a multi-line input; the block's content is the value, as a string |
-| ``<lang> >>`` fenced block | target code appended inside the `describe` (planned, liv-7zw2) |
+| ``<lang> >>`` fenced block | target code appended inside the `describe` (per heading: liv-du6y) |
 | ``!!`expr` `` | an assertion; `expr` is a framework assertion or consumer directive |
 | any other code span | prose, never executed |
 
@@ -395,8 +395,8 @@ failures (disk full, out of memory) throw, and those crash the process.
 3. **Generated-file lifecycle** — generating into `generated/` and gitignoring
    is the current answer; whether to ever commit them is still open.
 4. **Fenced assertions** — a fenced *input* is supported; a multi-line
-   expression can be a `>>` block (planned liv-7zw2), so a dedicated fenced
-   *assertion* (`!!` before a block) is deferred.
+   expression can be a `>>` block, so a dedicated fenced *assertion* (`!!`
+   before a block) is deferred.
 5. **Rendering** — deliberately deferred. How `Example:` markers and green/red
    results are presented in HTML is not being designed yet.
 6. **Base formats beyond Markdown** — the `:=` / `!!` sigils port, but the

@@ -1,8 +1,8 @@
 ---
 id: liv-7zw2
-status: in_progress
+status: closed
 deps: [liv-ty09]
-links: [liv-otqr]
+links: [liv-otqr, liv-du6y]
 created: 2026-09-27T00:00:00Z
 type: feature
 priority: 2
@@ -37,8 +37,8 @@ document itself.
   contributes its content, verbatim, to the generated test.
 - Only heading-level blocks: a `>>` block sits under a heading, outside any
   case. There is no bullet-level form.
-- With several headings (liv-du6y), a block belongs to the heading it sits under
-  and is emitted into that heading's `describe`.
+- With several headings, a block belongs to the heading it sits under and is
+  emitted into that heading's `describe` — acceptance on liv-du6y.
 - The block is emitted inside the `describe`, before its cases, so what it
   defines is in scope for them.
 - Inline bindings are visible only in that document's generated test; the
@@ -97,3 +97,7 @@ Vertical slices (each delivers a usable path, not a layer):
 
 - (none — the runtime (liv-ty09) owns `bindings`, including the duplicate and
   missing-binding rules; the API shape is decided there)
+
+**2026-09-29T20:30:35Z**
+
+Shipped: vitest/pytest >> binds, duplicate errors, dogfood. Per-heading >> placement tracked as AC on liv-du6y.

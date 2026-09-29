@@ -1,0 +1,19 @@
+{
+  "memoryFiles": [
+    "AGENTS.md"
+  ],
+  "budgetTokens": 5000,
+  "skillsDir": ".agents/skills",
+  "minGapEvidence": 2,
+  "maxTranscripts": 100,
+  "discovery": {
+    "harnesses": [
+      "pi",
+      "cursor"
+    ],
+    "since": "30d",
+    "worktreeGlobs": [],
+    "minUserTurns": 2
+  },
+  "jobs": 4
+}
