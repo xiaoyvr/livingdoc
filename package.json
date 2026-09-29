@@ -13,15 +13,16 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "rm -rf packages/cli/dist packages/runtime/dist packages/*/*.tsbuildinfo",
-    "clean:checks": "rm -rf tests/explain/vitest/generated",
+    "clean:checks": "rm -rf tests/explain/vitest/generated tests/explain/pytest/generated tests/explain/pytest/__pycache__",
     "typecheck": "tsc -b && tsc -p packages/runtime/tsconfig.check.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:python": "PYTHONPATH=packages/runtime-python/src python3 -m unittest discover -s packages/runtime-python/test -v",
+    "test:pytest-dogfood": "rm -rf tests/explain/pytest/__pycache__ tests/explain/pytest/generated/__pycache__ && PYTHONPATH=tests/explain/pytest:packages/runtime-python/src pytest tests/explain/pytest/generated -q",
     "livingdoc": "tsx packages/cli/src/bin.ts",
     "generate": "node packages/cli/dist/bin.js generate",
-    "dogfood": "npm run clean:checks && npm run typecheck && npm run generate && vitest run tests/",
-    "checks": "npm run typecheck && npm run generate && npm test && npm run test:python"
+    "dogfood": "npm run clean:checks && npm run typecheck && npm run generate && vitest run tests/ && npm run test:pytest-dogfood",
+    "checks": "npm run typecheck && npm run generate && npm test && npm run test:python && npm run test:pytest-dogfood"
   },
   "devDependencies": {
     "@types/node": "^26.6.2",

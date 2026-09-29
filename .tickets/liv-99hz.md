@@ -1,6 +1,6 @@
 ---
 id: liv-99hz
-status: open
+status: closed
 deps: [liv-f6ao]
 links: [liv-l4s2]
 created: 2026-09-29T18:13:01Z
@@ -42,6 +42,15 @@ exercised end-to-end the same way the TypeScript dogfood is today.
 - Implementing the pytest generator (liv-f6ao) — this story consumes it.
 - Directives, per-case results, or new product features beyond dogfooding.
 
+## Implementation tasks
+
+- [x] 1. One pytest explain case goes green: `[[backend.pytest]]`, pytest
+      backend that drives the built CLI, one `Example (pytest):` path case,
+      generated/ gitignored + cleaned, `dogfood`/`checks` run pytest.
+- [x] 2. Mirror vitest explain coverage under pytest (document / project /
+      generated-test shapes with pytest verbs); stale expectation fails the
+      suite.
+
 ## Notes
 
 - Depends on liv-f6ao: without a pytest generator and runtime import shape,
@@ -49,3 +58,5 @@ exercised end-to-end the same way the TypeScript dogfood is today.
 - Linked to liv-l4s2 (the original vitest dogfood) as the pattern to follow.
 - Today `npm run dogfood` only runs vitest on `tests/`; this story adds the
   pytest half.
+- Pytest verbs are `==` / `!=` / `in` (`result in args`); containment checks
+  use a bool-returning binding rather than `toContain`.

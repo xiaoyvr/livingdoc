@@ -54,3 +54,45 @@ Example:
   - run `git commit` now
   ```
   the generated test !!`not.toContain 'const run'`
+
+Example (pytest):
+
+- an input becomes a variable, doc :=
+  ```markdown doc :=
+  ---
+  livingdoc: true
+  ---
+
+  # Showing an input
+
+  Example:
+
+  - a code :=`"SAVE10"` is applied
+  ```
+  looking for needle :=`'code = "SAVE10"'` !!`== True`
+- an assertion becomes an assert, doc :=
+  ```markdown doc :=
+  ---
+  livingdoc: true
+  ---
+
+  # Showing an assertion
+
+  Example:
+
+  - a code :=`"SAVE10"` so the total !!`== total * 0.9`
+  ```
+  looking for needle :=`'assert outputs["result"] == total * 0.9'` !!`== True`
+- a plain code span is prose, doc :=
+  ```markdown doc :=
+  ---
+  livingdoc: true
+  ---
+
+  # Showing prose
+
+  Example:
+
+  - run `git commit` now
+  ```
+  looking for needle :=`'run ='` !!`== False`

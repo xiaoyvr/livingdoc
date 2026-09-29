@@ -47,3 +47,32 @@ Example:
   - a case
   ```
   the generated path !!`toBe "tests/vitest/generated/a/something.test.ts"`
+
+Example (pytest):
+
+- a document keeps its name, name :=`"fixture.md"` doc :=
+  ```markdown doc :=
+  ---
+  livingdoc: true
+  ---
+
+  # A document
+
+  Example:
+
+  - a case
+  ```
+  the generated path !!`== "tests/pytest/generated/test_fixture.py"`
+- a nested document keeps its path, name :=`"a/something.md"` doc :=
+  ```markdown doc :=
+  ---
+  livingdoc: true
+  ---
+
+  # A document
+
+  Example:
+
+  - a case
+  ```
+  the generated path !!`== "tests/pytest/generated/a/test_something.py"`
