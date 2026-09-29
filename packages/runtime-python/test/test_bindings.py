@@ -55,6 +55,24 @@ class CreateBindingsTest(unittest.TestCase):
         with self.assertRaisesRegex(Exception, r"unknown binding|no binding|not bound"):
             bindings.get("missing").run({})
 
+    def test_does_not_let_a_binding_change_after_it_is_bound(self):
+        bindings = create_bindings()
+        params = ["total"]
+        original = binding(params, lambda args: {"result": 1})
+
+        bindings.bind("fixed", original)
+
+        original.run = lambda args: {"result": 99}
+        params.append("extra")
+
+        stored = bindings.get("fixed")
+        self.assertEqual(stored.run({}), {"result": 1})
+        self.assertEqual(list(stored.params), ["total"])
+        with self.assertRaises(Exception):
+            stored.run = lambda args: {"result": 0}
+        with self.assertRaises(Exception):
+            stored.params.append("nope")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,5 @@
 export type Binding = {
-  params: string[]
+  params: readonly string[]
   run: (args: Record<string, unknown>) => unknown
 }
 
@@ -12,6 +12,12 @@ export type Bindings = {
   get(name: string): Binding
   bind(name: string, binding: Binding): void
 }
+
+const snapshot = (binding: Binding): Binding =>
+  Object.freeze({
+    params: Object.freeze([...binding.params]),
+    run: binding.run,
+  })
 
 export const createBindings = (): Bindings => {
   const entries: Entry[] = []
@@ -26,7 +32,7 @@ export const createBindings = (): Bindings => {
     if (entries.some((entry) => entry.name === name)) {
       throw new Error(`duplicate binding: ${name}`)
     }
-    entries.push({ name, binding })
+    entries.push({ name, binding: snapshot(binding) })
   }
 
   return { get, bind }

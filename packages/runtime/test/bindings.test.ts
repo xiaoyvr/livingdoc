@@ -69,4 +69,28 @@ describe('createBindings', () => {
       /unknown binding|no binding|not bound/i,
     )
   })
+
+  it('does not let a binding change after it is bound', () => {
+    const bindings = createBindings()
+    const params = ['total']
+    const binding = {
+      params,
+      run: () => ({ result: 1 }),
+    }
+
+    bindings.bind('fixed', binding)
+
+    binding.run = () => ({ result: 99 })
+    params.push('extra')
+
+    const stored = bindings.get('fixed')
+    expect(stored.run({})).toEqual({ result: 1 })
+    expect(stored.params).toEqual(['total'])
+    expect(() => {
+      stored.run = () => ({ result: 0 })
+    }).toThrow()
+    expect(() => {
+      stored.params.push('nope')
+    }).toThrow()
+  })
 })
