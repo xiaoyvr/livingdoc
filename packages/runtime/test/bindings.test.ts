@@ -90,7 +90,7 @@ describe('createBindings', () => {
       stored.run = () => ({ result: 0 })
     }).toThrow()
     expect(() => {
-      stored.params.push('nope')
+      ;(stored.params as string[]).push('nope')
     }).toThrow()
   })
 })

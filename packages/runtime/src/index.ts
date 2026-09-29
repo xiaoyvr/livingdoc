@@ -1,19 +1,36 @@
-export type Binding = {
-  params: readonly string[]
-  run: (args: Record<string, unknown>) => unknown
+export type Outputs = {
+  result: unknown
+}
+
+export type Binding<
+  Args extends Record<string, unknown> = Record<string, unknown>,
+  Result = Outputs,
+> = {
+  params: ReadonlyArray<Extract<keyof Args, string>>
+  run: (args: Args) => Result
 }
 
 type Entry = {
   name: string
-  binding: Binding
+  binding: Binding<Record<string, unknown>, unknown>
 }
 
 export type Bindings = {
-  get(name: string): Binding
-  bind(name: string, binding: Binding): void
+  get<
+    Args extends Record<string, unknown> = Record<string, unknown>,
+    Result = Outputs,
+  >(
+    name: string,
+  ): Binding<Args, Result>
+  bind<Args extends Record<string, unknown>, Result>(
+    name: string,
+    binding: Binding<Args, Result>,
+  ): void
 }
 
-const snapshot = (binding: Binding): Binding =>
+const snapshot = <Args extends Record<string, unknown>, Result>(
+  binding: Binding<Args, Result>,
+): Binding<Args, Result> =>
   Object.freeze({
     params: Object.freeze([...binding.params]),
     run: binding.run,
@@ -22,17 +39,28 @@ const snapshot = (binding: Binding): Binding =>
 export const createBindings = (): Bindings => {
   const entries: Entry[] = []
 
-  const get = (name: string): Binding => {
+  const get = <
+    Args extends Record<string, unknown> = Record<string, unknown>,
+    Result = Outputs,
+  >(
+    name: string,
+  ): Binding<Args, Result> => {
     const found = entries.find((entry) => entry.name === name)
     if (!found) throw new Error(`unknown binding: ${name}`)
-    return found.binding
+    return found.binding as Binding<Args, Result>
   }
 
-  const bind = (name: string, binding: Binding): void => {
+  const bind = <Args extends Record<string, unknown>, Result>(
+    name: string,
+    binding: Binding<Args, Result>,
+  ): void => {
     if (entries.some((entry) => entry.name === name)) {
       throw new Error(`duplicate binding: ${name}`)
     }
-    entries.push({ name, binding: snapshot(binding) })
+    entries.push({
+      name,
+      binding: snapshot(binding) as Binding<Record<string, unknown>, unknown>,
+    })
   }
 
   return { get, bind }
