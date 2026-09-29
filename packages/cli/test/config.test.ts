@@ -35,13 +35,13 @@ Example:
 - a code :=\`"SAVE10"\` is applied
 `
 
-const backend = `export const bindings = {
-  "walking-skeleton": {
+const backend = `export function register(bindings) {
+  bindings.bind("walking-skeleton", {
     params: ["code"],
     run({ code }) {
       return { result: code }
     },
-  },
+  })
 }
 `
 

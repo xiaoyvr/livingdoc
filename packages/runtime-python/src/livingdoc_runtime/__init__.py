@@ -5,10 +5,8 @@ class Entry:
 
 
 class Bindings:
-    def __init__(self, backend):
-        self._entries = [
-            Entry(name, binding) for name, binding in backend.items()
-        ]
+    def __init__(self):
+        self._entries = []
 
     def get(self, name):
         for entry in self._entries:
@@ -22,5 +20,5 @@ class Bindings:
         self._entries.append(Entry(name, binding))
 
 
-def create_bindings(backend):
-    return Bindings(backend)
+def create_bindings():
+    return Bindings()

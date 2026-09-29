@@ -57,14 +57,15 @@ document itself.
   duplicate rule is the runtime's, so it holds the same way for every document.
 
   ```ts
-  import { bindings as backend } from '../backend'
   import { createBindings } from '@livingdoc/runtime'
+  import { register } from '../backend'
 
-  const bindings = createBindings(backend)
+  const bindings = createBindings()
+  register(bindings)
 
   describe("…", () => {
     // the document's >> block, binding into bindings
-    bind('what-a-document-means', { … })
+    bindings.bind('what-a-document-means', { … })
     it("…", () => { … })
   })
   ```

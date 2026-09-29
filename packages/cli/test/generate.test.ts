@@ -130,14 +130,14 @@ Example:
   ~~~
 `
 
-const consumerBackend = `export const bindings = {
-  "walking-skeleton": {
+const consumerBackend = `export function register(bindings) {
+  bindings.bind("walking-skeleton", {
     params: ["code"],
     run({ code }) {
       if (code === "WRONG") throw new Error(\`unexpected code: \${code}\`)
       return { result: code }
     },
-  },
+  })
 }
 `
 
@@ -265,15 +265,16 @@ describe('livingdoc generate', () => {
     expect(content).toContain('expect(outputs.result).toBe(expected)')
   })
 
-  it('creates file-scoped bindings from the backend via the runtime', () => {
+  it('creates file-scoped bindings and registers the backend into them', () => {
     writeFileSync(fixture, withBullet)
 
     generate(fixture)
 
     const content = readFileSync(generated, 'utf8')
-    expect(content).toContain("import { bindings as backend } from '../backend'")
     expect(content).toContain("import { createBindings } from '@livingdoc/runtime'")
-    expect(content).toContain('const bindings = createBindings(backend)')
+    expect(content).toContain("import { register } from '../backend'")
+    expect(content).toContain('const bindings = createBindings()')
+    expect(content).toContain('register(bindings)')
     expect(content).toContain('bindings.get("walking-skeleton").run({ code })')
   })
 })

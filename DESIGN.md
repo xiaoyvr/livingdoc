@@ -162,14 +162,15 @@ The document's structure maps directly onto a test tree:
 The consumer writes one backend file, in their language, importing their real
 code. It provides the two things a framework cannot:
 
-1. **`bindings`** — parameterized test bodies, with declared parameter names:
+1. **`register(bindings)`** — binds parameterized test bodies onto the file's
+   `bindings`, with declared parameter names:
 
 ```js
-export const bindings = {
-  "applying-a-discount": {
+export function register(bindings) {
+  bindings.bind("applying-a-discount", {
     params: ["code", "total"],
     run({ code, total }) { return { result: applyDiscount(code, total) } },
-  },
+  })
 }
 ```
 
@@ -199,6 +200,12 @@ livingdoc generates test code in two layers:
 
 ```ts
 // vitest generator (TypeScript) — the doc's !!`toBe total * 0.9`
+import { createBindings } from '@livingdoc/runtime'
+import { register } from '../backend'
+
+const bindings = createBindings()
+register(bindings)
+
 describe("Applying a discount", () => {
   it("applying a SAVE10 code to a $100 cart", () => {
     const code = "SAVE10";

@@ -12,6 +12,7 @@ import {
 import { tmpdir } from 'node:os'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { Bindings } from '@livingdoc/runtime'
 
 const root = fileURLToPath(new URL('../../../', import.meta.url))
 const bin = join(root, 'packages/cli/dist/bin.js')
@@ -32,7 +33,7 @@ function build(name: string, doc: string): { path: string; content: string } {
     writeFileSync(target, doc)
     writeFileSync(
       join(dir, 'tests', 'vitest', 'backend.ts'),
-      'export const bindings = {}\n',
+      'export function register(_bindings) {}\n',
     )
     spawnSync('node', [bin, 'generate', join('docs', name)], {
       cwd: dir,
@@ -51,23 +52,23 @@ function build(name: string, doc: string): { path: string; content: string } {
   }
 }
 
-export const bindings = {
-  'what-a-document-means': {
+export function register(bindings: Bindings) {
+  bindings.bind('what-a-document-means', {
     params: ['doc'],
     run({ doc }: { doc: string }) {
       return { result: build('fixture.md', doc).content }
     },
-  },
-  'what-livingdoc-generates': {
+  })
+  bindings.bind('what-livingdoc-generates', {
     params: ['doc'],
     run({ doc }: { doc: string }) {
       return { result: build('fixture.md', doc).content }
     },
-  },
-  'what-a-project-provides': {
+  })
+  bindings.bind('what-a-project-provides', {
     params: ['name', 'doc'],
     run({ name, doc }: { name: string; doc: string }) {
       return { result: build(name, doc).path }
     },
-  },
+  })
 }

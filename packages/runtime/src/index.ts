@@ -1,4 +1,4 @@
-type Binding = {
+export type Binding = {
   params: string[]
   run: (args: Record<string, unknown>) => unknown
 }
@@ -8,18 +8,13 @@ type Entry = {
   binding: Binding
 }
 
-type Bindings = {
+export type Bindings = {
   get(name: string): Binding
   bind(name: string, binding: Binding): void
 }
 
-export const createBindings = (
-  backend: Record<string, Binding>,
-): Bindings => {
-  const entries: Entry[] = Object.entries(backend).map(([name, binding]) => ({
-    name,
-    binding,
-  }))
+export const createBindings = (): Bindings => {
+  const entries: Entry[] = []
 
   const get = (name: string): Binding => {
     const found = entries.find((entry) => entry.name === name)
