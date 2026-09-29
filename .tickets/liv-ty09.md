@@ -1,6 +1,6 @@
 ---
 id: liv-ty09
-status: in_progress
+status: closed
 deps: []
 links: [liv-m0mf, liv-hu8o]
 created: 2026-09-27T00:00:00Z
@@ -72,16 +72,16 @@ Vertical slices (each delivers a usable path, not a layer):
         generated test creates its own `bindings` with the backend's bindings
         and runs the case through them; existing checks still pass.
 
-- [ ] 2. **Duplicate bind fails clearly**
+- [x] 2. **Duplicate bind fails clearly**
       Binding a name already in `bindings` (from the backend's bindings or a
       prior bind) is a livingdoc duplicate error. Unblocks liv-7zw2's
       `bind(...)`.
 
-- [ ] 3. **Unknown binding name fails clearly**
+- [x] 3. **Unknown binding name fails clearly**
       Using a name that is not in `bindings` is a livingdoc miss error, not a
       raw runner/`undefined` failure.
 
-- [ ] 4. **Python sibling mirrors the same three behaviors**
+- [x] 4. **Python sibling mirrors the same three behaviors**
       Same create / bind / use / errors, importable by the future pytest
       generator (liv-f6ao).
 

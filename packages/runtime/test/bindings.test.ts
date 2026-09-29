@@ -39,6 +39,46 @@ describe('createBindings', () => {
       run: () => ({ result: 1 }),
     })
 
-    expect(another['inline']).toBeUndefined()
+    expect(() => another['inline']).toThrow(/unknown binding|no binding|not bound/i)
+  })
+
+  it('rejects binding a name already present', () => {
+    const backend = {
+      'applying-a-discount': {
+        params: ['total'],
+        run({ total }: { total: number }) {
+          return { result: total }
+        },
+      },
+    }
+
+    const bindings = createBindings(backend)
+
+    expect(() =>
+      bindings.bind('applying-a-discount', {
+        params: [],
+        run: () => ({ result: 0 }),
+      }),
+    ).toThrow(/already bound|duplicate/i)
+
+    bindings.bind('inline', {
+      params: [],
+      run: () => ({ result: 1 }),
+    })
+
+    expect(() =>
+      bindings.bind('inline', {
+        params: [],
+        run: () => ({ result: 2 }),
+      }),
+    ).toThrow(/already bound|duplicate/i)
+  })
+
+  it('rejects using a name that is not bound', () => {
+    const bindings = createBindings({})
+
+    expect(() => bindings['missing'].run({})).toThrow(
+      /unknown binding|no binding|not bound/i,
+    )
   })
 })
