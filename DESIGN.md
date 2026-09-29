@@ -203,7 +203,7 @@ livingdoc generates test code in two layers:
 import { setup } from '@livingdoc/runtime'
 import * as backend from '../backend'
 
-const { run } = setup(backend)
+const { bind, run } = setup(backend)
 
 describe("Applying a discount", () => {
   it("applying a SAVE10 code to a $100 cart", () => {

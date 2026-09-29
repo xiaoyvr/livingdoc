@@ -68,7 +68,6 @@ export const pytest = {
   },
 
   generate(title: string, bullets: Nodes[], appends: string[]): string {
-    const needsBindings = bullets.length > 0 || appends.length > 0
     const body =
       appends.length > 0 || bullets.length > 0
         ? indent(
@@ -80,11 +79,11 @@ export const pytest = {
         : indent('pass')
 
     return lines(
-      needsBindings && `from livingdoc_runtime import setup`,
-      needsBindings && `import backend`,
-      needsBindings && '',
-      needsBindings && `bind, run = setup(backend)`,
-      needsBindings && '',
+      `from livingdoc_runtime import setup`,
+      `import backend`,
+      '',
+      `bind, run = setup(backend)`,
+      '',
       `class ${className(title)}:`,
       body,
       '',

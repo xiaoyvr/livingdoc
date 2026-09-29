@@ -273,7 +273,7 @@ describe('livingdoc generate', () => {
     const content = readFileSync(generated, 'utf8')
     expect(content).toContain("import { setup } from '@livingdoc/runtime'")
     expect(content).toContain("import * as backend from '../backend'")
-    expect(content).toContain('const { run } = setup(backend)')
+    expect(content).toContain('const { bind, run } = setup(backend)')
     expect(content).toContain('run("walking-skeleton", { code })')
   })
 })

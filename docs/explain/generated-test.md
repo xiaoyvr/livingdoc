@@ -29,7 +29,7 @@ Example:
   import { setup } from '@livingdoc/runtime'
   import * as backend from '../backend'
 
-  const { run } = setup(backend)
+  const { bind, run } = setup(backend)
 
   describe("Applying a discount", () => {
     it("a code SAVE10 on a total 100 costs toBe total * 0.9", () => {
