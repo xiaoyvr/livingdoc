@@ -2,7 +2,7 @@
 id: liv-7zw2
 status: closed
 deps: [liv-ty09]
-links: [liv-otqr, liv-du6y]
+links: [liv-otqr, liv-du6y, liv-ty09, liv-ejez]
 created: 2026-09-27T00:00:00Z
 type: feature
 priority: 2
@@ -21,13 +21,13 @@ document itself.
   **Then** the block's statements are inside the generated `describe`, before
   its cases
 
-- **Given** a document with a `>>` block that binds an action, and an `Example:`
-  group whose action is that binding
+- **Given** a document with a `>>` block that registers a binding, and an
+  `Example:` group that targets that binding
   **When** the generated test runs
   **Then** it calls the binding and passes
 
-- **Given** a document that binds an action twice, or binds one the backend also
-  provides
+- **Given** a document that registers a binding twice, or binds one the backend
+  also provides
   **When** the generated test runs
   **Then** the duplicate is an error
 
@@ -45,7 +45,7 @@ document itself.
   backend's bindings are visible to every document.
 - The backend is not replaced — it stays for the system under test; the inline
   form is for simple cases.
-- A duplicate action is an error.
+- A duplicate binding is an error.
 
 ## Implementation tasks
 
@@ -53,8 +53,8 @@ Vertical slices (each delivers a usable path, not a layer):
 
 - [x] 1. **One inline bind goes green under vitest**
 
-      Document with a heading-level `` ```ts >> `` that `bindings.bind`s an
-      action, plus an `Example:` that targets it → generate → vitest passes.
+      Document with a heading-level `` ```ts >> `` that `bindings.bind`s a
+      binding, plus an `Example:` that targets it → generate → vitest passes.
       Delivers parse, emit-inside-`describe`, and the bind path together.
 
 - [x] 2. **A duplicate bind goes red**

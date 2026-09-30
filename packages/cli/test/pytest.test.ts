@@ -132,7 +132,7 @@ describe('livingdoc pytest', () => {
     expect(result.status, result.stdout + result.stderr).not.toBe(0)
   })
 
-  it('runs a case whose action is bound in a >> block', () => {
+  it('runs a case whose binding is registered in a >> block', () => {
     writeFileSync(join(backendDir, 'backend.py'), emptyBackend)
     writeFileSync(fixture, withAppend)
 

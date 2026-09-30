@@ -35,7 +35,7 @@ const backendBind = `export function register(bindings) {
 
 const bindBlock = `bind('walking-skeleton', ['code'], ({ code }) => code)`
 
-// The action is bound in the document, not the backend.
+// The binding is registered in the document, not the backend.
 const document = `---
 livingdoc: true
 ---
@@ -107,7 +107,7 @@ describe('livingdoc append (>>)', () => {
     rmSync(dir, { recursive: true, force: true })
   })
 
-  it('runs a case whose action is bound in a >> block', () => {
+  it('runs a case whose binding is registered in a >> block', () => {
     writeFileSync(fixture, document)
 
     expect(generate(fixture).ok).toBe(true)
@@ -123,7 +123,7 @@ describe('livingdoc append (>>)', () => {
     expect(result.status, result.stdout + result.stderr).toBe(0)
   })
 
-  it('fails when the >> block binds an action the backend already provides', () => {
+  it('fails when the >> block binds a name the backend already provides', () => {
     writeFileSync(join(dir, 'tests', 'vitest', 'backend.ts'), backendBind)
     writeFileSync(fixture, document)
 
@@ -134,7 +134,7 @@ describe('livingdoc append (>>)', () => {
     expect(result.stdout + result.stderr).toContain('duplicate binding')
   })
 
-  it('fails when the >> block binds the same action twice', () => {
+  it('fails when the >> block binds the same name twice', () => {
     writeFileSync(fixture, documentTwice)
 
     expect(generate(fixture).ok).toBe(true)
