@@ -1,6 +1,6 @@
 ---
 id: liv-otqr
-status: open
+status: closed
 deps: []
 links: [liv-7zw2, liv-ty09, liv-ejez]
 created: 2026-09-27T00:00:00Z
@@ -38,3 +38,9 @@ assignee: xiaoyvr
 
 - With no `backend:`, is the first configured backend the default, as the
   unmarked `Example:` is today?
+
+## Notes
+
+**2026-09-30T02:54:14Z**
+
+Merged into liv-ejez (keyed Example marker, positional migration, open question on default backend).

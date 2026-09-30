@@ -2,7 +2,7 @@
 id: liv-du6y
 status: open
 deps: [liv-ybyq, liv-0ou1, liv-7zw2]
-links: [liv-7zw2]
+links: [liv-7zw2, liv-ejez]
 created: 2026-09-26T03:21:48Z
 type: feature
 priority: 2
@@ -20,7 +20,7 @@ behaviors of a real system.
   **When** I run `livingdoc generate`
   **Then** each heading is its own `describe`
   **And** each bullet becomes its own generated case, named after the bullet
-  **And** the binding a case targets is the group's (liv-otqr) or, if unnamed,
+  **And** the binding a case targets is the group's (liv-ejez) or, if unnamed,
   its heading's
 
 - **Given** a document with two headings, each with a heading-level `>>` block
@@ -39,9 +39,9 @@ behaviors of a real system.
 
 ## Notes
 
-- The heading is a `describe` and the default binding; liv-otqr lets a group name
+- The heading is a `describe` and the default binding; liv-ejez lets a group name
   its binding, so a multi-heading document composes with that instead of relying
-  on the heading slug alone.
+  on the heading alone.
 - Per-heading `>>` placement was deferred from liv-7zw2: today every `>>` in
   the document lands in the single generated `describe`; this ticket splits
   that by heading.

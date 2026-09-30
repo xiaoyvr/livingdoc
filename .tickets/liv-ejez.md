@@ -2,7 +2,7 @@
 id: liv-ejez
 status: open
 deps: []
-links: [liv-ty09, liv-otqr, liv-7zw2]
+links: [liv-ty09, liv-otqr, liv-7zw2, liv-du6y]
 created: 2026-09-30T02:45:23Z
 type: feature
 priority: 0
@@ -29,6 +29,16 @@ stable, shareable across docs, and gaps show up before generate/run.
 - **Given** `Example (binding: checkout.md#applying-a-discount):`
   **When** I run `livingdoc generate`
   **Then** the generated test uses that backend key
+
+- **Given** `Example (backend: web, binding: applying-a-discount):`
+  **When** I run `livingdoc generate`
+  **Then** the group's cases use that backend and that binding; either key may
+  be omitted
+
+- **Given** the positional marker `Example (web):`
+  **When** I run `livingdoc generate`
+  **Then** it is accepted as `Example (backend: web):` (migration of today's
+  form)
 
 - **Given** a heading-level `>>` with `bind(params, run)` (no name)
   **When** the generated test runs
@@ -74,6 +84,13 @@ stable, shareable across docs, and gaps show up before generate/run.
 Path relative to the docs root. `#` ⇒ file+anchor; otherwise ⇒ short name.
 Anchor = Markdown heading id (lowercase, dashed).
 
+### Keyed `Example` marker
+
+`Example (backend: web, binding: applying-a-discount):` — either key may be
+omitted. The heading still names the `describe`, whatever the binding is.
+Migrating the positional marker (`Example (web):`) to the keyed form is in
+scope.
+
 ### How a group picks its binding
 
 1. `Example (binding: …):` — that key (short or file+anchor), defined on the
@@ -103,9 +120,13 @@ Anchor = Markdown heading id (lowercase, dashed).
 `livingdoc bindings` (name flexible) walks docs + backends and reports missing
 and unused backend binds; exit non-zero if either is found.
 
+## Open questions
+
+- With no `backend:`, is the first configured backend the default, as the
+  unmarked `Example:` is today?
+
 ## Notes
 
-- Supersedes the default-binding part of liv-otqr (slug → file+anchor); liv-otqr's
-  keyed `Example (backend:, binding:):` marker remains the vehicle for explicit
-  `binding:`.
+- Absorbs liv-otqr (keyed `Example (backend:, binding:):` and positional
+  migration).
 - Inline `>>` bind API change (drop the name) builds on liv-7zw2 / liv-ty09.

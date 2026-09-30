@@ -140,22 +140,22 @@ The document's structure maps directly onto a test tree:
 | `it(...)` — one case | one bullet under `Example:` |
 | parameter names in the signature | the ``name :=`expr` `` / ``!!`expr` `` tokens |
 
-- The **heading** locates the `describe` (the behavior being tested): its slug is
-  the binding name — `## Applying a discount` → `applying-a-discount`
-  (lowercase, whitespace → hyphen, digits kept, other punctuation dropped).
+- The **heading** locates the `describe` (the behavior being tested). Planned
+  (liv-ejez): its default binding is `‹file›#‹heading-anchor›` — e.g.
+  `checkout.md#applying-a-discount` (anchor = Markdown heading id). Today the
+  binding name is still the heading's slug alone.
 - `Example:` alone uses the first configured backend. A document may hold
   groups for several backends, and its cases are generated per backend.
-  Planned (liv-otqr): `Example (backend: web, binding: applying-a-discount):`
-  names the group's backend and binding, and a missing `binding:` falls back to
-  the heading's slug.
+  Planned (liv-ejez): `Example (backend: web, binding: applying-a-discount):`
+  names the group's backend and binding; either key may be omitted. A missing
+  `binding:` falls back to `‹file›#‹heading-anchor›`.
 - The **parameter names** locate the `it` (the parameterized test): the names in
   a bullet must match the binding's declared parameters.
 - The `it` **title** is the bullet's prose with input values substituted. Until
   rendering lands (§16.5) it still carries the raw assertion text, e.g. `toBe 90`.
 - A nested heading overrides the binding. A heading with no `Example:` bullets
-  is just structure. Today the heading's slug is the binding name, so renaming a
-  heading changes the lookup; naming the binding on the group (above, planned)
-  removes that coupling.
+  is just structure. Renaming a heading changes the default lookup; naming the
+  binding on the group (above, planned) removes that coupling.
 
 ## 7. The consumer's backend
 
