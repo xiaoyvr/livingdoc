@@ -2,18 +2,17 @@
 id: liv-1wj2
 status: in_progress
 deps: []
-links: [liv-ty09, liv-ejez, liv-7zw2, liv-du6y]
+links: [liv-ty09, liv-ejez, liv-7zw2, liv-du6y, liv-j2jx]
 created: 2026-09-30T03:25:00Z
 type: feature
 priority: 0
 assignee: xiaoyvr
 ---
-# Backend binds: direct bind, multi-file index, describe hooks
+# Backend binds: module-level `bind` / `run` behind one index
 
-**As a** documentation author, **I want** backend bindings declared with `bind()`
-across multiple files behind one index import, with optional describe-level
-`beforeAll` / `afterAll` on each bind, **so that** generated tests stay thin and
-documents need not carry setup implementation.
+**As a** documentation author, **I want** backend bindings declared with
+`bind()` in modules behind a single index import, **so that** generated tests
+stay thin and documents need not carry setup implementation.
 
 ## Acceptance criteria
 
@@ -30,52 +29,32 @@ documents need not carry setup implementation.
   **When** the backend loads
   **Then** duplicate binding is an error
 
-- **Given** `bind(name, params, run, { beforeAll, afterAll })`
-  **When** the generated test runs under vitest
-  **Then** that binding’s `describe` runs those hooks once around its cases
-  (via a runtime helper such as `describeBinding`)
-
-- **Given** a binding with no hooks
-  **When** the generated test loads
-  **Then** the framework’s `beforeAll` / `afterAll` are not registered for that
-  describe — the runtime helper no-ops on missing hooks
-
-- **Given** `livingdoc generate`
-  **When** it runs
-  **Then** it loads the backend (pre-run), collects a bindings manifest, checks
-  missing/unused against the documents, and feeds the manifest into emit
-  (fail closed on check errors)
-
-- **Given** suite-level setup owned by the runner (`globalSetup`, setupFiles,
-  root `conftest`)
-  **When** documents and generated tests are written
-  **Then** they do not contain suite-level setup (backend binds may read
-  env/handles published by it)
+- **Given** `livingdoc generate` for vitest
+  **When** it writes a document's test
+  **Then** the test imports the backend index and calls `run` — there is no
+  `setup(backend)`
 
 - **Given** dogfood / explain backends
   **When** this lands
-  **Then** they use `bind(...)` in modules imported by the index; `register` is
-  gone from runtime and generators
+  **Then** they use `bind(...)` in modules imported by the index; `register`
+  and `setup` are gone from the runtime and the generators
 
 ## Design
 
-### No `register`
-
-Consumer API is module-level `bind` / `run` / `list` from `@livingdoc/runtime`
-(and the Python sibling). Internal `createBindings` may remain for tests.
+Consumer API is module-level `bind` / `run` from `@livingdoc/runtime`. Internal
+`createBindings` may remain for tests.
 
 ```ts
 // backend/checkout.ts
 import { bind } from '@livingdoc/runtime'
 
-bind('checkout.md#applying-a-discount', ['code', 'total'],
+bind('applying-a-discount', ['code', 'total'],
   ({ code, total }) => applyDiscount(code, total),
-  { beforeAll, afterAll }, // optional
 )
 ```
 
 ```ts
-// backend/index.ts — only entry generate and generated tests import
+// backend/index.ts — the only entry generate and generated tests import
 import './checkout'
 import './cart'
 ```
@@ -84,9 +63,8 @@ import './cart'
 // generated (vitest)
 import '../backend'
 import { run } from '@livingdoc/runtime'
-import { describeBinding } from '@livingdoc/runtime/vitest'
 
-describeBinding('applying-a-discount', 'Applying a discount', () => {
+describe('Applying a discount', () => {
   it('…', () => {
     const result = run('applying-a-discount', { code, total })
     expect(result).toBe(…)
@@ -94,90 +72,75 @@ describeBinding('applying-a-discount', 'Applying a discount', () => {
 })
 ```
 
-### Collect → check → generate
-
-```
-load backend → manifest (list)
-       ↓
-check vs docs (missing / unused → fail)
-       ↓
-emit from docs + manifest
-```
-
-- Generate always loads the backend for the suite being emitted.
-- Manifest feeds validation and (with liv-ejez) resolved keys; emit still uses
-  `describeBinding` so hooks attach at test runtime from the registry.
-- Document parse supplies cases and inline `>>`; pre-run supplies backend binds.
-
 ### One `bind` shape
 
-`bind(name, params, run, hooks?)` — `run` returns the bare value; the runtime
-wraps `{ result }`. Optional `hooks`: `beforeAll` / `afterAll` on the entry.
-`list()` returns `{ name, params, hasBeforeAll, hasAfterAll }[]` for the
-manifest (no function values).
+`bind(name, params, run)` — `run` returns the bare value; the runtime wraps
+`{ result }`.
 
 ### Registry
 
 - **Backend** `bind` → shared registry for that process/suite
-- **Inline** `bind` → describe-local overlay (liv-ejez); not in the pre-run
-  manifest
+- Duplicate name → error; unknown name on `run` → error
 
-### Lifecycle split
+### Lifecycle
 
-| Scope | Where |
-|---|---|
-| Once per suite / every `it` suite-wide | Runner — not Markdown |
-| Once per heading (`describe`) | Optional hooks on `bind`, via `describeBinding` |
-| Per case | Binding `run` |
-| Demo in a document | Verbatim hooks in `>>` |
+All suite-level setup is owned by the runner (`globalSetup`, setup files, root
+`conftest`). Documents and generated tests carry none; backend binds may read
+env/handles the runner publishes. Per-case setup is the binding's own business.
 
 ## Notes
 
-- Foundation for liv-ejez (keys, unnamed inline, richer check). liv-ejez depends
-  on this.
+- Foundation for liv-ejez, which owns key resolution and the collect → check →
+  generate pass; this ticket only provides the registry and the generated-test
+  shape.
 - Replaces `register` + `bindings.bind` from liv-ty09 / liv-7zw2.
-- Today’s default key remains the heading slug until liv-ejez ships file+anchor.
+- Today's default key remains the heading slug until liv-ejez ships file+anchor.
 
 ## Implementation tasks
 
 Vertical slices (each delivers a usable path, not a layer). Strict TDD per
 slice: red → confirm → green → refactor; one slice at a time.
 
-- [ ] 1. **Module-level `bind` / `run` / `list` (TS runtime)**
+- [x] 1. **Module-level `bind` / `run` registry (TS runtime)**
 
-      Failing tests for `bind(name, params, run)`, `run`, duplicate, unknown,
-      and `list()` manifest (params + hook flags). No `register` / `setup` in
-      the new surface. Minimum impl in `@livingdoc/runtime`.
+      No `register` / `setup` in the new surface. Registry in
+      `@livingdoc/runtime`.
 
-- [ ] 2. **`describeBinding` under vitest**
+      - [x] happy path: `bind(name, params, run)` then `run(name, args)`
+      - [x] duplicate: binding a name already bound throws
+      - [x] unknown: running a name not bound throws
 
-      Binding with hooks → vitest `beforeAll`/`afterAll` run once for the
-      describe; binding without hooks → those hooks are not registered. Ship
-      `@livingdoc/runtime/vitest`.
+- [ ] 2. **Generated vitest file imports the index and calls `run`**
 
-- [ ] 3. **Generated vitest file uses `import '../backend'` + `describeBinding`**
+      Generator emits `import '../backend'` + `run` (no `setup(backend)`); a
+      tiny backend with `bind(...)` makes the generated test pass under vitest.
 
-      Generator emits the new shape (no `setup(backend)`). One CLI/unit fixture
-      generate → output contains `describeBinding` and `run`; a tiny backend
-      with `bind(...)` makes the generated test pass under vitest.
+- [ ] 3. **Multi-file backend index**
 
-- [ ] 4. **Collect → check → generate (vitest)**
+      Two modules each `bind` a name; the index side-effect imports both; a
+      generated test sees both; duplicate across files → red.
 
-      Generate loads the backend, builds a manifest, fails on missing/unused
-      (slug key as today), then emits. Fixture: missing bind → generate red;
-      matching bind → generate green and test passes.
-
-- [ ] 5. **Dogfood vitest backend on `bind(...)`**
+- [ ] 4. **Dogfood vitest backend on `bind(...)` + index**
 
       Migrate `tests/explain/vitest` (and explain expected snippets) off
       `register`; dogfood vitest path green.
 
-- [ ] 6. **Python `bind` / `run` / `list_bindings` + pytest generator**
+- [ ] 5. **Remove `setup` / `register` from the TS runtime and generator**
 
-      Same consumer surface; pytest emit imports `backend` and uses `run` (no
-      `setup`). Collect/check for `.py` backends. Pytest dogfood green.
+      Once no consumer remains. `createBindings` may stay for tests.
 
-- [ ] 7. **Multi-file backend index**
+## Moved out
 
-      Two modules each `bind` a name; index side-effect imports both; generate
-      collect sees both; duplicate across files → red.
+- collect → check → generate: liv-ejez (owns the bindings check).
+- Python `bind` / `run` + pytest: new ticket.
+- binding lifecycle setup / teardown: liv-j2jx (Lifecycle hooks).
+
+## Blocking
+
+- liv-ejez [open] Binding keys: file+anchor, global names, unnamed inline, and bindings check
+
+## Linked
+
+- liv-ty09 [closed] The livingdoc runtime
+- liv-7zw2 [closed] Append code to the generated test
+- liv-du6y [open] Headings and multiple cases
