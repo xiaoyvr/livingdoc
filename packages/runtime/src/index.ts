@@ -60,6 +60,28 @@ export const createBindings = (): Bindings => {
   return { get, bind }
 }
 
+// Module-level consumer surface: a backend index binds into one registry for
+// the process, and its generated tests run through it.
+const registry = new Map<string, (args: Record<string, unknown>) => unknown>()
+
+export const bind = (
+  name: string,
+  params: ReadonlyArray<string>,
+  run: (args: Record<string, unknown>) => unknown,
+): void => {
+  if (registry.has(name)) throw new Error(`duplicate binding: ${name}`)
+  registry.set(name, run)
+}
+
+export const run = (
+  name: string,
+  args: Record<string, unknown> = {},
+): unknown => {
+  const found = registry.get(name)
+  if (!found) throw new Error(`unknown binding: ${name}`)
+  return found(args)
+}
+
 // Document-facing surface: bind and run. Backends still use createBindings + register.
 export const setup = (backend: Backend) => {
   const bindings = createBindings()
