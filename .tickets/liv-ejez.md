@@ -1,8 +1,8 @@
 ---
 id: liv-ejez
 status: open
-deps: []
-links: [liv-ty09, liv-otqr, liv-7zw2, liv-du6y]
+deps: [liv-1wj2]
+links: [liv-ty09, liv-otqr, liv-7zw2, liv-du6y, liv-1wj2]
 created: 2026-09-30T02:45:23Z
 type: feature
 priority: 0
@@ -12,8 +12,8 @@ assignee: xiaoyvr
 
 **As a** documentation author, **I want** document bindings to resolve by
 file+anchor or a shared global name, with unnamed inline binds for local demos,
-and a CLI that reports missing or unused backend bindings, **so that** lookup is
-stable, shareable across docs, and gaps show up before generate/run.
+and generate to collect → check → emit using that model, **so that** lookup is
+stable, shareable across docs, and gaps show up before tests run.
 
 ## Acceptance criteria
 
@@ -53,33 +53,43 @@ stable, shareable across docs, and gaps show up before generate/run.
   **When** the test loads
   **Then** duplicate binding is an error
 
-- **Given** `livingdoc bindings` (or equivalent)
+- **Given** generate’s collect → check pass (or `livingdoc bindings`)
   **When** a document resolves a binding with no backend bind and no covering
   inline bind
-  **Then** it reports the binding as missing
+  **Then** it reports the binding as missing and generate exits non-zero
 
 - **Given** a backend bind no document refers to
-  **When** the bindings check runs
-  **Then** it reports the bind as unused
-
-- **Given** missing or unused bindings
-  **When** the check command finishes
-  **Then** it exits non-zero
+  **When** collect → check runs
+  **Then** it reports the bind as unused and exits non-zero
 
 ## Design
+
+### Pipeline (with liv-1wj2)
+
+```
+load backend → manifest
+       ↓
+resolve each group’s binding key (rules below)
+       ↓
+check missing / unused → fail closed
+       ↓
+emit (docs + manifest)
+```
+
+Inline `>>` binds are not in the manifest; a heading covered by inline bind is
+not missing.
 
 ### Two kinds of bind
 
 | Kind | Where | Name | Visibility |
 |---|---|---|---|
 | Inline | `>>` under a heading | Unnamed — `bind(params, run)` | That heading's `describe` only |
-| Backend | `register(bindings)` | Required string key | Global — every document can use it |
+| Backend | `bind(...)` in backend modules | Required string key | Global |
 
-### Binding keys (backend / `Example`)
+### Binding keys
 
 - **Short** — `applying-a-discount` — shared across documents
-- **File+anchor** — `checkout.md#applying-a-discount` — usual default for a
-  heading in that file
+- **File+anchor** — `checkout.md#applying-a-discount` — default for a heading
 
 Path relative to the docs root. `#` ⇒ file+anchor; otherwise ⇒ short name.
 Anchor = Markdown heading id (lowercase, dashed).
@@ -87,38 +97,21 @@ Anchor = Markdown heading id (lowercase, dashed).
 ### Keyed `Example` marker
 
 `Example (backend: web, binding: applying-a-discount):` — either key may be
-omitted. The heading still names the `describe`, whatever the binding is.
-Migrating the positional marker (`Example (web):`) to the keyed form is in
-scope.
+omitted. Heading names `describe`. Positional `Example (web):` →
+`Example (backend: web):`.
 
 ### How a group picks its binding
 
-1. `Example (binding: …):` — that key (short or file+anchor), defined on the
-   backend
-2. Else, inline `bind` under the heading — use it (no global lookup)
+1. `Example (binding: …):` — that key on the backend
+2. Else, inline `bind` under the heading — local overlay
 3. Else — `‹file›#‹heading-anchor›` on the backend
 
 ### Authoring
 
 - Inline: `bind(['code', 'total'], …)` under the heading
-- Backend file-default: `bindings.bind('checkout.md#applying-a-discount', …)`
-- Backend shared: `bindings.bind('applying-a-discount', …)` +
+- Backend file-default: `bind('checkout.md#applying-a-discount', …)`
+- Backend shared: `bind('applying-a-discount', …)` +
   `Example (binding: applying-a-discount):`
-- `Example (binding: checkout.md#applying-a-discount):` also fine
-
-### Scoping
-
-- One heading → at most one inline bind (duplicate → error)
-- Per-`describe` inline binds don't cross-talk
-- Nested heading: child wins for its cases
-- Heading names `describe` only; `binding:` may diverge
-- Inline never keyed as file+anchor, never global
-- All backend keys are global
-
-### Check command
-
-`livingdoc bindings` (name flexible) walks docs + backends and reports missing
-and unused backend binds; exit non-zero if either is found.
 
 ## Open questions
 
@@ -127,6 +120,4 @@ and unused backend binds; exit non-zero if either is found.
 
 ## Notes
 
-- Absorbs liv-otqr (keyed `Example (backend:, binding:):` and positional
-  migration).
-- Inline `>>` bind API change (drop the name) builds on liv-7zw2 / liv-ty09.
+- Absorbs liv-otqr. Depends on liv-1wj2 for `bind` / collect → check → generate.
