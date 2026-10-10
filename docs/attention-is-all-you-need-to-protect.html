@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Attention Is All You Need</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1115;
+      --fg: #f2f2f0;
+      --muted: #9a9a94;
+      --accent: #e8e2d6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    .deck {
+      height: 100%;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      height: 100%;
+      padding: clamp(2rem, 6vw, 5rem);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    .title-slide {
+      text-align: center;
+    }
+
+    .title-slide > div {
+      width: min(100%, 36rem);
+    }
+
+    .title-slide h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 3.6rem);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--accent);
+      text-wrap: balance;
+      overflow-wrap: break-word;
+    }
+
+    .title-slide p {
+      margin: 1.25rem 0 0;
+      font-size: clamp(1rem, 2.2vw, 1.45rem);
+      line-height: 1.35;
+      color: var(--muted);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 400;
+      text-wrap: balance;
+    }
+
+    .content-slide {
+      text-align: left;
+    }
+
+    .content-slide > div {
+      width: min(100%, 54rem);
+    }
+
+    .content-slide h2 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--accent);
+    }
+
+    .content-slide .lead {
+      margin: 1.25rem 0 0;
+      font-size: clamp(1.15rem, 2.5vw, 1.7rem);
+      line-height: 1.4;
+      color: var(--fg);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 400;
+    }
+
+    .content-slide .muted {
+      margin: 0.85rem 0 0;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      line-height: 1.45;
+      color: var(--muted);
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .content-slide .conclusion {
+      margin: 1.25rem 0 0;
+      font-size: clamp(1.1rem, 2.3vw, 1.45rem);
+      line-height: 1.4;
+      color: var(--accent);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 600;
+    }
+
+    .picture-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(1rem, 3vw, 1.75rem);
+      margin-top: 1.5rem;
+    }
+
+    .picture-card {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .picture-card svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(232, 226, 214, 0.12);
+      border-radius: 0.4rem;
+      background: #14171d;
+    }
+
+    .picture-card figcaption {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: clamp(0.85rem, 1.5vw, 1rem);
+      line-height: 1.35;
+      color: var(--muted);
+    }
+
+    .label-list,
+    .promote-list,
+    .beat-list {
+      margin: 1.75rem 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 0.85rem;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .label-list li {
+      font-size: clamp(1.2rem, 2.4vw, 1.6rem);
+      line-height: 1.3;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .promote-list > li,
+    .beat-list > li {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      line-height: 1.35;
+      color: var(--fg);
+    }
+
+    .promote-list > li > strong,
+    .beat-list > li > strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .promote-list > li > span,
+    .beat-list > li > span {
+      color: var(--muted);
+    }
+
+    .promote-list ul {
+      margin: 0.35rem 0 0;
+      padding-left: 1.1rem;
+      display: grid;
+      gap: 0.25rem;
+      color: var(--muted);
+      font-size: clamp(0.9rem, 1.7vw, 1.05rem);
+      line-height: 1.35;
+    }
+
+    .closing-copy {
+      margin: 1.5rem 0 0;
+      display: grid;
+      gap: 1rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: clamp(1.05rem, 2.1vw, 1.35rem);
+      line-height: 1.45;
+      color: var(--fg);
+    }
+
+    .closing-copy p {
+      margin: 0;
+    }
+
+    .closing-copy .muted {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+    }
+
+    .progress {
+      position: fixed;
+      right: 1.25rem;
+      bottom: 1rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <main class="deck">
+    <section class="slide title-slide active" data-slide="1">
+      <div>
+        <h1>Attention Is All You Need</h1>
+        <p>to protect...</p>
+      </div>
+    </section>
+
+    <section class="slide content-slide" data-slide="2">
+      <div>
+        <h2>New bottleneck — human understanding</h2>
+        <p class="lead">Human understanding — attention span.</p>
+
+        <div class="picture-row" aria-label="Understanding bandwidth: vertical slices pass, horizontal slices choke">
+          <figure class="picture-card">
+            <svg viewBox="0 0 320 220" role="img" aria-label="Thin end-to-end vertical slices pass easily through a human understanding bandwidth">
+              <rect width="320" height="220" fill="#14171d" />
+              <!-- incoming thin vertical slices — different lengths -->
+              <g fill="none" stroke="#7dcea0" stroke-linecap="round">
+                <path d="M46 42 V78" stroke-width="4" />
+                <path d="M70 18 V78" stroke-width="4" />
+                <path d="M94 34 V78" stroke-width="4" />
+                <path d="M118 50 V78" stroke-width="4" opacity="0.55" />
+              </g>
+              <g fill="#e8e2d6">
+                <circle cx="46" cy="42" r="2.5" />
+                <circle cx="70" cy="18" r="2.5" />
+                <circle cx="94" cy="34" r="2.5" />
+                <circle cx="118" cy="50" r="2.5" opacity="0.55" />
+              </g>
+              <!-- bandwidth aperture around the head -->
+              <path d="M34 88 H148" stroke="#9a9a94" stroke-width="1.5" opacity="0.5" />
+              <path d="M34 150 H148" stroke="#9a9a94" stroke-width="1.5" opacity="0.5" />
+              <path d="M34 88 C18 110, 18 128, 34 150" fill="none" stroke="#9a9a94" stroke-width="1.5" opacity="0.5" />
+              <path d="M148 88 C164 110, 164 128, 148 150" fill="none" stroke="#9a9a94" stroke-width="1.5" opacity="0.5" />
+              <!-- person / brain as the bandwidth -->
+              <circle cx="91" cy="119" r="28" fill="#14171d" stroke="#e8e2d6" stroke-width="2.4" />
+              <path d="M76 114 C80 104, 90 102, 96 108 C104 102, 114 108, 108 118 C114 126, 106 136, 96 134 C88 140, 76 134, 74 124 C70 120, 70 116, 76 114 Z"
+                    fill="none" stroke="#7dcea0" stroke-width="1.8" />
+              <path d="M84 147 C86 156, 96 156, 98 147" fill="none" stroke="#e8e2d6" stroke-width="2" />
+              <path d="M68 188 C74 166, 108 166, 114 188" fill="none" stroke="#e8e2d6" stroke-width="2.2" />
+              <!-- slices continuing out understood — different lengths -->
+              <g fill="none" stroke="#7dcea0" stroke-linecap="round">
+                <path d="M202 88 V156" stroke-width="4" />
+                <path d="M226 88 V188" stroke-width="4" />
+                <path d="M250 88 V168" stroke-width="4" />
+                <path d="M274 88 V142" stroke-width="4" opacity="0.55" />
+              </g>
+              <path d="M148 119 H190" stroke="#7dcea0" stroke-width="1.8" stroke-dasharray="4 3" />
+              <g fill="none" stroke="#7dcea0" stroke-width="2">
+                <path d="M196 162 L202 168 L212 154" />
+                <path d="M220 194 L226 200 L236 186" />
+                <path d="M244 174 L250 180 L260 166" />
+                <path d="M268 148 L274 154 L284 140" opacity="0.55" />
+              </g>
+            </svg>
+            <figcaption>Right level of cognitive load</figcaption>
+          </figure>
+
+          <figure class="picture-card">
+            <svg viewBox="0 0 320 220" role="img" aria-label="Wide horizontal whole-design layers choke a human understanding bandwidth">
+              <rect width="320" height="220" fill="#14171d" />
+              <!-- varied wide horizontal shapes = whole-layer / upfront design -->
+              <g fill="#c07a7a" opacity="0.22" stroke="#c07a7a" stroke-width="2">
+                <!-- long bar -->
+                <rect x="18" y="18" width="150" height="14" rx="3" />
+                <!-- irregular wide trapezoid -->
+                <path d="M28 42 L168 48 L156 68 L22 62 Z" />
+                <!-- capsule / pill -->
+                <rect x="20" y="76" width="140" height="16" rx="8" />
+              </g>
+              <g fill="none" stroke="#c07a7a" stroke-width="2">
+                <rect x="18" y="18" width="150" height="14" rx="3" />
+                <path d="M28 42 L168 48 L156 68 L22 62 Z" />
+                <rect x="20" y="76" width="140" height="16" rx="8" />
+              </g>
+              <!-- same bandwidth aperture -->
+              <path d="M34 104 H148" stroke="#9a9a94" stroke-width="1.5" opacity="0.5" />
+              <path d="M34 166 H148" stroke="#9a9a94" stroke-width="1.5" opacity="0.5" />
+              <path d="M34 104 C18 126, 18 144, 34 166" fill="none" stroke="#9a9a94" stroke-width="1.5" opacity="0.5" />
+              <path d="M148 104 C164 126, 164 144, 148 166" fill="none" stroke="#9a9a94" stroke-width="1.5" opacity="0.5" />
+              <!-- slabs jammed against the aperture -->
+              <path d="M88 94 V104" stroke="#c07a7a" stroke-width="2" />
+              <path d="M83 100 L88 106 L93 100" fill="none" stroke="#c07a7a" stroke-width="2" />
+              <!-- overwhelmed person / brain -->
+              <circle cx="91" cy="135" r="28" fill="#14171d" stroke="#e8e2d6" stroke-width="2.4" />
+              <path d="M76 130 C80 120, 90 118, 96 124 C104 118, 114 124, 108 134 C114 142, 106 152, 96 150 C88 156, 76 150, 74 140 C70 136, 70 132, 76 130 Z"
+                    fill="none" stroke="#c07a7a" stroke-width="1.8" />
+              <path d="M82 128 L98 144" stroke="#c07a7a" stroke-width="1.5" />
+              <path d="M98 128 L82 144" stroke="#c07a7a" stroke-width="1.5" />
+              <path d="M84 163 C86 172, 96 172, 98 163" fill="none" stroke="#e8e2d6" stroke-width="2" />
+              <path d="M68 204 C74 182, 108 182, 114 204" fill="none" stroke="#e8e2d6" stroke-width="2.2" />
+              <!-- hands to head -->
+              <path d="M70 180 C62 168, 66 152, 74 144" fill="none" stroke="#e8e2d6" stroke-width="2" />
+              <path d="M112 180 C120 168, 116 152, 108 144" fill="none" stroke="#e8e2d6" stroke-width="2" />
+              <!-- almost nothing usable comes out -->
+              <path d="M148 135 H190" stroke="#c07a7a" stroke-width="1.8" stroke-dasharray="4 3" />
+              <text x="236" y="142" text-anchor="middle" fill="#c07a7a" font-size="36" font-family="system-ui, sans-serif" font-weight="600">?</text>
+              <text x="236" y="172" text-anchor="middle" fill="#9a9a94" font-size="12" font-family="system-ui, sans-serif">whole design</text>
+            </svg>
+            <figcaption>Cognitive surrender</figcaption>
+          </figure>
+        </div>
+
+        <p class="muted">Lose control. Low confidence releasing code to production. Shifting-right a heavy QA process.</p>
+        <p class="conclusion">We need to better use our attention to maxium the outcome!</p>
+      </div>
+    </section>
+
+    <section class="slide content-slide" data-slide="3">
+      <div>
+        <h2>Failure modes</h2>
+        <p class="muted">Attention is NOT well spent when:</p>
+        <ul class="label-list">
+          <li>Oversized unit of work</li>
+          <li>Handoffs</li>
+          <li>Context switching</li>
+          <li>Waiting for others</li>
+          <li>Early optimization / over implementation</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="slide content-slide" data-slide="4">
+      <div>
+        <h2>Promote</h2>
+        <ul class="promote-list">
+          <li>
+            <strong>Small vertical slice</strong>
+            <span> as the unit of the work — what we can understand and kick off within 5 mins</span>
+            <ul>
+              <li>Not tickets as coordination between roles</li>
+              <li>The slice is part of the work, not a board people visit between meetings</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Shared working space</strong>
+            <span> — everything lives in the codebase; push everyone there</span>
+          </li>
+          <li>
+            <strong>Pairing / mobbing</strong>
+            <span> across roles, fewer handoffs</span>
+            <ul>
+              <li>Everyone becomes a builder; roles blur</li>
+              <li>Work is not linear — specialty still matters; the process does not</li>
+            </ul>
+          </li>
+          <li>
+            <strong>Good engineering practice</strong>
+            <span> matters more</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="slide content-slide" data-slide="5">
+      <div>
+        <h2>Demo</h2>
+      </div>
+    </section>
+
+    <section class="slide content-slide" data-slide="6">
+      <div>
+        <h2>Closing</h2>
+        <div class="closing-copy">
+          <p>We manage attention, so that we can manage our understanding. Only understanding can give us the confidence needed for production. Without confidence, we might build a bunch, still not able to ship.</p>
+          <p>Do not optimize for agent emit — optimize for human understanding. Take the step to ease human understanding, not for how big the agent can accept.</p>
+          <p>Invest in building the system and tooling. So we can go faster with confidence.</p>
+          <p class="muted">New ways of working — across-role pairing, non-linear process.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="progress" aria-live="polite"></div>
+
+  <script>
+    const slides = [...document.querySelectorAll(".slide")];
+    const progress = document.querySelector(".progress");
+    let index = slides.findIndex((slide) => slide.classList.contains("active"));
+    if (index < 0) index = 0;
+
+    function show(next) {
+      index = Math.max(0, Math.min(slides.length - 1, next));
+      slides.forEach((slide, i) => {
+        slide.classList.toggle("active", i === index);
+      });
+      progress.textContent = `${index + 1} / ${slides.length}`;
+    }
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowRight" || event.key === " ") {
+        event.preventDefault();
+        show(index + 1);
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        show(index - 1);
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        show(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        show(slides.length - 1);
+      }
+    });
+
+    show(index);
+  </script>
+</body>
+</html>
