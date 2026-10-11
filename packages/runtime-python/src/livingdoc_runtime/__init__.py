@@ -37,20 +37,19 @@ def create_bindings():
     return Bindings()
 
 
-# Document-facing surface: bind and run. Backends still use create_bindings + register.
-def setup(backend):
-    from types import SimpleNamespace
+# Module-level consumer surface: a backend binds into one registry for the
+# process, and its generated tests run through it.
+_registry = {}
 
-    bindings = create_bindings()
-    backend.register(bindings)
 
-    def bind(name, params, run):
-        bindings.bind(
-            name,
-            SimpleNamespace(params=params, run=lambda args: {"result": run(args)}),
-        )
+def bind(name, params, run):
+    if name in _registry:
+        raise Exception(f"duplicate binding: {name}")
+    _registry[name] = (tuple(params), run)
 
-    def run(name, args=None):
-        return bindings.get(name).run(args or {})["result"]
 
-    return bind, run
+def run(name, args=None):
+    if name not in _registry:
+        raise Exception(f"unknown binding: {name}")
+    _params, body = _registry[name]
+    return body(args or {})

@@ -1,11 +1,35 @@
 import unittest
 from types import SimpleNamespace
 
-from livingdoc_runtime import create_bindings, setup
+from livingdoc_runtime import bind, create_bindings, run
 
 
 def binding(params, run):
     return SimpleNamespace(params=params, run=run)
+
+
+class BindTest(unittest.TestCase):
+    def test_lets_a_case_use_a_bound_binding(self):
+        bind(
+            "applying-a-discount",
+            ["code", "total"],
+            lambda args: args["total"] * 0.9,
+        )
+
+        self.assertEqual(
+            run("applying-a-discount", {"code": "SAVE10", "total": 100}),
+            90,
+        )
+
+    def test_rejects_binding_a_name_already_bound(self):
+        bind("a-unique-name", [], lambda args: 1)
+
+        with self.assertRaisesRegex(Exception, "duplicate"):
+            bind("a-unique-name", [], lambda args: 2)
+
+    def test_rejects_running_a_name_that_is_not_bound(self):
+        with self.assertRaisesRegex(Exception, "unknown binding"):
+            run("nobody-bound-this")
 
 
 class CreateBindingsTest(unittest.TestCase):
@@ -72,31 +96,6 @@ class CreateBindingsTest(unittest.TestCase):
             stored.run = lambda args: {"result": 0}
         with self.assertRaises(Exception):
             stored.params.append("nope")
-
-
-class SetupTest(unittest.TestCase):
-    def test_lets_a_case_use_setup_bind_and_run(self):
-        class Backend:
-            def register(self, bindings):
-                bindings.bind(
-                    "applying-a-discount",
-                    binding(
-                        ["code", "total"],
-                        lambda args: {"result": args["total"] * 0.9},
-                    ),
-                )
-
-        _bind, run = setup(Backend())
-        self.assertEqual(run("applying-a-discount", {"code": "SAVE10", "total": 100}), 90)
-
-    def test_lets_a_document_bind_without_seeing_bindings(self):
-        class Backend:
-            def register(self, _bindings):
-                pass
-
-        bind, run = setup(Backend())
-        bind("inline", ["code"], lambda args: args["code"])
-        self.assertEqual(run("inline", {"code": "SAVE10"}), "SAVE10")
 
 
 if __name__ == "__main__":
