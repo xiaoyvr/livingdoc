@@ -159,19 +159,26 @@ The document's structure maps directly onto a test tree:
 
 ## 7. The consumer's backend
 
-The consumer writes one backend file, in their language, importing their real
-code. It provides the two things a framework cannot:
+The consumer writes one backend index, in their language, importing their real
+code and the modules that declare bindings. It provides the two things a
+framework cannot:
 
-1. **`register(bindings)`** — binds parameterized test bodies onto the file's
-   `bindings`, with declared parameter names:
+1. **`bind(name, params, run)`** — declares a parameterized test body with
+   declared parameter names. Bindings live in modules reached through one
+   index:
 
 ```js
-export function register(bindings) {
-  bindings.bind("applying-a-discount", {
-    params: ["code", "total"],
-    run({ code, total }) { return { result: applyDiscount(code, total) } },
-  })
-}
+// backend/checkout.js
+import { bind } from "@livingdoc/runtime"
+
+bind("applying-a-discount", ["code", "total"], ({ code, total }) =>
+  applyDiscount(code, total),
+)
+```
+
+```js
+// backend/index.js — the only entry generate and generated tests import
+import "./checkout.js"
 ```
 
 2. **`directives`** — custom assertion verbs (e.g. mock verification). Like the
@@ -200,10 +207,9 @@ livingdoc generates test code in two layers:
 
 ```ts
 // vitest generator (TypeScript) — the doc's !!`toBe total * 0.9`
-import { setup } from '@livingdoc/runtime'
-import * as backend from '../backend'
-
-const { bind, run } = setup(backend)
+import { describe, expect, it } from 'vitest'
+import '../backend/index.js'
+import { run } from '@livingdoc/runtime'
 
 describe("Applying a discount", () => {
   it("applying a SAVE10 code to a $100 cart", () => {
@@ -219,8 +225,10 @@ describe("Applying a discount", () => {
 planned; §16.1, liv-m0mf, liv-du6y.)
 
 The generated test is a plain test file plus a small target-language runtime
-(`setup` → `bind` / `run` — `@livingdoc/runtime` and its Python sibling) that
-the cases call.
+(`bind` / `run` — `@livingdoc/runtime` and its Python sibling) that the cases
+call. Importing the backend index registers its bindings; the generated file
+calls `run`. The index is imported by an explicit `.js` specifier, so Vite,
+Node ESM, and `tsc` all resolve it.
 
 The verb `toBe` is used **as-is** — the generator only knows *where* a verb goes
 (`expect(SUBJECT).VERB(ARGS)`) and *which* verbs belong to its framework. It
@@ -334,8 +342,8 @@ name = "pricing"
   `livingdoc generate` with no path generates for every opted-in document under
   it.
 - **`code_path`** — the root folder for the generated tests. A backend's folder
-  is `<code_path>/<name>`, holding `backend.<ext>` and a `generated/`
-  subfolder. A document's test is written to
+  is `<code_path>/<name>`, holding the backend index (`backend.<ext>` or
+  `backend/index.<ext>`) and a `generated/` subfolder. A document's test is written to
   `<code_path>/<name>/generated/<path>.test.ts`, where `<path>` is the
   document's path relative to `livingdocs` without its extension, so
   `docs/explain/a/something.md` becomes `generated/a/something.test.ts` and two
@@ -388,7 +396,7 @@ failures (disk full, out of memory) throw, and those crash the process.
    needs per-case results (including the actual on failure) to color each
    bullet. Parse the framework's reporter (TAP/junit/spec), or have each
    generated test also call a `record(id, ok, actual)` helper? Leaning: helper,
-   which would live in the runtime (liv-ty09) alongside file-scoped `bindings`.
+   which would live in the runtime (liv-ty09) alongside `bind` / `run`.
 2. **Which frameworks next** — vitest is implemented; pytest (liv-f6ao) and
    jest are the next candidates, then node:test, Catch2, cargo-test, go-test,
    gtest.
