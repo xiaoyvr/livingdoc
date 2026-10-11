@@ -110,7 +110,7 @@ slice: red → confirm → green → refactor; one slice at a time.
       - [x] duplicate: binding a name already bound throws
       - [x] unknown: running a name not bound throws
 
-- [ ] 2. **Generated vitest file imports the index and calls `run`**
+- [x] 2. **Generated vitest file imports the index and calls `run`**
 
       Generator emits `import '../backend'` + `run` (no `setup(backend)`); a
       tiny backend with `bind(...)` makes the generated test pass under vitest.
@@ -120,7 +120,7 @@ slice: red → confirm → green → refactor; one slice at a time.
       Two modules each `bind` a name; the index side-effect imports both; a
       generated test sees both; duplicate across files → red.
 
-- [ ] 4. **Dogfood vitest backend on `bind(...)` + index**
+- [x] 4. **Dogfood vitest backend on `bind(...)` + index**
 
       Migrate `tests/explain/vitest` (and explain expected snippets) off
       `register`; dogfood vitest path green.

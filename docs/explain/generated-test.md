@@ -26,10 +26,8 @@ Example:
 
   ```js expected :=
   import { describe, expect, it } from 'vitest'
-  import { setup } from '@livingdoc/runtime'
-  import * as backend from '../backend'
-
-  const { bind, run } = setup(backend)
+  import '../backend'
+  import { run } from '@livingdoc/runtime'
 
   describe("Applying a discount", () => {
     it("a code SAVE10 on a total 100 costs toBe total * 0.9", () => {

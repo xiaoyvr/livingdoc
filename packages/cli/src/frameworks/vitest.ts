@@ -56,14 +56,13 @@ export const vitest = {
   generate(title: string, bullets: Nodes[], appends: string[]): string {
     const tokens = bullets.flatMap((bullet) => bulletTokens(bullet))
     const hasAssertion = tokens.some((token) => token.kind === 'assertion')
-    const imports = ['describe', ...(hasAssertion ? ['expect'] : []), 'it']
+    const vitestImports = ['describe', ...(hasAssertion ? ['expect'] : []), 'it']
+    const runtimeImports = appends.length > 0 ? ['bind', 'run'] : ['run']
 
     return lines(
-      `import { ${imports.join(', ')} } from 'vitest'`,
-      `import { setup } from '@livingdoc/runtime'`,
-      `import * as backend from '../backend'`,
-      '',
-      `const { bind, run } = setup(backend)`,
+      `import { ${vitestImports.join(', ')} } from 'vitest'`,
+      `import '../backend'`,
+      `import { ${runtimeImports.join(', ')} } from '@livingdoc/runtime'`,
       '',
       `describe(${quote(title)}, () => {`,
       appends.length > 0 && indent(lines(...appends)),

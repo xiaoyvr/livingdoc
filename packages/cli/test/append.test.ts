@@ -25,12 +25,9 @@ name = "vitest"
 const emptyBackend = `export function register(_bindings) {}
 `
 
-const backendBind = `export function register(bindings) {
-  bindings.bind('walking-skeleton', {
-    params: ['code'],
-    run({ code }) { return { result: code } },
-  })
-}
+const backendBind = `import { bind } from '@livingdoc/runtime'
+
+bind('walking-skeleton', ['code'], ({ code }) => code)
 `
 
 const bindBlock = `bind('walking-skeleton', ['code'], ({ code }) => code)`
@@ -142,5 +139,33 @@ describe('livingdoc append (>>)', () => {
     const result = runGenerated(dir)
     expect(result.status, result.stdout + result.stderr).not.toBe(0)
     expect(result.stdout + result.stderr).toContain('duplicate binding')
+  })
+
+  it('runs a case whose binding the backend declares', () => {
+    writeFileSync(
+      join(dir, 'tests', 'vitest', 'backend.ts'),
+      `import { bind } from '@livingdoc/runtime'
+
+bind('walking-skeleton', ['code'], ({ code }) => code)
+`,
+    )
+    writeFileSync(
+      fixture,
+      `---
+livingdoc: true
+---
+
+# Walking skeleton
+
+Example:
+
+- a code :=\`"SAVE10"\` is applied, returning !!\`toBe "SAVE10"\`
+`,
+    )
+
+    expect(generate(fixture).ok).toBe(true)
+
+    const result = runGenerated(dir)
+    expect(result.status, result.stdout + result.stderr).toBe(0)
   })
 })

@@ -12,7 +12,7 @@ import {
 import { tmpdir } from 'node:os'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { Bindings } from '@livingdoc/runtime'
+import { bind } from '@livingdoc/runtime'
 
 const root = fileURLToPath(new URL('../../../', import.meta.url))
 const bin = join(root, 'packages/cli/dist/bin.js')
@@ -55,17 +55,10 @@ export function build(
   }
 }
 
-export function register(bindings: Bindings) {
-  bindings.bind('what-livingdoc-generates', {
-    params: ['doc'],
-    run({ doc }: { doc: string }) {
-      return { result: build(doc).content }
-    },
-  })
-  bindings.bind('what-a-project-provides', {
-    params: ['name', 'doc'],
-    run({ name, doc }: { name: string; doc: string }) {
-      return { result: build(doc, name).path }
-    },
-  })
-}
+bind('what-livingdoc-generates', ['doc'], ({ doc }) =>
+  build(doc as string).content,
+)
+
+bind('what-a-project-provides', ['name', 'doc'], ({ name, doc }) =>
+  build(doc as string, name as string).path,
+)
