@@ -262,4 +262,14 @@ describe('livingdoc generate', () => {
     expect(content).toContain('expect(result).toBe(expected)')
   })
 
+  it('reports a document that does not exist', () => {
+    const missing = join(dir, 'docs', 'missing.md')
+
+    const result = generate(missing)
+
+    expect(result).toEqual({
+      ok: false,
+      error: { kind: 'document-missing', path: missing },
+    })
+  })
 })
