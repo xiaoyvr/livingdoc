@@ -13,7 +13,7 @@ export type Backend = { name: string; framework: Framework }
 export type Config = {
   livingdocs: string
   codePath: string
-  backends: Backend[]
+  backends: [Backend, ...Backend[]]
 }
 
 const ConfigSchema = z.object({
@@ -27,7 +27,12 @@ const ConfigSchema = z.object({
 export function loadConfig(start: string): Result<Config, DomainError> {
   const from = resolve(start)
   const file = findConfig(from)
-  if (!file) return fail(join(from, 'livingdoc.toml'), 'not found')
+  if (!file) {
+    return {
+      ok: false,
+      error: { kind: 'config-not-found', path: join(from, 'livingdoc.toml') },
+    }
+  }
   const root = dirname(file)
 
   let raw: unknown
@@ -68,7 +73,8 @@ export function loadConfig(start: string): Result<Config, DomainError> {
       backends.push({ name, framework })
     }
   }
-  if (backends.length === 0) {
+  const [first, ...rest] = backends
+  if (!first) {
     return fail(file, 'at least one [[backend.<framework>]] is required')
   }
 
@@ -77,7 +83,7 @@ export function loadConfig(start: string): Result<Config, DomainError> {
     value: {
       livingdocs: livingdocsDir,
       codePath: join(root, codePath),
-      backends,
+      backends: [first, ...rest],
     },
   }
 }

@@ -247,8 +247,8 @@ describe('livingdoc configuration', () => {
       writeFileSync(doc, '# Plain\n')
 
       const result = generate(doc)
-      expect(kindOf(result)).toBe('invalid-config')
-      expect(errorOf(result)).toMatch(/livingdoc\.toml/)
+      expect(kindOf(result)).toBe('config-not-found')
+      expect(errorOf(result)).toMatch(/config not found/)
     } finally {
       rmSync(plain, { recursive: true, force: true })
     }

@@ -113,7 +113,7 @@ function resolveBackend(
   config: Config,
   alias?: string,
 ): Result<Backend, DomainError> {
-  if (!alias) return { ok: true, value: config.backends[0] as Backend }
+  if (!alias) return { ok: true, value: config.backends[0] }
   const match = config.backends.find((backend) => backend.name === alias)
   if (!match) return fail({ kind: 'unknown-backend', name: alias })
   return { ok: true, value: match }

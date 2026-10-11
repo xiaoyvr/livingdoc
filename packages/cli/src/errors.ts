@@ -1,6 +1,7 @@
 // Domain failures. A kind exists for each distinct domain error, carrying data
 // rather than a display string; the CLI renders the message.
 export type DomainError =
+  | { kind: 'config-not-found'; path: string }
   | { kind: 'invalid-config'; file: string; issues: string[] }
   | { kind: 'unknown-backend'; name: string }
   | { kind: 'backend-file-missing'; path: string }
@@ -8,6 +9,8 @@ export type DomainError =
 
 export function formatError(error: DomainError): string {
   switch (error.kind) {
+    case 'config-not-found':
+      return `config not found: ${error.path}`
     case 'invalid-config':
       return `${error.file}: ${error.issues.join('; ')}`
     case 'unknown-backend':
