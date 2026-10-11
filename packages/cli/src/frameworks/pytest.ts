@@ -67,7 +67,7 @@ export const pytest = {
     return [...parts, `test_${file}.py`].join('/')
   },
 
-  generate(title: string, bullets: Nodes[], appends: string[]): string {
+  generate(title: string, bullets: Nodes[], appends: string[], _backend: string): string {
     const body =
       appends.length > 0 || bullets.length > 0
         ? indent(

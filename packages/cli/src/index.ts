@@ -84,7 +84,18 @@ function writeBackend(
     backend.name,
     `backend.${framework.extension}`,
   )
-  if (!existsSync(backendFile)) {
+  const backendIndex = join(
+    config.codePath,
+    backend.name,
+    'backend',
+    `index.${framework.extension}`,
+  )
+  const entry = existsSync(backendFile)
+    ? backendFile
+    : existsSync(backendIndex)
+      ? backendIndex
+      : undefined
+  if (!entry) {
     return fail({ kind: 'backend-file-missing', path: backendFile })
   }
 
@@ -92,8 +103,9 @@ function writeBackend(
     generatedDir(config, backend),
     framework.generatedFile(name),
   )
+  const backendModule = relative(dirname(target), entry).replace(/\\/g, '/')
   mkdirSync(dirname(target), { recursive: true })
-  writeFileSync(target, framework.generate(title, bullets, appends))
+  writeFileSync(target, framework.generate(title, bullets, appends, backendModule))
   return { ok: true, value: undefined }
 }
 

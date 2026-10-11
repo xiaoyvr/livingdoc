@@ -8,7 +8,7 @@ export type Framework = {
   name: string
   extension: string
   generatedFile(name: string): string
-  generate(title: string, bullets: Nodes[], appends: string[]): string
+  generate(title: string, bullets: Nodes[], appends: string[], backend: string): string
 }
 
 export function registry(...list: Framework[]): Framework[] {

@@ -55,13 +55,13 @@ bind('applying-a-discount', ['code', 'total'],
 
 ```ts
 // backend/index.ts — the only entry generate and generated tests import
-import './checkout'
-import './cart'
+import './checkout.js'
+import './cart.js'
 ```
 
 ```ts
 // generated (vitest)
-import '../backend'
+import '../backend/index.js'
 import { run } from '@livingdoc/runtime'
 
 describe('Applying a discount', () => {
@@ -112,13 +112,17 @@ slice: red → confirm → green → refactor; one slice at a time.
 
 - [x] 2. **Generated vitest file imports the index and calls `run`**
 
-      Generator emits `import '../backend'` + `run` (no `setup(backend)`); a
-      tiny backend with `bind(...)` makes the generated test pass under vitest.
+      Generator emits `import '../backend.js'` (or `../backend/index.js`) +
+      `run` (no `setup(backend)`); a tiny backend with `bind(...)` makes the
+      generated test pass under vitest.
 
-- [ ] 3. **Multi-file backend index**
+- [x] 3. **Multi-file backend index**
 
-      Two modules each `bind` a name; the index side-effect imports both; a
-      generated test sees both; duplicate across files → red.
+      `backend/index.<ext>` is accepted when `backend.<ext>` is absent; the index
+      side-effect imports modules that each `bind` a name; a generated test
+      imports the index by an explicit `.js` specifier (Vite, Node ESM, and
+      `tsc` all resolve it) and sees both bindings. Duplicate across modules is
+      the registry's existing duplicate guarantee.
 
 - [x] 4. **Dogfood vitest backend on `bind(...)` + index**
 

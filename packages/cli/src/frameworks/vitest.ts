@@ -53,15 +53,16 @@ export const vitest = {
   extension: 'ts',
   generatedFile: (name: string) => `${name}.test.ts`,
 
-  generate(title: string, bullets: Nodes[], appends: string[]): string {
+  generate(title: string, bullets: Nodes[], appends: string[], backend: string): string {
     const tokens = bullets.flatMap((bullet) => bulletTokens(bullet))
     const hasAssertion = tokens.some((token) => token.kind === 'assertion')
     const vitestImports = ['describe', ...(hasAssertion ? ['expect'] : []), 'it']
     const runtimeImports = appends.length > 0 ? ['bind', 'run'] : ['run']
+    const specifier = backend.replace(/\.ts$/, '.js')
 
     return lines(
       `import { ${vitestImports.join(', ')} } from 'vitest'`,
-      `import '../backend'`,
+      `import '${specifier}'`,
       `import { ${runtimeImports.join(', ')} } from '@livingdoc/runtime'`,
       '',
       `describe(${quote(title)}, () => {`,

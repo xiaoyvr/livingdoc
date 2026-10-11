@@ -26,7 +26,7 @@ Example:
 
   ```js expected :=
   import { describe, expect, it } from 'vitest'
-  import '../backend'
+  import '../backend.js'
   import { run } from '@livingdoc/runtime'
 
   describe("Applying a discount", () => {
