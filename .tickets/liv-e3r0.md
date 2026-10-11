@@ -1,6 +1,6 @@
 ---
 id: liv-e3r0
-status: open
+status: in_progress
 deps: []
 links: []
 created: 2026-09-26T22:27:13Z
@@ -12,26 +12,33 @@ assignee: xiaoyvr
 
 Deferred findings from the liv-ybyq, liv-ter0, and liv-uxrl reviews.
 
-## Token and generation
+## Ready
 
-- The generated `it` title keeps the raw assertion text (e.g. `toBe 90`), and a
-  fenced input echoes its name into the title. Revisit once rendering
-  (DESIGN 16.5) defines how tokens are shown.
-- Assertion verbs are not validated against a closed vocabulary (DESIGN 9). An
-  unknown verb, or the middle form ``!!`"x" toBe true` ``, emits invalid
-  generated code instead of a clear error. liv-m0mf owns this.
-- A document whose heading names no binding fails as a raw runner error; there
-  is no `no binding for <slug>` message.
+- **`config-not-found` kind.** A missing `livingdoc.toml` is reported as
+  `invalid-config` with `issues: ['not found']`; a distinct kind carrying the
+  path reads better.
+- **Non-empty `backends`.** `resolveBackend` casts `config.backends[0] as
+  Backend` because the non-empty guarantee is not in the type; express it as
+  `[Backend, ...Backend[]]` or a `defaultBackend` field.
+- **`document-missing` coverage.** `generate(<missing path>)` returns
+  `document-missing`, but no test drives it.
+- **`bin` coverage.** The Result-to-message path and exit code are not driven
+  through the built command.
 
-## Config
+## Owned elsewhere / blocked
 
-- A missing `livingdoc.toml` is reported as `invalid-config` with
-  `issues: ['not found']`; a distinct `config-not-found` kind would read better.
-- `resolveBackend` casts `config.backends[0] as Backend`, because the non-empty
-  guarantee is not in the type; a `defaultBackend` field or a `[Backend,
-  ...Backend[]]` tuple would remove it.
+- Generated `it` title keeps the raw assertion text (e.g. `toBe 90`), and a
+  fenced input echoes its name into the title; revisit once rendering
+  (DESIGN §16.5) defines how tokens are shown.
+- Assertion verbs are not validated against a closed vocabulary; an unknown
+  verb or the middle form ``!!`"x" toBe true` `` emits invalid generated code.
+  liv-m0mf owns this.
+- A heading naming no binding: the runtime now says `unknown binding: <slug>`;
+  the generate-time "no binding" check is liv-ejez's missing-binding pass.
 
-## Coverage
+## Implementation tasks
 
-- `bin` itself is untested: the Result-to-message path and the exit code are not
-  driven through the built command, and `document-missing` has no test.
+- [x] 1. **`config-not-found` kind**
+- [x] 2. **Non-empty `backends`; drop the `as Backend` cast**
+- [x] 3. **`document-missing` test**
+- [x] 4. **`bin` end-to-end test**
