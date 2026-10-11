@@ -57,10 +57,8 @@ Example (pytest):
   the generated test !!`== expected`
 
   ```python expected :=
-  from livingdoc_runtime import setup
+  from livingdoc_runtime import run
   import backend
-
-  bind, run = setup(backend)
 
   class TestApplyingADiscount:
       def test_a_code_save10_on_a_total_100_costs_total_09(self):

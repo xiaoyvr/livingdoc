@@ -133,8 +133,13 @@ slice: red → confirm → green → refactor; one slice at a time.
 
       Once no consumer remains. `createBindings` may stay for tests.
 
+- [x] 6. **Python `bind` / `run` + pytest generator**
+
+      Module-level `bind` / `run` in `livingdoc_runtime` (duplicate and unknown
+      throw); pytest emit imports `backend` and calls `run` (no `setup`);
+      pytest dogfood green; `setup` gone from the Python runtime and generator.
+
 ## Moved out
 
 - collect → check → generate: liv-ejez (owns the bindings check).
-- Python `bind` / `run` + pytest: new ticket.
 - binding lifecycle setup / teardown: liv-j2jx (Lifecycle hooks).

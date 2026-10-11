@@ -68,6 +68,7 @@ export const pytest = {
   },
 
   generate(title: string, bullets: Nodes[], appends: string[], _backend: string): string {
+    const runtimeImports = appends.length > 0 ? 'bind, run' : 'run'
     const body =
       appends.length > 0 || bullets.length > 0
         ? indent(
@@ -79,10 +80,8 @@ export const pytest = {
         : indent('pass')
 
     return lines(
-      `from livingdoc_runtime import setup`,
+      `from livingdoc_runtime import ${runtimeImports}`,
       `import backend`,
-      '',
-      `bind, run = setup(backend)`,
       '',
       `class ${className(title)}:`,
       body,

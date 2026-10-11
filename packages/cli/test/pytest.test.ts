@@ -47,20 +47,12 @@ Example:
 - a code :=\`"SAVE10"\` is applied, returning !!\`== "OTHER"\`
 `
 
-const backend = `from types import SimpleNamespace
+const backend = `from livingdoc_runtime import bind
 
-def register(bindings):
-    bindings.bind(
-        "walking-skeleton",
-        SimpleNamespace(
-            params=["code"],
-            run=lambda args: {"result": args["code"]},
-        ),
-    )
+bind("walking-skeleton", ["code"], lambda args: args["code"])
 `
 
-const emptyBackend = `def register(_bindings):
-    pass
+const emptyBackend = `# no bindings
 `
 
 const withAppend = `---

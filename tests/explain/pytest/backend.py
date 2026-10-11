@@ -7,7 +7,8 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from types import SimpleNamespace
+
+from livingdoc_runtime import bind
 
 _ROOT = Path(__file__).resolve().parents[3]
 _BIN = _ROOT / "packages" / "cli" / "dist" / "bin.js"
@@ -36,9 +37,7 @@ def build(doc: str, name: str = "fixture.md") -> dict[str, str]:
         target = dir / "docs" / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(doc)
-        (dir / "tests" / "pytest" / "backend.py").write_text(
-            "def register(_bindings):\n    pass\n"
-        )
+        (dir / "tests" / "pytest" / "backend.py").write_text("# no bindings\n")
         subprocess.run(
             ["node", str(_BIN), "generate", str(Path("docs") / name)],
             cwd=dir,
@@ -55,18 +54,13 @@ def build(doc: str, name: str = "fixture.md") -> dict[str, str]:
         shutil.rmtree(dir, ignore_errors=True)
 
 
-def register(bindings):
-    bindings.bind(
-        "what-a-project-provides",
-        SimpleNamespace(
-            params=["name", "doc"],
-            run=lambda args: {"result": build(args["doc"], args["name"])["path"]},
-        ),
-    )
-    bindings.bind(
-        "what-livingdoc-generates",
-        SimpleNamespace(
-            params=["doc"],
-            run=lambda args: {"result": build(args["doc"])["content"]},
-        ),
-    )
+bind(
+    "what-a-project-provides",
+    ["name", "doc"],
+    lambda args: build(args["doc"], args["name"])["path"],
+)
+bind(
+    "what-livingdoc-generates",
+    ["doc"],
+    lambda args: build(args["doc"])["content"],
+)
