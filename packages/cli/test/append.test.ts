@@ -22,7 +22,7 @@ code_path = "tests"
 name = "vitest"
 `
 
-const emptyBackend = `export function register(_bindings) {}
+const emptyBackend = `export {}
 `
 
 const backendBind = `import { bind } from '@livingdoc/runtime'

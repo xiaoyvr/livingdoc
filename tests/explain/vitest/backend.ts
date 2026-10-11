@@ -36,7 +36,7 @@ export function build(
     writeFileSync(target, doc)
     writeFileSync(
       join(dir, 'tests', 'vitest', 'backend.ts'),
-      'export function register(_bindings) {}\n',
+      'export {}\n',
     )
     spawnSync('node', [bin, 'generate', join('docs', name)], {
       cwd: dir,

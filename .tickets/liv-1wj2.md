@@ -129,7 +129,7 @@ slice: red → confirm → green → refactor; one slice at a time.
       Migrate `tests/explain/vitest` (and explain expected snippets) off
       `register`; dogfood vitest path green.
 
-- [ ] 5. **Remove `setup` / `register` from the TS runtime and generator**
+- [x] 5. **Remove `setup` / `register` from the TS runtime and generator**
 
       Once no consumer remains. `createBindings` may stay for tests.
 

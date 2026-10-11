@@ -130,15 +130,12 @@ Example:
   ~~~
 `
 
-const consumerBackend = `export function register(bindings) {
-  bindings.bind("walking-skeleton", {
-    params: ["code"],
-    run({ code }) {
-      if (code === "WRONG") throw new Error(\`unexpected code: \${code}\`)
-      return { result: code }
-    },
-  })
-}
+const consumerBackend = `import { bind } from '@livingdoc/runtime'
+
+bind("walking-skeleton", ["code"], ({ code }) => {
+  if (code === "WRONG") throw new Error(\`unexpected code: \${code}\`)
+  return code
+})
 `
 
 describe('livingdoc generate', () => {

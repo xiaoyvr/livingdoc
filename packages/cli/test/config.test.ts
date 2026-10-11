@@ -35,14 +35,9 @@ Example:
 - a code :=\`"SAVE10"\` is applied
 `
 
-const backend = `export function register(bindings) {
-  bindings.bind("walking-skeleton", {
-    params: ["code"],
-    run({ code }) {
-      return { result: code }
-    },
-  })
-}
+const backend = `import { bind } from '@livingdoc/runtime'
+
+bind("walking-skeleton", ["code"], ({ code }) => code)
 `
 
 describe('livingdoc configuration', () => {
