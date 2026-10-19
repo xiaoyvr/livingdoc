@@ -85,8 +85,11 @@ for one step is not approval for the next.
 - [ ] **S7** — hand the in-memory manifest to the check stage boundary that
       liv-ejez builds on (no key resolution here).
 - [x] ~~**S8** dogfood against the entrypoint `init` emits~~ — **moved to
-      liv-3si5**, where the entrypoint exists to be pointed at. Keeping it here
-      made this P0 wait on a P1 that itself only exists for this step.
+      liv-3si5** (option B, decided 2026-10-19): the entrypoint this repo points
+      `collect` at is `init`'s own output, not a hand-written one, so the proof
+      lives with `init` and liv-3si5 carries the dep on this ticket. `liv-s5ym`
+      tests the spawn against fixtures it writes itself, and closes without
+      waiting.
 
 **Deferred, decided:** no timeout knob, no `--no-collect`, no `livingdoc collect`
 command, no manifest file (see Decisions taken).

@@ -27,25 +27,32 @@ not only return values.
   **Then** the generated test fails
 
 - **Given** an assertion phrase neither the framework nor the backend declares
-  **When** I run `livingdoc generate`
-  **Then** the unknown verb is reported as an error
+  **When** the project's tests run
+  **Then** the case fails — livingdoc does not check verbs at generate time
+  (decided 2026-10-19, DESIGN §9)
 
-## Open question — how does generate know the declared verbs?
+## Decided 2026-10-19 — no verb check
 
-AC3 is a **generate-time** check on consumer-declared verbs. That is the same
-"read the backend without running it" problem liv-s5ym solved for `params` — and
-the manifest contract liv-s5ym defines carries only `{ name, params }`. There is
-no path by which livingdoc learns a backend's `directives` (DESIGN §7.2).
-Undecided fork:
+An earlier AC asked generate to report an unknown verb. That would need livingdoc
+to learn a backend's `directives`, and the manifest carries only
+`{ name, params }` — the same "read the backend without running it" problem
+liv-s5ym solved for params, at a cost that buys little: the target already
+catches a bad name when the generated code runs.
 
-1. **Grow the manifest** with a `directives` field (runtime read side alongside
-   `collectBindings()`), keep AC3 as a generate-time failure, and this ticket
-   depends on liv-s5ym.
-2. **Move the check to run time** — generated code calls the directive, an
-   unknown verb is `undefined`, the case goes red in the consumer's suite; AC3
-   is reworded from "generate reports it" to "the case fails".
+**Decision: do not check verbs at generate time, framework or consumer.**
+DESIGN §9 records the rule and the accepted cost — note that in pytest a bad
+verb is a syntax error, so the whole generated file fails, not one case.
 
-Option 2 is smaller and matches "livingdoc carries text; the target language
-and framework give it meaning". Option 1 keeps the fail-early property that is
-the point of the check stage. Not decided as of 2026-10-19 — decide before this
-ticket is picked up.
+## Still open — how a directive is reached
+
+Not a checking question, a wiring one:
+
+- does the generated test import `directives` from the backend index and call
+  `directives.calls(outputs, …)` directly, or go through a runtime registry
+  (`registerDirectives` alongside `bind`)?
+- is a directive per backend, per document, or per heading?
+- do directives receive the same `outputs` the assertions receive (DESIGN §12
+  names them; §16.7 says named outputs are not supported yet — is this ticket
+  the one that adds them, or does it land after)?
+
+Decide while tasking; they shape the emitted line, not the manifest.
