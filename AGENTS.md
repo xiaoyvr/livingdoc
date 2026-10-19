@@ -48,6 +48,18 @@ and `tk dep tree <id>` shows what it depends on.
 
 Write and update the tasks inside the ticket.
 
+**Closed tickets are immutable records.** Never edit one — not its body, its
+acceptance criteria, or its frontmatter. This includes commands that rewrite a
+closed ticket's frontmatter as a side effect (`tk link`, `tk unlink`, `tk dep`,
+`tk status`, `tk add-note`). A closed ticket records what happened; a correction
+goes forward, not backward.
+
+When a decision or a fix touches something a closed ticket owns, put it where
+work still happens: the open ticket's notes or design section, or `DESIGN.md` /
+`DOMAIN.md` if it is a rule about the system. If an open ticket needs a
+relationship to a closed one, describe it in prose — do not write into the
+closed file.
+
 ## Conventions
 
 ### Typescript
