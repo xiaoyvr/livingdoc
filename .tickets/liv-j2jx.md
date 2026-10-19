@@ -1,7 +1,7 @@
 ---
 id: liv-j2jx
 status: open
-deps: [liv-1wj2]
+deps: [liv-1wj2, liv-du6y]
 links: [liv-1wj2, liv-ejez, liv-du6y]
 created: 2026-10-10T18:49:01Z
 type: feature

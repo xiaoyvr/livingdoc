@@ -1,7 +1,7 @@
 ---
 id: liv-d7uk
 status: open
-deps: [liv-ybyq, liv-0ou1]
+deps: [liv-ybyq, liv-0ou1, liv-s5ym, liv-ejez]
 links: [liv-s5ym]
 created: 2026-09-26T03:21:48Z
 type: feature
@@ -30,12 +30,15 @@ instead of being passed silently.
 
 - Several inputs and computed expectations already work — the generated test
   binds each `name :=`expr`` and emits the computation verbatim. What is
-  missing is checking the names against `bindings[<slug>].params` at generate
-  time (DESIGN §6, §15.2).
-- Getting `params` without running the backend is the open question: importing
-  the TS backend executes it, and a Python backend cannot be imported at all.
-  A declaration of the names that does not run the bindings is what a second
-  language needs.
+  missing is checking the names against the collected manifest's declared
+  params at generate time (DESIGN §6, §15.2).
+- **Resolved:** "how to get `params` without running the backend" is answered by
+  liv-s5ym — the consumer declares a `collect` command, livingdoc spawns it and
+  reads `{name, params}` from stdout; liv-3si5 emits the entrypoint and gives
+  the runtime its read side (`collectBindings()`, TS `bind` retaining
+  `params`).
+- 2026-10-19 scan: depends on liv-s5ym (produces the manifest) and liv-ejez
+  (owns the check pass this extends). It is no longer ready work.
 
 ## Revisit when working this
 
