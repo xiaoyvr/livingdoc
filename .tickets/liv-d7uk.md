@@ -2,7 +2,7 @@
 id: liv-d7uk
 status: open
 deps: [liv-ybyq, liv-0ou1]
-links: []
+links: [liv-s5ym]
 created: 2026-09-26T03:21:48Z
 type: feature
 priority: 2

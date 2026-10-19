@@ -24,7 +24,7 @@ TDD loop.
    the whole test file and wait for review.
 2. **Confirm the red.** If useful, stub the function so the failure is
    behavioral (missing output) rather than a missing import.
-3. **Green.** Implement the minimum that passes — list amout of code to make it
+3. **Green.** Implement the minimum that passes — list amount of code to make it
    work first (all test passes), no speculative abstraction.
 4. **Refactor.** Only when green, and only driven by bad smells; also wait for
    confirmation before writing anything.
