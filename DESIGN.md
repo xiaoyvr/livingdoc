@@ -247,13 +247,14 @@ is what runs.
 
 ## 9. The framework generator
 
-Each generator knows two things: its framework's assertion *shape*, and its
-assertion *verbs*.
+Each generator knows one thing: its framework's assertion *shape* — where the
+subject, the verb and the arguments go. It does **not** keep a list of legal
+verbs, and checks none.
 
 | framework | shape | verbs (examples) | status |
 |---|---|---|---|
 | vitest | `expect(SUBJECT).VERB(ARGS)` | `toBe`, `toEqual`, `toContain`, `toMatch` | implemented |
-| pytest | `assert SUBJECT VERB ARGS` | `==`, `!=`, `in`, `<` | implemented (liv-f6ao; verbs in scope: `==`, `!=`, `in`) |
+| pytest | `assert SUBJECT VERB ARGS` | `==`, `!=`, `in`, `<` | implemented (liv-f6ao) |
 | jest | `expect(SUBJECT).VERB(ARGS)` | `toBe`, `toEqual`, `toContain`, `toMatch` | planned |
 
 A document is bound to one framework, so it writes that framework's verbs
@@ -268,13 +269,25 @@ Consumer directives (`calls`) are transcribed as direct calls —
 `calls(outputs, "pricing service", "Once")` — no wrapping, and they throw on
 mismatch exactly like a framework assertion.
 
-The declared vocabulary is therefore: **the framework's verbs** (known to the
-generator) plus **the consumer's directives** (from the backend). Any other
-verb is red: "no assertion `foo`".
+A verb is a name the document supplies and the generator transcribes — a
+framework's own verb, or a consumer directive imported from the backend.
+**livingdoc never checks whether the name exists.** Decided 2026-10-19: the
+generation rule stays simple and the target judges the name.
 
-The generator knows its own verbs today. How it learns the backend's directives
-is **unresolved** (§16.8) — they are not in the manifest contract (§14), so an
-undeclared directive verb is not yet caught at generate time.
+What that costs, and it is accepted:
+
+- **vitest** — `!!`tobe 90`` emits `expect(result).tobe(90)`; the case fails with
+  `expect(...).tobe is not a function`, a message that does not point back at the
+  document.
+- **pytest** — a bad verb emits `assert result tobe 90`, which is a **syntax
+  error**: the generated module cannot be imported, so every case in that file
+  fails, not just the one with the typo.
+
+A name is still *declared* somewhere — a framework's shape, a backend's
+`directives` — but livingdoc discovers that by generating, not by validating.
+The one check that does happen at generate time is parameter names against the
+collected manifest (§14, liv-d7uk), because those names cannot fail any other
+way: nothing in the target would ever notice an unused input.
 
 ## 10. How one bullet is generated
 
@@ -452,11 +465,12 @@ failures (disk full, out of memory) throw, and those crash the process.
 
 1. **A document cannot be false** — a red assertion fails the generated test,
    and therefore the consumer's test run.
-2. **A closed vocabulary** — parameter names and directive names are declared by
-   the backend, and assertion verbs come from the framework the generator knows;
-   any undeclared name is red. Doc and code share one vocabulary, and drift is
-   caught both ways. *Partly planned: parameter names need liv-s5ym + liv-d7uk;
-   directive names are unresolved (§16.8).*
+2. **A closed vocabulary** — parameter names are declared by the backend and
+   checked at generate time (planned: liv-s5ym + liv-d7uk), so a name that exists
+   in neither document nor code cannot slip through. Assertion verbs are not
+   checked: they are transcribed, and an unknown one fails when the generated
+   code runs (§9). Doc and code share one vocabulary; parameters are enforced by
+   livingdoc, verbs by the target.
 3. **Framework-native** — the document writes the framework's own assertions;
    the generated tests run under the consumer's real runner, in their CI.
 4. **Native expressions** — values are target-language code, evaluated by the
@@ -487,11 +501,8 @@ failures (disk full, out of memory) throw, and those crash the process.
    the host's literal syntax.
 7. **The middle assertion form** — ``!!`"order saved" toBe true` `` (subject
    then verb) and named outputs are not yet supported (liv-du6y, liv-m0mf).
-8. **How does generate learn the backend's directives?** §9 and §15.2 promise an
-   undeclared verb is caught, but the manifest contract (§14) carries only
-   `{ name, params }`. Either the manifest grows a `directives` field and the
-   check stays at generate time, or unknown directives fail at run time — the
-   generated call hits `undefined` and the case goes red in the consumer's
-   suite — which fits "livingdoc carries text, the target gives it meaning" but
-   gives up failing before the tests run. Tracked on liv-m0mf; decide before it
-   is picked up.
+8. **Directive dispatch** — settled in part on 2026-10-19: there is **no
+   generate-time check of directive verbs** (§9), so the manifest needs no
+   `directives` field. What remains open is only how a generated test reaches a
+   directive — imported from the backend index, or through the runtime's
+   registry — and whether a directive is per backend or per document. liv-m0mf.

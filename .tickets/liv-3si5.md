@@ -1,7 +1,7 @@
 ---
 id: liv-3si5
 status: open
-deps: []
+deps: [liv-s5ym]
 links: [liv-s5ym, liv-1wj2, liv-ty09]
 created: 2026-10-19T04:26:24Z
 type: feature
@@ -33,7 +33,11 @@ manifest contract on the ground before liv-s5ym writes its validator.
 - [ ] **I2** — runtime read side for Python: `collect_bindings()`; `init` emits
       `collect.py`, runnable with the `PYTHONPATH` the generated pytest checks
       already use.
-- [ ] **I3** — `backend.<ext>` stub per backend, with a `bind` example.
+- [ ] **I3** — `backend.<ext>` stub per backend: **inert** (`export {}` /
+      `# no bindings`), the `bind` example shown only as a comment. Decided
+      2026-10-19: `init` never emits a binding — liv-ejez makes a bind no
+      document refers to a non-zero exit, so a demo bind would have `init`
+      produce a project that fails its own guarantee.
 - [ ] **I4** — create-if-missing: an existing `backend.ts` survives byte-for-byte
       untouched; the run reports `created` / `exists` per file; re-running
       writes nothing and exits 0.
@@ -45,7 +49,14 @@ manifest contract on the ground before liv-s5ym writes its validator.
       real spawn path. Needs liv-s5ym's collect stage.
 
 **Out of scope, decided:** `init` never writes `livingdoc.toml`; `init` never
-writes into `generated/`.
+writes into `generated/`; `init` never writes into `livingdocs`, and never emits
+a binding.
+
+**Blocked:** I1–I6 need nothing. The dogfood AC (and I7) needs liv-s5ym's collect
+stage — decided 2026-10-19 as **option B**: the entrypoint the repo points
+`collect` at is `init`'s own output, not a hand-written file, so the proof that
+`init` produces something usable lives here. This dep is one-way: liv-s5ym no
+longer holds a step that needs `init`.
 
 ## Design
 
