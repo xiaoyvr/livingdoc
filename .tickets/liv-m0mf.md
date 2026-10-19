@@ -29,3 +29,23 @@ not only return values.
 - **Given** an assertion phrase neither the framework nor the backend declares
   **When** I run `livingdoc generate`
   **Then** the unknown verb is reported as an error
+
+## Open question — how does generate know the declared verbs?
+
+AC3 is a **generate-time** check on consumer-declared verbs. That is the same
+"read the backend without running it" problem liv-s5ym solved for `params` — and
+the manifest contract liv-s5ym defines carries only `{ name, params }`. There is
+no path by which livingdoc learns a backend's `directives` (DESIGN §7.2).
+Undecided fork:
+
+1. **Grow the manifest** with a `directives` field (runtime read side alongside
+   `collectBindings()`), keep AC3 as a generate-time failure, and this ticket
+   depends on liv-s5ym.
+2. **Move the check to run time** — generated code calls the directive, an
+   unknown verb is `undefined`, the case goes red in the consumer's suite; AC3
+   is reworded from "generate reports it" to "the case fails".
+
+Option 2 is smaller and matches "livingdoc carries text; the target language
+and framework give it meaning". Option 1 keeps the fail-early property that is
+the point of the check stage. Not decided as of 2026-10-19 — decide before this
+ticket is picked up.
