@@ -1,8 +1,8 @@
 ---
 id: liv-ejez
 status: open
-deps: [liv-1wj2]
-links: [liv-ty09, liv-otqr, liv-7zw2, liv-du6y, liv-1wj2, liv-j2jx]
+deps: [liv-1wj2, liv-s5ym]
+links: [liv-ty09, liv-otqr, liv-7zw2, liv-du6y, liv-1wj2, liv-j2jx, liv-s5ym]
 created: 2026-09-30T02:45:23Z
 type: feature
 priority: 0
@@ -12,8 +12,9 @@ assignee: xiaoyvr
 
 **As a** documentation author, **I want** document bindings to resolve by
 file+anchor or a shared global name, with unnamed inline binds for local demos,
-and generate to collect → check → emit using that model, **so that** lookup is
-stable, shareable across docs, and gaps show up before tests run.
+and generate to check → emit against the collected manifest using that model,
+**so that** lookup is stable, shareable across docs, and gaps show up before
+tests run.
 
 ## Acceptance criteria
 
@@ -53,31 +54,35 @@ stable, shareable across docs, and gaps show up before tests run.
   **When** the test loads
   **Then** duplicate binding is an error
 
-- **Given** generate’s collect → check pass (or `livingdoc bindings`)
+- **Given** generate’s check pass (or `livingdoc collect`)
   **When** a document resolves a binding with no backend bind and no covering
   inline bind
   **Then** it reports the binding as missing and generate exits non-zero
 
 - **Given** a backend bind no document refers to
-  **When** collect → check runs
+  **When** the check runs
   **Then** it reports the bind as unused and exits non-zero
 
 ## Design
 
-### Pipeline (with liv-1wj2)
+### Pipeline (manifest from liv-s5ym)
 
 ```
-load backend → manifest
+manifest ← livingdoc collect (liv-s5ym)
        ↓
 resolve each group’s binding key (rules below)
        ↓
 check missing / unused → fail closed
        ↓
-emit (docs + manifest)
+emit (docs)
 ```
 
 Inline `>>` binds are not in the manifest; a heading covered by inline bind is
 not missing.
+
+The manifest's production — the configured `collect` command, its JSON contract
+and its error kinds — is owned by liv-s5ym. This ticket consumes it as an
+input.
 
 ### Two kinds of bind
 
@@ -120,4 +125,7 @@ omitted. Heading names `describe`. Positional `Example (web):` →
 
 ## Notes
 
-- Absorbs liv-otqr. Depends on liv-1wj2 for `bind` / collect → check → generate.
+- Absorbs liv-otqr. Depends on liv-1wj2 for `bind` and on liv-s5ym for the
+  manifest (`livingdoc collect`) that the check and codegen consume.
+- Extracted: backend manifest production moved to liv-s5ym; the old
+  `livingdoc bindings` command is now `livingdoc collect`.
