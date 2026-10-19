@@ -54,7 +54,7 @@ tests run.
   **When** the test loads
   **Then** duplicate binding is an error
 
-- **Given** generate’s check pass (or `livingdoc collect`)
+- **Given** generate’s check pass
   **When** a document resolves a binding with no backend bind and no covering
   inline bind
   **Then** it reports the binding as missing and generate exits non-zero
@@ -68,7 +68,7 @@ tests run.
 ### Pipeline (manifest from liv-s5ym)
 
 ```
-manifest ← livingdoc collect (liv-s5ym)
+manifest ← the collect stage of generate (liv-s5ym)
        ↓
 resolve each group’s binding key (rules below)
        ↓
@@ -127,5 +127,8 @@ omitted. Heading names `describe`. Positional `Example (web):` →
 
 - Absorbs liv-otqr. Depends on liv-1wj2 for `bind` and on liv-s5ym for the
   manifest (`livingdoc collect`) that the check and codegen consume.
-- Extracted: backend manifest production moved to liv-s5ym; the old
-  `livingdoc bindings` command is now `livingdoc collect`.
+- Extracted: backend manifest production moved to liv-s5ym. There is no
+  `livingdoc collect` command — collection is a stage of `generate`, and the
+  manifest is a value passed in memory, never a file on disk.
+- 2026-10-19 scan: liv-d7uk now depends on this ticket (it extends this check
+  pass with input-name validation) and on liv-s5ym (it reads the manifest).

@@ -22,7 +22,10 @@ livingdoc is a **prose → code generator**. It parses the document's fluent tex
 into inputs and assertions, and generates test code — in the consumer's
 language, wrapped in the consumer's test framework — that executes the
 document against their real code. The consumer's own runner executes that code;
-livingdoc never runs it.
+livingdoc never spawns the **test** runner. The one process it may spawn is a
+backend's configured `collect` command (§13, §14), which is the consumer's own
+declaration of how to read their bindings back — same trust model as `npm run`
+or `pre-commit`.
 
 - **is**: a parser, a text carrier, a code generator, an exit code.
 - **is not**: a test runner, a test framework, a specification language, an
@@ -150,7 +153,8 @@ The document's structure maps directly onto a test tree:
   names the group's backend and binding; either key may be omitted. A missing
   `binding:` falls back to `‹file›#‹heading-anchor›`.
 - The **parameter names** locate the `it` (the parameterized test): the names in
-  a bullet must match the binding's declared parameters.
+  a bullet must match the binding's declared parameters. *Planned — liv-d7uk,
+  reading the manifest liv-s5ym produces; nothing checks them today.*
 - The `it` **title** is the bullet's prose with input values substituted. Until
   rendering lands (§16.5) it still carries the raw assertion text, e.g. `toBe 90`.
 - A nested heading overrides the binding. A heading with no `Example:` bullets
@@ -160,7 +164,7 @@ The document's structure maps directly onto a test tree:
 ## 7. The consumer's backend
 
 The consumer writes one backend index, in their language, importing their real
-code and the modules that declare bindings. It provides the two things a
+code and the modules that declare bindings. It provides three things a
 framework cannot:
 
 1. **`bind(name, params, run)`** — declares a parameterized test body with
@@ -191,6 +195,12 @@ export const directives = {
   },
 }
 ```
+
+3. **`collectBindings()`** — the runtime's read side: one entry per binding the
+   index reached, as `{ name, params }`. livingdoc reaches it through the
+   `collect.<ext>` entrypoint `livingdoc init` writes beside the backend index
+   (§13, §14), and never imports the backend from the CLI itself. *Neither the
+   export nor `init` exists yet — liv-3si5.*
 
 The framework's own assertions (`toBe`, `toEqual`, `toContain`, …) are **not**
 consumer code — the document writes them directly and the generator transcribes
@@ -262,13 +272,17 @@ The declared vocabulary is therefore: **the framework's verbs** (known to the
 generator) plus **the consumer's directives** (from the backend). Any other
 verb is red: "no assertion `foo`".
 
+The generator knows its own verbs today. How it learns the backend's directives
+is **unresolved** (§16.8) — they are not in the manifest contract (§14), so an
+undeclared directive verb is not yet caught at generate time.
+
 ## 10. How one bullet is generated
 
 ```
 - applying a code :="SAVE10" to a total :=`100` cart, the total !!`toBe total * 0.9`.
 
 1. heading "Applying a discount"           → binding "applying-a-discount"
-2. code :="SAVE10" total :=`100`           → inputs; names must match binding.params
+2. code :="SAVE10" total :=`100`           → inputs (names matching binding.params: planned, liv-d7uk)
 3. !!`toBe total * 0.9`                     → assertion: verb "toBe", args "total * 0.9"
 4. generate (vitest):
      const code = "SAVE10"; const total = 100;
@@ -343,7 +357,8 @@ name = "pricing"
   it.
 - **`code_path`** — the root folder for the generated tests. A backend's folder
   is `<code_path>/<name>`, holding the backend index (`backend.<ext>` or
-  `backend/index.<ext>`) and a `generated/` subfolder. A document's test is written to
+  `backend/index.<ext>`), the consumer's `collect.<ext>` entrypoint (§14), and a
+  `generated/` subfolder. A document's test is written to
   `<code_path>/<name>/generated/<path>.test.ts`, where `<path>` is the
   document's path relative to `livingdocs` without its extension, so
   `docs/explain/a/something.md` becomes `generated/a/something.test.ts` and two
@@ -353,21 +368,79 @@ name = "pricing"
   that framework, so several backends can share one. A backend may be named
   after its framework (this repository uses `[[backend.vitest]] name =
   "vitest"`).
+- **`collect`** — the command livingdoc spawns to read that backend's bindings
+  (§14), as an **argv array**, never a shell string: no shell parsing, no
+  quoting, no Windows differences. It runs with the `livingdoc.toml` root as
+  cwd, so a Python backend finds its `pyproject.toml` and relative paths are
+  stable. livingdoc has no default for it and never guesses a toolchain.
+  *Planned — liv-s5ym.*
+- **`manifest`** — a path to a bindings manifest already on disk, for
+  environments that cannot run the toolchain; livingdoc produces no such file
+  itself (§14). `collect` wins when both are set. *Planned — liv-s5ym.*
+
+There is no `livingdoc collect` command: collection is a stage of `generate`.
 
 Paths are resolved relative to `livingdoc.toml`.
 
 ## 14. Generating the checks
 
 ```
-livingdoc generate  # write the tests for every document and backend
-livingdoc render    # produce the static site with green/red baked in
+livingdoc init             # planned (liv-3si5): create missing backend folders, indexes, collect entrypoints
+livingdoc generate [file]  # collect (planned, liv-s5ym), then write the tests for every document and backend
+livingdoc render           # planned (§16.5, liv-53z4): produce the static site with green/red baked in
 ```
 
 A document that touches several backends produces one file per backend, in that
 backend's folder under `code_path`. `generate` only writes the checks. They are
 part of the consumer's suite, so the consumer's own runner executes them and
 reports the result. A red assertion fails their build exactly like any other
-failing test; livingdoc never spawns the runner.
+failing test; livingdoc never spawns the **test** runner.
+
+### Collecting the bindings
+
+To check a document's names against real bindings, livingdoc needs the
+backend's binding names — and it cannot know the consumer's toolchain, so it
+spawns what the consumer declares (§13):
+
+```
+collect (spawn, per backend) → parse stdout as the manifest → resolve keys → check → emit
+                                    §14 · liv-s5ym              liv-ejez
+```
+
+Collection is a stage of `generate`, not a command of its own, and the manifest
+is a **wire value, not an artifact**: the parsed stdout goes straight to the
+check, never through a file. A backend with no `collect` command is skipped; a
+backend with `manifest` and no `collect` is read from disk, with no process
+spawned. Freshness comes from collecting on every `generate` — there is nothing
+on disk to go stale, and no fingerprint or lockfile.
+
+Ownership of the two folders under a backend is what keeps the spawn target
+alive: `code_path/<name>/` is the consumer's, created by `livingdoc init`,
+committed and never clobbered; `code_path/<name>/generated/` is livingdoc's,
+deleted and rewritten on every `generate`. `init` writes only in the first, so
+the file a `collect` command names survives a clean.
+
+The contract with the spawned command:
+
+> **stdout = one JSON document. stderr = logs. Exit 0 = success.**
+
+```json
+{
+  "bindings": [
+    { "name": "checkout.md#applying-a-discount", "params": ["code", "total"] },
+    { "name": "applying-a-discount", "params": ["code", "total"] }
+  ]
+}
+```
+
+livingdoc validates that shape and nothing about its contents: a non-zero exit
+is `collect-failed` (backend, command, exit code, stderr tail); stdout that is
+not the schema is `manifest-invalid` (backend, path, schema issue) — which also
+covers a configured `manifest` that cannot be read. There is no
+`manifest-missing` kind: it existed for the manifest file this design does not
+write. The `collect.<ext>` entrypoint `livingdoc init` emits (liv-3si5) is the
+reference implementation of the contract, so a hand-written collector only has
+to match it.
 
 Domain failures — a bad config, an unknown backend, a missing file — are
 returned as `Result` values whose error is a `DomainError`: a `kind` per domain
@@ -382,7 +455,8 @@ failures (disk full, out of memory) throw, and those crash the process.
 2. **A closed vocabulary** — parameter names and directive names are declared by
    the backend, and assertion verbs come from the framework the generator knows;
    any undeclared name is red. Doc and code share one vocabulary, and drift is
-   caught both ways.
+   caught both ways. *Partly planned: parameter names need liv-s5ym + liv-d7uk;
+   directive names are unresolved (§16.8).*
 3. **Framework-native** — the document writes the framework's own assertions;
    the generated tests run under the consumer's real runner, in their CI.
 4. **Native expressions** — values are target-language code, evaluated by the
@@ -413,3 +487,11 @@ failures (disk full, out of memory) throw, and those crash the process.
    the host's literal syntax.
 7. **The middle assertion form** — ``!!`"order saved" toBe true` `` (subject
    then verb) and named outputs are not yet supported (liv-du6y, liv-m0mf).
+8. **How does generate learn the backend's directives?** §9 and §15.2 promise an
+   undeclared verb is caught, but the manifest contract (§14) carries only
+   `{ name, params }`. Either the manifest grows a `directives` field and the
+   check stays at generate time, or unknown directives fail at run time — the
+   generated call hits `undefined` and the case goes red in the consumer's
+   suite — which fits "livingdoc carries text, the target gives it meaning" but
+   gives up failing before the tests run. Tracked on liv-m0mf; decide before it
+   is picked up.
