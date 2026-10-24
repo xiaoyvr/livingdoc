@@ -34,8 +34,9 @@ instead of being passed silently.
   params at generate time (DESIGN §6, §15.2).
 - **Resolved:** "how to get `params` without running the backend" is answered by
   liv-s5ym — the consumer declares a `collect` command, livingdoc spawns it and
-  reads `{name, params}` from stdout; liv-3si5 emits the entrypoint and gives
-  the runtime its read side (`collectBindings()`, TS `bind` retaining
+  reads `{name, params}` from the per-backend
+  `generated/manifest.json` the command writes; liv-3si5 emits the entrypoint
+  and gives the runtime its read side (`collectBindings()`, TS `bind` retaining
   `params`).
 - 2026-10-19 scan: depends on liv-s5ym (produces the manifest) and liv-ejez
   (owns the check pass this extends). It is no longer ready work.

@@ -383,13 +383,16 @@ name = "pricing"
   "vitest"`).
 - **`collect`** — the command livingdoc spawns to read that backend's bindings
   (§14), as an **argv array**, never a shell string: no shell parsing, no
-  quoting, no Windows differences. It runs with the `livingdoc.toml` root as
-  cwd, so a Python backend finds its `pyproject.toml` and relative paths are
-  stable. livingdoc has no default for it and never guesses a toolchain.
-  *Planned — liv-s5ym.*
+  quoting, no Windows differences. The command writes the manifest JSON to
+  `<backend folder>/generated/manifest.json`; stdout and stderr are logs and
+  are never parsed. livingdoc spawns it exactly as written and appends no
+  argument. It runs with the `livingdoc.toml` root as cwd, so a Python backend
+  finds its `pyproject.toml` and relative paths are stable. livingdoc has no
+  default for it and never guesses a toolchain. *Planned — liv-s5ym.*
 - **`manifest`** — a path to a bindings manifest already on disk, for
-  environments that cannot run the toolchain; livingdoc produces no such file
-  itself (§14). `collect` wins when both are set. *Planned — liv-s5ym.*
+  environments that cannot run the toolchain; when `collect` is unset,
+  livingdoc only reads it and never writes it (§14). `collect` wins when both
+  are set. *Planned — liv-s5ym.*
 
 There is no `livingdoc collect` command: collection is a stage of `generate`.
 
@@ -416,26 +419,43 @@ backend's binding names — and it cannot know the consumer's toolchain, so it
 spawns what the consumer declares (§13):
 
 ```
-collect (spawn, per backend) → parse stdout as the manifest → resolve keys → check → emit
-                                    §14 · liv-s5ym              liv-ejez
+collect (spawn, per backend) → read generated/manifest.json → resolve keys → check → emit
+                                       §14 · liv-s5ym            liv-ejez
 ```
 
-Collection is a stage of `generate`, not a command of its own, and the manifest
-is a **wire value, not an artifact**: the parsed stdout goes straight to the
-check, never through a file. A backend with no `collect` command is skipped; a
+Collection is a stage of `generate`, not a command of its own. The manifest is
+read from a **file the command writes**, not from stdout: a toolchain command's
+stdout is noisy and livingdoc does not control it. The path is fixed and
+livingdoc-owned:
+
+```
+<code_path>/<name>/generated/manifest.json
+```
+
+The collector resolves it relative to its own file — the entrypoint sits in
+`<backend folder>/` — not relative to cwd, which is the config root. livingdoc
+`mkdir`s `generated/` and **unlinks the manifest before spawning**, so a
+command that exits zero without writing fails as `manifest-missing` instead of
+passing on an earlier run's file. That unlink, not `cleanGenerated()`, is what
+guarantees freshness: `generate <file>` cleans only that document's output,
+while a full `generate` also removes the whole folder. The manifest is
+therefore disposable and never committed — refreshed every run, with no
+fingerprint or lockfile. A backend with no `collect` command is skipped; a
 backend with `manifest` and no `collect` is read from disk, with no process
-spawned. Freshness comes from collecting on every `generate` — there is nothing
-on disk to go stale, and no fingerprint or lockfile.
+spawned.
 
 Ownership of the two folders under a backend is what keeps the spawn target
 alive: `code_path/<name>/` is the consumer's, created by `livingdoc init`,
 committed and never clobbered; `code_path/<name>/generated/` is livingdoc's,
-deleted and rewritten on every `generate`. `init` writes only in the first, so
-the file a `collect` command names survives a clean.
+deleted and rewritten on every `generate`. The collector entrypoint lives in
+the first, so the file a `collect` command names survives a clean; the manifest
+it writes lives in the second, because it is disposable. `init` writes only in
+the first.
 
 The contract with the spawned command:
 
-> **stdout = one JSON document. stderr = logs. Exit 0 = success.**
+> **Write one JSON document to `<backend folder>/generated/manifest.json`.
+> stdout/stderr are logs. Exit 0 = success.**
 
 ```json
 {
@@ -447,13 +467,13 @@ The contract with the spawned command:
 ```
 
 livingdoc validates that shape and nothing about its contents: a non-zero exit
-is `collect-failed` (backend, command, exit code, stderr tail); stdout that is
-not the schema is `manifest-invalid` (backend, path, schema issue) — which also
-covers a configured `manifest` that cannot be read. There is no
-`manifest-missing` kind: it existed for the manifest file this design does not
-write. The `collect.<ext>` entrypoint `livingdoc init` emits (liv-3si5) is the
-reference implementation of the contract, so a hand-written collector only has
-to match it.
+is `collect-failed` (backend, command, exit code, stderr tail); a missing
+manifest — a command that exited zero without writing, or a configured
+`manifest` path that does not exist — is `manifest-missing` (backend, path); a
+file that is not the schema is `manifest-invalid` (backend, path, schema
+issue). The `collect.<ext>` entrypoint `livingdoc init` emits (liv-3si5) is the
+reference implementation of the contract — it writes the JSON beside itself —
+so a hand-written collector only has to match it.
 
 Domain failures — a bad config, an unknown backend, a missing file — are
 returned as `Result` values whose error is a `DomainError`: a `kind` per domain

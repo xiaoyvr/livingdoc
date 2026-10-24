@@ -22,10 +22,10 @@ manifest contract on the ground before liv-s5ym writes its validator.
 - [ ] **I1 red** — `livingdoc init` in a temp project: config declares
       `[[backend.vitest]] name = "web"`, `code_path = "tests/explain"`; after
       `init`, `tests/explain/web/collect.ts` exists and running it with node
-      prints `{"bindings":[…{name,params}…]}` for a binding the index reached.
-      This is the vertical slice: it drives the runtime read side
-      (`collectBindings()`, TS `bind` retaining `params`) rather than
-      pre-building it.
+      writes `generated/manifest.json` beside it, containing
+      `{"bindings":[…{name,params}…]}` for a binding the index reached. This is
+      the vertical slice: it drives the runtime read side (`collectBindings()`,
+      TS `bind` retaining `params`) rather than pre-building it.
 - [ ] **I1 green** — emit `collect.<ext>` + runtime `collectBindings()`.
       `backend.<ext>` is not created by this slice if it gets in the way; it is
       I3.
@@ -65,15 +65,16 @@ longer holds a step that needs `init`.
 | path | owner | lifecycle | written by |
 |---|---|---|---|
 | `code_path/<name>/` | consumer, committed | created once, edited forever | `init` (create-if-missing), the consumer |
-| `code_path/<name>/generated/` | livingdoc, disposable | `rm -rf`d on every `generate` | `generate` only |
+| `code_path/<name>/generated/` | livingdoc, disposable | `rm -rf`d on every `generate` | `generate`, plus the `collect` command's `manifest.json` |
 
-`init` never writes into `generated/`: anything there is deleted by the next `generate`. The collector entrypoint lives beside the backend index, so the spawn target named by a config `collect` command is committed consumer code — `generate` never has to write it, and there is no generated template to fall out of sync with the runtime version.
+`init` never writes into `generated/`: anything there is deleted by the next `generate`. Only the configured `collect` command writes there (its `manifest.json`), because that file is disposable by design. The collector entrypoint lives beside the backend index, so the spawn target named by a config `collect` command is committed consumer code — `generate` never has to write it, and there is no generated template to fall out of sync with the runtime version.
 
 ```
 tests/explain/web/
 ├── backend.ts          # consumer index (init stubs it)
 ├── collect.ts          # collector entrypoint (init stubs it)
 └── generated/          # livingdoc owned, disposable
+    └── manifest.json   # written by collect.ts, read and unlinked by generate
 ```
 
 ## Config is the source of intent
@@ -92,12 +93,19 @@ TS `bind(name, params, run)` currently discards `params` (`registry.set(name, ru
 
 ```ts
 // tests/explain/web/collect.ts (emitted)
+import { writeFileSync } from "node:fs"
 import "./backend.js"
 import { collectBindings } from "@livingdoc/runtime"
-process.stdout.write(JSON.stringify({ bindings: collectBindings() }, null, 2))
+writeFileSync(
+  new URL("./generated/manifest.json", import.meta.url),
+  JSON.stringify({ bindings: collectBindings() }, null, 2),
+)
 ```
 
-The pytest sibling imports `backend` and prints the same shape via `json.dump`.
+The sibling Python collector imports `backend` and writes the same shape to
+`Path(__file__).parent / "generated" / "manifest.json"`. Resolving the path
+relative to the entrypoint, never to cwd, is what lets livingdoc spawn it from
+the config root without passing an argument.
 
 ## Why a file and not a shipped collector
 
@@ -116,8 +124,12 @@ The alternative is pointing `collect` at a runtime-provided entry (`python -m li
   **Then** `tests/explain/web/backend.ts` and `tests/explain/web/collect.ts` are created, and the command exits zero
 
 - **Given** a backend folder created by `livingdoc init`
-  **When** the consumer binds a binding in a module the index imports, and runs the emitted `collect.ts` with their own tooling
-  **Then** it prints `{ "bindings": [ { "name": …, "params": [ … ] } ] }` for every `bind(name, params, run)` the index reached, so `collect` in the config may point at it
+  **When** the consumer binds a binding in a module the index imports, and runs
+  the emitted `collect.ts` with their own tooling
+  **Then** it writes `generated/manifest.json` beside itself, containing
+  `{ "bindings": [ { "name": …, "params": [ … ] } ] }` for every
+  `bind(name, params, run)` the index reached, so `collect` in the config may
+  point at it
 
 - **Given** a backend folder where `backend.ts` exists and `collect.ts` does not
   **When** I run `livingdoc init`
@@ -129,7 +141,9 @@ The alternative is pointing `collect` at a runtime-provided entry (`python -m li
 
 - **Given** `[[backend.pytest]] name = "pricing"`
   **When** I run `livingdoc init`
-  **Then** `pricing/backend.py` and `pricing/collect.py` are emitted, and `collect.py` prints the same manifest shape when run with the `PYTHONPATH` the generated pytest checks already use
+  **Then** `pricing/backend.py` and `pricing/collect.py` are emitted, and
+  `collect.py` writes the same manifest to `generated/manifest.json` beside it
+  when run with the `PYTHONPATH` the generated pytest checks already use
 
 - **Given** a directory with no `livingdoc.toml`
   **When** I run `livingdoc init`
