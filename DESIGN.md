@@ -154,7 +154,7 @@ The document's structure maps directly onto a test tree:
   `binding:` falls back to `‹file›#‹heading-anchor›`.
 - The **parameter names** locate the `it` (the parameterized test): the names in
   a bullet must match the binding's declared parameters. *Planned — liv-d7uk,
-  reading the manifest liv-s5ym produces; nothing checks them today.*
+  reading the manifest liv-ejez produces; nothing checks them today.*
 - The `it` **title** is the bullet's prose with input values substituted. Until
   rendering lands (§16.5) it still carries the raw assertion text, e.g. `toBe 90`.
 - A nested heading overrides the binding. A heading with no `Example:` bullets
@@ -200,7 +200,8 @@ export const directives = {
    index reached, as `{ name, params }`. livingdoc reaches it through the
    `collect.<ext>` entrypoint `livingdoc init` writes beside the backend index
    (§13, §14), and never imports the backend from the CLI itself. *Neither the
-   export nor `init` exists yet — liv-3si5.*
+   export nor the emitted collector exists yet — liv-ejez, which extends
+   `livingdoc init` (liv-3si5) with the entrypoint.*
 
 The framework's own assertions (`toBe`, `toEqual`, `toContain`, …) are **not**
 consumer code — the document writes them directly and the generator transcribes
@@ -360,9 +361,13 @@ code_path  = "tests/explain"
 
 [[backend.vitest]]
 name = "web"
+collect = ["npx", "tsx", "tests/explain/web/collect.ts", "{manifest}"]
 
 [[backend.pytest]]
 name = "pricing"
+collect = ["uv", "run", "python", "-m", "pricing.collect_bindings", "{manifest}"]
+# or, where the toolchain cannot run:
+# manifest = "tests/explain/pricing/bindings.json"
 ```
 
 - **`livingdocs`** — the folder whose `*.md` files are livingdoc documents.
@@ -383,16 +388,21 @@ name = "pricing"
   "vitest"`).
 - **`collect`** — the command livingdoc spawns to read that backend's bindings
   (§14), as an **argv array**, never a shell string: no shell parsing, no
-  quoting, no Windows differences. The command writes the manifest JSON to
-  `<backend folder>/generated/manifest.json`; stdout and stderr are logs and
-  are never parsed. livingdoc spawns it exactly as written and appends no
-  argument. It runs with the `livingdoc.toml` root as cwd, so a Python backend
-  finds its `pyproject.toml` and relative paths are stable. livingdoc has no
-  default for it and never guesses a toolchain. *Planned — liv-s5ym.*
+  quoting, no Windows differences. livingdoc substitutes `{manifest}` with the
+  absolute `<code_path>/<name>/generated/manifest.json` and spawns the array
+  otherwise exactly as written; the command writes the JSON there. The token is
+  required, so every command is told its destination; a missing or unknown
+  `{…}` token is `invalid-config`. stdout/stderr are logs and are never parsed.
+  It runs with the `livingdoc.toml` root as cwd, so a Python backend finds its
+  `pyproject.toml` and relative paths are stable. livingdoc has no default for
+  it and never guesses a toolchain. *Planned — liv-ejez.*
 - **`manifest`** — a path to a bindings manifest already on disk, for
   environments that cannot run the toolchain; when `collect` is unset,
   livingdoc only reads it and never writes it (§14). `collect` wins when both
-  are set. *Planned — liv-s5ym.*
+  are set. *Planned — liv-ejez.*
+
+The `{manifest}` token inside `collect` is the collect **output** path; the
+`manifest` key is the **input** fallback — different things despite the name.
 
 There is no `livingdoc collect` command: collection is a stage of `generate`.
 
@@ -401,8 +411,8 @@ Paths are resolved relative to `livingdoc.toml`.
 ## 14. Generating the checks
 
 ```
-livingdoc init             # planned (liv-3si5): create missing backend folders, indexes, collect entrypoints
-livingdoc generate [file]  # collect (planned, liv-s5ym), then write the tests for every document and backend
+livingdoc init             # planned (liv-3si5): backend folders and indexes; collectors come with the check
+livingdoc generate [file]  # collect (planned, liv-ejez), then write the tests for every document and backend
 livingdoc render           # planned (§16.5, liv-53z4): produce the static site with green/red baked in
 ```
 
@@ -419,8 +429,8 @@ backend's binding names — and it cannot know the consumer's toolchain, so it
 spawns what the consumer declares (§13):
 
 ```
-collect (spawn, per backend) → read generated/manifest.json → resolve keys → check → emit
-                                       §14 · liv-s5ym            liv-ejez
+collect (spawn, per backend) → read the backend manifest
+                             → resolve keys → check → emit    §14 · liv-ejez
 ```
 
 Collection is a stage of `generate`, not a command of its own. The manifest is
@@ -432,29 +442,36 @@ livingdoc-owned:
 <code_path>/<name>/generated/manifest.json
 ```
 
-The collector resolves it relative to its own file — the entrypoint sits in
-`<backend folder>/` — not relative to cwd, which is the config root. livingdoc
-`mkdir`s `generated/` and **unlinks the manifest before spawning**, so a
-command that exits zero without writing fails as `manifest-missing` instead of
-passing on an earlier run's file. That unlink, not `cleanGenerated()`, is what
-guarantees freshness: `generate <file>` cleans only that document's output,
-while a full `generate` also removes the whole folder. The manifest is
-therefore disposable and never committed — refreshed every run, with no
-fingerprint or lockfile. A backend with no `collect` command is skipped; a
-backend with `manifest` and no `collect` is read from disk, with no process
-spawned.
+The path reaches the command by substitution, not by convention: every
+`{manifest}` in the declared argv is replaced with that absolute path before
+spawning, and `{manifest}` is required — a missing or unknown `{…}` token is
+`invalid-config`. A placeholder rather than a hidden trailing argument because
+appending is not universally valid: `npx`, `uv` and `npm run` forward a
+trailing positional, but `make collect /abs/path` reads it as another target and
+fails. The token lets the consumer choose the position and form
+(`make collect MANIFEST={manifest}`). livingdoc `mkdir`s `generated/` and
+**unlinks the manifest before spawning**, so a command that exits zero without
+writing fails as `manifest-missing` instead of passing on an earlier run's
+file. That unlink, not `cleanGenerated()`, is what guarantees freshness:
+`generate <file>` cleans only that document's output, while a full `generate`
+also removes the whole folder. The manifest is therefore disposable and never
+committed — refreshed every run, with no fingerprint or lockfile. cwd stays the
+config root, so the backend index imported by both the collector and the
+generated tests runs under the same cwd in both. A backend with no `collect`
+command is skipped; a backend with `manifest` and no `collect` is read from
+disk, with no process spawned.
 
 Ownership of the two folders under a backend is what keeps the spawn target
 alive: `code_path/<name>/` is the consumer's, created by `livingdoc init`,
 committed and never clobbered; `code_path/<name>/generated/` is livingdoc's,
 deleted and rewritten on every `generate`. The collector entrypoint lives in
-the first, so the file a `collect` command names survives a clean; the manifest
+the first, so the entrypoint a `collect` command runs survives a clean; the manifest
 it writes lives in the second, because it is disposable. `init` writes only in
 the first.
 
 The contract with the spawned command:
 
-> **Write one JSON document to `<backend folder>/generated/manifest.json`.
+> **Write one JSON document to the path substituted for `{manifest}`.
 > stdout/stderr are logs. Exit 0 = success.**
 
 ```json
@@ -466,14 +483,15 @@ The contract with the spawned command:
 }
 ```
 
-livingdoc validates that shape and nothing about its contents: a non-zero exit
-is `collect-failed` (backend, command, exit code, stderr tail); a missing
-manifest — a command that exited zero without writing, or a configured
+livingdoc validates that shape and nothing about its contents: a `collect` with
+no `{manifest}` (or an unknown token) is `invalid-config` before any spawn; a
+non-zero exit is `collect-failed` (backend, command, exit code, stderr tail); a
+missing manifest — a command that exited zero without writing, or a configured
 `manifest` path that does not exist — is `manifest-missing` (backend, path); a
 file that is not the schema is `manifest-invalid` (backend, path, schema
 issue). The `collect.<ext>` entrypoint `livingdoc init` emits (liv-3si5) is the
-reference implementation of the contract — it writes the JSON beside itself —
-so a hand-written collector only has to match it.
+reference implementation of the contract — it writes the JSON to its manifest
+argument — so a hand-written collector only has to match it.
 
 Domain failures — a bad config, an unknown backend, a missing file — are
 returned as `Result` values whose error is a `DomainError`: a `kind` per domain
@@ -486,7 +504,7 @@ failures (disk full, out of memory) throw, and those crash the process.
 1. **A document cannot be false** — a red assertion fails the generated test,
    and therefore the consumer's test run.
 2. **A closed vocabulary** — parameter names are declared by the backend and
-   checked at generate time (planned: liv-s5ym + liv-d7uk), so a name that exists
+   checked at generate time (planned: liv-ejez + liv-d7uk), so a name that exists
    in neither document nor code cannot slip through. Assertion verbs are not
    checked: they are transcribed, and an unknown one fails when the generated
    code runs (§9). Doc and code share one vocabulary; parameters are enforced by

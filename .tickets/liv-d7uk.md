@@ -1,8 +1,8 @@
 ---
 id: liv-d7uk
 status: open
-deps: [liv-ybyq, liv-0ou1, liv-s5ym, liv-ejez]
-links: [liv-s5ym]
+deps: [liv-ybyq, liv-0ou1, liv-ejez]
+links: [liv-s5ym, liv-ejez]
 created: 2026-09-26T03:21:48Z
 type: feature
 priority: 2
@@ -33,13 +33,13 @@ instead of being passed silently.
   missing is checking the names against the collected manifest's declared
   params at generate time (DESIGN §6, §15.2).
 - **Resolved:** "how to get `params` without running the backend" is answered by
-  liv-s5ym — the consumer declares a `collect` command, livingdoc spawns it and
-  reads `{name, params}` from the per-backend
-  `generated/manifest.json` the command writes; liv-3si5 emits the entrypoint
-  and gives the runtime its read side (`collectBindings()`, TS `bind` retaining
-  `params`).
-- 2026-10-19 scan: depends on liv-s5ym (produces the manifest) and liv-ejez
-  (owns the check pass this extends). It is no longer ready work.
+  liv-ejez — the check feature emits the collector entrypoint, declares a
+  `collect` command and reads `{name, params}` from the per-backend
+  `<code_path>/<name>/generated/manifest.json` the command writes; the runtime
+  read side (`collectBindings()`, TS `bind` retaining `params`) is part of that
+  slice.
+- 2026-10-25 scan: depends on liv-ejez, which owns collection, the check pass
+  this extends, and the collector entrypoint. It is no longer ready work.
 
 ## Revisit when working this
 

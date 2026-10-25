@@ -36,7 +36,7 @@ not only return values.
 An earlier AC asked generate to report an unknown verb. That would need livingdoc
 to learn a backend's `directives`, and the manifest carries only
 `{ name, params }` — the same "read the backend without running it" problem
-liv-s5ym solved for params, at a cost that buys little: the target already
+the manifest solves for params, at a cost that buys little: the target already
 catches a bad name when the generated code runs.
 
 **Decision: do not check verbs at generate time, framework or consumer.**

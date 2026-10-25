@@ -60,6 +60,17 @@ work still happens: the open ticket's notes or design section, or `DESIGN.md` /
 relationship to a closed one, describe it in prose — do not write into the
 closed file.
 
+**A ticket tells one story.** Write what this ticket delivers and why, from its
+own consumer's point of view.
+
+## Writing
+
+- **No negative residue.** State what is true, not what was removed, deferred,
+  or owned elsewhere: "we don't do X", "X moved to …", "Y will consume it" are
+  noise. The exception is a meaningful option: an alternative that was
+  genuinely weighed and whose rejection matters to a future reader. Record that
+  in a decisions section, as a considered choice — not as asides in the story.
+
 ## Conventions
 
 ### Typescript
