@@ -24,6 +24,7 @@ import {
 import type { Result } from './result.js'
 
 export { formatError } from './errors.js'
+export { init } from './init.js'
 
 export function generate(file?: string): Result<void, DomainError> {
   const config = loadConfig(file ? dirname(resolve(file)) : process.cwd())

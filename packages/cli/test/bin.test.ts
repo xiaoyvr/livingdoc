@@ -59,6 +59,7 @@ describe('livingdoc bin', () => {
 
     const usage = run(['nonsense'])
     expect(usage.status).toBe(1)
-    expect(usage.stderr).toContain('usage: livingdoc generate')
+    expect(usage.stderr).toContain('usage: livingdoc init')
+    expect(usage.stderr).toContain('livingdoc generate [file.md]')
   })
 })

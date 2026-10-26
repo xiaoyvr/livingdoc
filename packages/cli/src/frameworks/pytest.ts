@@ -61,6 +61,11 @@ const caseBlock = (title: string, bullet: Nodes): string => {
 export const pytest = {
   name: 'pytest',
   extension: 'py',
+  stub: `from livingdoc_runtime import bind
+
+# Example:
+# bind("applying-a-discount", ["code", "total"], lambda args: args["total"])
+`,
   generatedFile: (name: string) => {
     const parts = name.split('/')
     const file = parts.pop()!

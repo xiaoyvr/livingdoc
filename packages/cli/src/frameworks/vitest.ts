@@ -51,6 +51,11 @@ const caseBlock = (title: string, bullet: Nodes): string => {
 export const vitest = {
   name: 'vitest',
   extension: 'ts',
+  stub: `import { bind } from '@livingdoc/runtime'
+
+// Example:
+// bind("applying-a-discount", ["code", "total"], ({ code, total }) => total)
+`,
   generatedFile: (name: string) => `${name}.test.ts`,
 
   generate(title: string, bullets: Nodes[], appends: string[], backend: string): string {

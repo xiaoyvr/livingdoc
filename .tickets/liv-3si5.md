@@ -21,8 +21,8 @@ either.
 - **Given** a `livingdoc.toml` declaring `[[backend.vitest]] name = "web"` and
   `code_path = "tests/explain"`
   **When** I run `livingdoc init`
-  **Then** `tests/explain/web/backend.ts` is created with an inert stub
-  (`export {}` for TS, `# no bindings` for Python) and the command exits zero
+  **Then** `tests/explain/web/backend.ts` is created, it declares no bindings,
+  and the command exits zero
 
 - **Given** a backend folder where `backend.ts` exists
   **When** I run `livingdoc init`
@@ -36,7 +36,7 @@ either.
 
 - **Given** `[[backend.pytest]] name = "pricing"` and `code_path = "tests/explain"`
   **When** I run `livingdoc init`
-  **Then** `tests/explain/pricing/backend.py` is created with the inert stub
+  **Then** `tests/explain/pricing/backend.py` is created and declares no bindings
 
 - **Given** a directory with no `livingdoc.toml`
   **When** I run `livingdoc init`
@@ -65,9 +65,9 @@ to scaffold, and config stays hand-authored. No defaults, no discovery.
 
 ### Why the index is inert
 
-`backend.<ext>` is created as `export {}` / `# no bindings`, with the `bind`
-example shown only as a comment. A demo bind would be a binding no document
-refers to, so the stub stays inert.
+`backend.<ext>` imports `bind` and shows a registration only as a comment;
+nothing is registered. The consumer replaces the example with real bindings. A
+demo bind would be a binding no document refers to, so the stub stays inert.
 
 ## Decisions taken
 
@@ -86,16 +86,17 @@ refers to, so the stub stays inert.
 Realtime list. One slice = red → confirm → green → refactor-on-smell; approval
 for one step is not approval for the next.
 
-- [ ] **I1 red** — `livingdoc init` in a temp project: config declares
+- [x] **I1 red** — `livingdoc init` in a temp project: config declares
       `[[backend.vitest]] name = "web"`, `code_path = "tests/explain"`; after
       `init`, `tests/explain/web/backend.ts` exists, contains an inert stub,
       and the command exits zero. Red for the right reason: `bin.ts` accepts
       only `generate`.
-- [ ] **I1 green** — the `init` verb in `bin.ts`, config load, and the write
+- [x] **I1 green** — the `init` verb in `bin.ts`, config load, and the write
       of `backend.<ext>`.
 
-- [ ] **I2** — pytest extension: `backend.py` emitted for
-      `[[backend.pytest]] name = "pricing"`.
+- [x] **I2** — pytest extension: `backend.py` is emitted by the
+      extension-generic write; the test asserts the file exists, not its
+      placeholder content.
 - [ ] **I3** — create-if-missing and reporting: an existing `backend.ts` is
       byte-for-byte untouched; the run reports `created` / `exists` per file;
       re-running writes nothing and exits 0.
