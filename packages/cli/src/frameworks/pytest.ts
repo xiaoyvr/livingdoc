@@ -2,6 +2,7 @@
 // pytest test module. Every output line is a template literal, so the source
 // reads like the file it emits; `lines` and `indent` only touch whitespace.
 import type { Nodes } from 'mdast'
+import { join } from 'node:path'
 import { bulletTitle, bulletTokens, slugify, type Token } from '../document.js'
 
 type Input = Extract<Token, { kind: 'input' }>
@@ -60,12 +61,16 @@ const caseBlock = (title: string, bullet: Nodes): string => {
 
 export const pytest = {
   name: 'pytest',
-  extension: 'py',
-  stub: `from livingdoc_runtime import bind
-
-# Example:
+  stub: `# Example:
+# from livingdoc_runtime import bind
+#
 # bind("applying-a-discount", ["code", "total"], lambda args: args["total"])
 `,
+  entry: (dir: string) => [
+    join(dir, 'backend', '__init__.py'),
+    join(dir, 'backend.py'),
+  ],
+  scaffold: (dir: string) => join(dir, 'backend.py'),
   generatedFile: (name: string) => {
     const parts = name.split('/')
     const file = parts.pop()!

@@ -2,6 +2,7 @@
 // Vitest test file. Every output line is a template literal, so the source
 // reads like the file it emits; `lines` and `indent` only touch whitespace.
 import type { Nodes } from 'mdast'
+import { join } from 'node:path'
 import { bulletTitle, bulletTokens, slugify, type Token } from '../document.js'
 
 type Input = Extract<Token, { kind: 'input' }>
@@ -50,12 +51,15 @@ const caseBlock = (title: string, bullet: Nodes): string => {
 
 export const vitest = {
   name: 'vitest',
-  extension: 'ts',
-  stub: `import { bind } from '@livingdoc/runtime'
-
-// Example:
+  stub: `// Example:
+// import { bind } from '@livingdoc/runtime'
+//
 // bind("applying-a-discount", ["code", "total"], ({ code, total }) => total)
+
+export {}
 `,
+  entry: (dir: string) => [join(dir, 'backend.ts')],
+  scaffold: (dir: string) => join(dir, 'backend.ts'),
   generatedFile: (name: string) => `${name}.test.ts`,
 
   generate(title: string, bullets: Nodes[], appends: string[], backend: string): string {

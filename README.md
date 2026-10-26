@@ -33,6 +33,7 @@ npm test           # run the vitest suite
 npm run test:python # run the Python runtime tests
 npm run typecheck  # tsc -b across all packages (plus runtime type checks)
 npm run generate   # write the checks for docs/explain with the built CLI
+npm run livingdoc -- init # scaffold each backend's backend.<ext>
 npm run dogfood    # clean the checks, rebuild, generate, then run them
 npm run checks     # typecheck + generate + test + test:python
 ```
@@ -46,7 +47,9 @@ after which `packages/cli/dist/bin.js` is the `livingdoc` executable.
 The CLI reads `livingdoc.toml` at the project root. It names the `livingdocs`
 folder, the `code_path` root, and one `[[backend.<framework>]]` entry per
 backend. Each backend's folder is `<code_path>/<name>`, holding its
-`backend.<ext>` and a `generated/` folder. Run `livingdoc generate <file.md>`
+`backend.<ext>` and a `generated/` folder. Run `livingdoc init` to create each
+backend's missing `backend.<ext>`; an existing backend entry (including
+pytest's `backend/__init__.py`) is left alone. Then run `livingdoc generate <file.md>`
 for one document, or `livingdoc generate` for every opted-in document under
 `livingdocs`.
 

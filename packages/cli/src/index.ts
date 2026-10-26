@@ -25,6 +25,7 @@ import type { Result } from './result.js'
 
 export { formatError } from './errors.js'
 export { init } from './init.js'
+export type { InitReport } from './init.js'
 
 export function generate(file?: string): Result<void, DomainError> {
   const config = loadConfig(file ? dirname(resolve(file)) : process.cwd())
@@ -80,24 +81,10 @@ function writeBackend(
 ): Result<void, DomainError> {
   const framework = backend.framework
 
-  const backendFile = join(
-    config.codePath,
-    backend.name,
-    `backend.${framework.extension}`,
-  )
-  const backendIndex = join(
-    config.codePath,
-    backend.name,
-    'backend',
-    `index.${framework.extension}`,
-  )
-  const entry = existsSync(backendFile)
-    ? backendFile
-    : existsSync(backendIndex)
-      ? backendIndex
-      : undefined
+  const dir = join(config.codePath, backend.name)
+  const entry = framework.entry(dir).find((candidate) => existsSync(candidate))
   if (!entry) {
-    return fail({ kind: 'backend-file-missing', path: backendFile })
+    return fail({ kind: 'backend-file-missing', path: framework.scaffold(dir) })
   }
 
   const target = join(

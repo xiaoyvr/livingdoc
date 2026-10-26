@@ -1,10 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import {
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -57,17 +52,17 @@ export default defineConfig({
   )
 }
 
-describe('livingdoc backend index', () => {
+describe('livingdoc backend barrel', () => {
   let dir: string
 
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), 'livingdoc-index-'))
+    dir = mkdtempSync(join(tmpdir(), 'livingdoc-barrel-'))
     mkdirSync(join(dir, 'docs'))
     mkdirSync(join(dir, 'tests', 'vitest', 'backend'), { recursive: true })
     writeFileSync(join(dir, 'livingdoc.toml'), config)
     writeFileSync(
-      join(dir, 'tests', 'vitest', 'backend', 'index.ts'),
-      `import './checkout'\nimport './cart'\n`,
+      join(dir, 'tests', 'vitest', 'backend.ts'),
+      `import './backend/checkout.js'\nimport './backend/cart.js'\n`,
     )
     writeFileSync(
       join(dir, 'tests', 'vitest', 'backend', 'checkout.ts'),
@@ -85,7 +80,7 @@ describe('livingdoc backend index', () => {
     rmSync(dir, { recursive: true, force: true })
   })
 
-  it('runs cases for bindings declared in two backend modules', () => {
+  it('runs cases for bindings declared in two modules behind one barrel', () => {
     expect(generate(join(dir, 'docs', 'checkout.md')).ok).toBe(true)
     expect(generate(join(dir, 'docs', 'cart.md')).ok).toBe(true)
 

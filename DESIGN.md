@@ -181,8 +181,8 @@ bind("applying-a-discount", ["code", "total"], ({ code, total }) =>
 ```
 
 ```js
-// backend/index.js — the only entry generate and generated tests import
-import "./checkout.js"
+// backend.js — the only entry generate and generated tests import
+import "./backend/checkout.js"
 ```
 
 2. **`directives`** — custom assertion verbs (e.g. mock verification). Like the
@@ -219,7 +219,7 @@ livingdoc generates test code in two layers:
 ```ts
 // vitest generator (TypeScript) — the doc's !!`toBe total * 0.9`
 import { describe, expect, it } from 'vitest'
-import '../backend/index.js'
+import '../backend.js'
 import { run } from '@livingdoc/runtime'
 
 describe("Applying a discount", () => {
@@ -374,8 +374,9 @@ collect = ["uv", "run", "python", "-m", "pricing.collect_bindings", "{manifest}"
   `livingdoc generate` with no path generates for every opted-in document under
   it.
 - **`code_path`** — the root folder for the generated tests. A backend's folder
-  is `<code_path>/<name>`, holding the backend index (`backend.<ext>` or
-  `backend/index.<ext>`), the consumer's `collect.<ext>` entrypoint (§14), and a
+  is `<code_path>/<name>`, holding the backend index (for vitest
+  `backend.ts`; for pytest `backend.py` or a package `backend/__init__.py`),
+  the consumer's `collect.<ext>` entrypoint (§14), and a
   `generated/` subfolder. A document's test is written to
   `<code_path>/<name>/generated/<path>.test.ts`, where `<path>` is the
   document's path relative to `livingdocs` without its extension, so
@@ -411,7 +412,7 @@ Paths are resolved relative to `livingdoc.toml`.
 ## 14. Generating the checks
 
 ```
-livingdoc init             # planned (liv-3si5): backend folders and indexes; collectors come with the check
+livingdoc init             # create missing backend folders and indexes
 livingdoc generate [file]  # collect (planned, liv-ejez), then write the tests for every document and backend
 livingdoc render           # planned (§16.5, liv-53z4): produce the static site with green/red baked in
 ```

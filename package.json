@@ -15,6 +15,7 @@
     "clean": "rm -rf packages/cli/dist packages/runtime/dist packages/*/*.tsbuildinfo",
     "clean:checks": "rm -rf tests/explain/vitest/generated tests/explain/pytest/generated tests/explain/pytest/__pycache__",
     "typecheck": "tsc -b && tsc -p packages/runtime/tsconfig.check.json",
+    "pretest": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:python": "PYTHONPATH=packages/runtime-python/src python3 -m unittest discover -s packages/runtime-python/test -v",

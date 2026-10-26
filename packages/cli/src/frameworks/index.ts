@@ -6,8 +6,11 @@ import { vitest } from './vitest.js'
 
 export type Framework = {
   name: string
-  extension: string
   stub: string
+  /** Entry candidates, in precedence order. */
+  entry(dir: string): string[]
+  /** The file `livingdoc init` creates for a new backend. */
+  scaffold(dir: string): string
   generatedFile(name: string): string
   generate(title: string, bullets: Nodes[], appends: string[], backend: string): string
 }
